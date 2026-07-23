@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microsoft Foundry — step by step · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Reference<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <span class="side-nav__group">The platform</span>
+      <a class="side-nav__link" href="#what">What Foundry is</a>
+      <a class="side-nav__link" href="#services">The platform, mapped</a>
+      <span class="side-nav__group">Hands-on</span>
+      <a class="side-nav__link" href="#tutorial">Step by step from zero</a>
+      <a class="side-nav__link" href="#models">Choosing models</a>
+      <a class="side-nav__link" href="#local-app">Calling it from your app</a>
+      <a class="side-nav__link" href="#monitoring">Monitoring &amp; consumption</a>
+      <span class="side-nav__group">Perspective</span>
+      <a class="side-nav__link" href="#vs-openai">Foundry vs OpenAI direct</a>
+      <a class="side-nav__link" href="#references">References</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Reference · Standalone explainer &amp; tutorial</span>
+          <h1>Microsoft Foundry — the platform, <span class="gradient-text">step by step</span></h1>
+          <p><strong>From an empty Azure account to a deployed language model answering calls from your own machine.</strong></p>
+          <p>What Microsoft Foundry is and how it's organized; a click-by-click tutorial that takes
+            a brand-new Azure account to working <em>chat</em> and <em>embedding</em> deployments;
+            how to call them from a local Python application — including the honest answer to
+            "do I need an API key, the Azure CLI, or PowerShell?"; how to watch your consumption;
+            and how all of this compares to calling OpenAI directly.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Reference page</span>
+            <span class="badge badge--navy">~25 min read</span>
+            <span class="badge badge--gold">Includes a hands-on tutorial</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ WHAT ============ -->
+      <section id="what" class="doc-section">
+        <div>
+          <span class="eyebrow">The platform</span>
+          <h2>What Microsoft Foundry is</h2>
+        </div>
+        <p class="prose"><strong>Microsoft Foundry</strong> is Microsoft's unified platform for
+          building applications on top of AI models: a model catalog spanning many providers,
+          managed <em>deployments</em> that expose those models as authenticated HTTPS endpoints,
+          project workspaces with access control, an agent runtime, evaluation tooling, and
+          observability — one resource in your Azure subscription instead of a dozen separately
+          wired services. Conceptually it is a <strong>platform-as-a-service for inference</strong>:
+          you never see the GPUs, the model weights or the serving infrastructure; you see an
+          endpoint, a quota and a bill.</p>
+        <p class="prose">The name is the newest layer of a decade of consolidation, and you will
+          meet every older name in documentation and in real estates:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Cognitive Services<br><span class="dg-note">2016 · per-capability APIs</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Azure AI services<br><span class="dg-note">2023 · rebrand</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Azure AI Studio<br><span class="dg-note">2023 · unified portal</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Azure AI Foundry<br><span class="dg-note">2024 · platform</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Microsoft Foundry<br><span class="dg-note">2025 · current name</span></div>
+          </div>
+          <p class="diagram__caption">One product line, five names. Reading older tutorials is fine — the concepts map one-to-one.</p>
+        </div>
+        <p class="prose">Foundry presents <strong>two faces over the same objects</strong>. In the
+          <em>Azure portal</em> (portal.azure.com) it is infrastructure: a resource in a resource
+          group, with networking, identity, cost and policy — the governance lens. In the
+          <em>Foundry portal</em> (<strong>ai.azure.com</strong>) it is a workbench: projects,
+          model catalog, playground, agents, evaluations — the builder lens. Everything in this
+          page's tutorial uses both, in that order.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Microsoft Foundry resource · in your subscription</span>
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:1.4;">
+                <span class="dg-label">Project(s)</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--accent">Model deployments<br><span class="dg-note">endpoints with quota</span></div>
+                  <div class="dg-box">Connections<br><span class="dg-note">AI Search · storage · Azure OpenAI</span></div>
+                </div>
+              </div>
+              <div class="dg-box dg-box--frame" style="flex:1;">
+                <span class="dg-label">Platform capabilities</span>
+                <div class="dg-stack">
+                  <div class="dg-box">Model catalog</div>
+                  <div class="dg-box">Agent Service</div>
+                  <div class="dg-box">Evaluations &amp; tracing</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The platform map: projects hold what you deploy and connect; the catalog, agents and evaluations come with the platform.</p>
+        </div>
+      </section>
+
+      <!-- ============ SERVICES ============ -->
+      <section id="services" class="doc-section">
+        <div>
+          <span class="eyebrow">The platform</span>
+          <h2>The platform, mapped to the portal menu</h2>
+        </div>
+        <p class="prose">Open <em>Microsoft Foundry</em> in the Azure portal and its left menu
+          organizes Microsoft's whole AI estate into three groups. <strong>"Use with
+          Foundry"</strong> holds the four modern building blocks: <strong>Foundry</strong> (the
+          platform resource described above), <strong>AI Hubs</strong> (the previous workspace
+          generation — a <em>hub</em> centralizes shared storage, connections and compute with
+          projects hanging off it; still supported, no longer the default for new work),
+          <strong>Azure OpenAI</strong> (the dedicated OpenAI-models resource that predates
+          Foundry — see the comparison at the end of this page), and <strong>AI Search</strong>
+          (the retrieval engine: full-text, vector and hybrid search with semantic ranking — the
+          production backbone of RAG).</p>
+        <p class="prose"><strong>"More services"</strong> lists the specialized, task-specific AI
+          services. Each is independently consumable and many predate the LLM era; in an
+          agent-shaped world they increasingly appear as <em>tools an agent calls</em>:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Service</th><th>What it does</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Bot services</strong></td><td>Framework and hosting for conversational bots across channels (Teams, web chat, telephony).</td></tr>
+              <tr><td><strong>Computer vision</strong></td><td>Prebuilt image analysis: objects, scenes, OCR, spatial analysis.</td></tr>
+              <tr><td><strong>Custom vision</strong></td><td>Train your own image classifiers/detectors on labelled examples.</td></tr>
+              <tr><td><strong>Content safety</strong></td><td>Harm and policy-violation detection for text and images — the moderation layer.</td></tr>
+              <tr><td><strong>Document intelligence</strong></td><td>Structured extraction from documents: invoices, contracts, custom forms.</td></tr>
+              <tr><td><strong>Face API</strong></td><td>Face detection/recognition — access-restricted given its sensitivity.</td></tr>
+              <tr><td><strong>Health Insights</strong></td><td>Healthcare-specific models over clinical data.</td></tr>
+              <tr><td><strong>Machine Learning</strong></td><td>Azure ML: the train-your-own-models platform — pipelines, registries, MLOps.</td></tr>
+              <tr><td><strong>Immersive reader</strong></td><td>Embeddable reading assistance (read-aloud, translation, comprehension).</td></tr>
+              <tr><td><strong>Language service</strong></td><td>Text analytics: sentiment, entities, key phrases, summarization, CLU.</td></tr>
+              <tr><td><strong>Speech service</strong></td><td>Speech-to-text, neural text-to-speech, speech translation, speaker recognition.</td></tr>
+              <tr><td><strong>Translator</strong></td><td>Neural machine translation across 100+ languages.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose"><strong>"Classic AI services"</strong> is the legacy shelf — multi-service
+          accounts and retired offerings (Anomaly Detector among them). In an organization that
+          adopted AI early you will find them running in production; the label is your cue to
+          check migration guidance before building anything new there.</p>
+      </section>
+
+      <!-- ============ TUTORIAL ============ -->
+      <section id="tutorial" class="doc-section">
+        <div>
+          <span class="eyebrow">Hands-on · tutorial</span>
+          <h2>From an empty Azure account to a deployed model</h2>
+        </div>
+        <p class="prose">This walkthrough assumes exactly one thing: a fresh Azure account — a
+          company-provided one or a personal <em>free account</em> (which includes a time-limited
+          credit and a set of always-free services). Every step is in the portal; no command line
+          needed until your first API call. The path you are about to walk:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Azure account<br><span class="dg-note">+ subscription</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Resource group</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Foundry resource<br><span class="dg-note">+ default project</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Model deployments<br><span class="dg-note">chat + embeddings</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Playground<br><span class="dg-note">first test</span></div>
+          </div>
+          <p class="diagram__caption">Seven steps, ~15 minutes on a quiet day. Each numbered step below is one arrow.</p>
+        </div>
+
+        <h3>Step 1 — verify your subscription</h3>
+        <p class="prose">Sign in at <strong>portal.azure.com</strong>. Search for
+          <em>Subscriptions</em> in the top bar and confirm one exists (free accounts get one
+          automatically). The subscription is the billing and quota boundary — everything you
+          create below hangs from it.</p>
+
+        <h3>Step 2 — create a resource group</h3>
+        <p class="prose">Search <em>Resource groups</em> → <strong>Create</strong>. Choose your
+          subscription, name it (e.g. <code>rg-ai-course</code>), and pick a region close to you
+          that offers AI services broadly — for Europe, <em>West Europe</em> or
+          <em>Sweden Central</em> are safe defaults. The group is the lifecycle unit: deleting it
+          later removes everything in it, which is exactly what you want for a learning setup.</p>
+
+        <h3>Step 3 — create the Foundry resource</h3>
+        <p class="prose">Search <em>Microsoft Foundry</em> → <strong>+ Create</strong> → choose
+          <strong>"Foundry (Recommended)"</strong> (not "Azure OpenAI" — you want the platform,
+          not the single-family lane). Select subscription, your resource group, region, and a
+          globally unique name (it becomes part of your endpoint URL, e.g.
+          <code>my-foundry-lb</code> → <code>my-foundry-lb.services.ai.azure.com</code>).
+          <em>Review + create</em> → <em>Create</em>, and wait for deployment to finish. Creation
+          also provisions your first <strong>project</strong>.</p>
+
+        <h3>Step 4 — open the Foundry portal</h3>
+        <p class="prose">From the resource's overview click <em>Go to Foundry portal</em> (or visit
+          <strong>ai.azure.com</strong> and sign in with the same account). Select your project and
+          orient yourself: <em>Overview</em> shows the project's <strong>endpoint</strong> and API
+          keys; <em>Models + endpoints</em> lists deployments (empty for now); the
+          <em>Model catalog</em> is where the next step happens.</p>
+
+        <h3>Step 5 — deploy a chat model</h3>
+        <p class="prose">Open the <strong>Model catalog</strong>, find your chat model (in this
+          course: <code>gpt-5.1</code>), and click <strong>Deploy</strong>. Three decisions appear:
+          the <strong>deployment name</strong> (the string your code will reference — keeping it
+          equal to the model name is a sane convention), the <strong>deployment type</strong>
+          (start with a standard/global pay-as-you-go type; see the next section for what the
+          options mean), and the <strong>tokens-per-minute quota</strong> allocation. Confirm, and
+          in under a minute the model is an endpoint with a name.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">If Deploy is greyed out or a model is missing</p>
+          <p>That is quota or regional availability, not a mistake on your part. Not every model
+            exists in every region, and fresh trial subscriptions get modest default quotas with
+            some families requiring a quota request. Check the model's region list, or create the
+            resource in a better-served region.</p>
+        </div>
+
+        <h3>Step 6 — deploy the embedding model</h3>
+        <p class="prose">Repeat step 5 for <code>text-embedding-3-small</code>. Two deployments —
+          one generative, one embedding — are the complete model estate this course needs until
+          its final session.</p>
+
+        <h3>Step 7 — prove it in the playground</h3>
+        <p class="prose">Open the <strong>playground</strong>, select your chat deployment, set a
+          system prompt ("You are a precise banking assistant…"), ask a question, and adjust
+          temperature to see its effect. The playground is the zero-code sanity check: if it
+          answers here, the platform side is done and every remaining problem is on the client
+          side — which is precisely the next section.</p>
+      </section>
+
+      <!-- ============ MODELS ============ -->
+      <section id="models" class="doc-section">
+        <div>
+          <span class="eyebrow">Hands-on</span>
+          <h2>Choosing models in the catalog</h2>
+        </div>
+        <p class="prose">The catalog lists thousands of entries — OpenAI models alongside Meta,
+          Mistral, DeepSeek, xAI and open-weight families — so choosing is a filtering discipline,
+          not a browsing one. Filter by <em>task</em> first (chat completion vs embeddings vs
+          image), then compare candidates on four axes: <strong>capability</strong> (benchmark
+          scores and leaderboards are in the catalog — treat them as screening evidence, not
+          verdicts; your own evaluation in Session 4 is the verdict),
+          <strong>context window</strong> (how much input it can attend to),
+          <strong>latency class</strong> (reasoning models deliberate longer), and
+          <strong>price per million tokens</strong>, input and output priced separately.</p>
+        <p class="prose">Orthogonal to <em>which model</em> is <em>how it is served</em> — the
+          <strong>deployment type</strong>, which sets your traffic contract:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Deployment type</th><th>Serving</th><th>Billing</th><th>Choose when…</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Global standard</strong></td><td>Routed across Microsoft's global fleet</td><td>Pay per token</td><td>Default for development and most production — best availability</td></tr>
+              <tr><td><strong>Standard (regional)</strong></td><td>Served within the resource's region</td><td>Pay per token</td><td>Data-processing residency requirements pin traffic to a region</td></tr>
+              <tr><td><strong>Provisioned (PTU)</strong></td><td>Reserved throughput capacity</td><td>Capacity units per hour</td><td>Sustained high traffic needing guaranteed throughput and stable latency</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Every pay-per-token deployment carries a <strong>tokens-per-minute (TPM)</strong>
+          and requests-per-minute quota; exceeding them yields HTTP 429 responses — which is why
+          resilience and retry logic are a Session 3 topic rather than an afterthought.</p>
+        <p class="prose">For <strong>embedding models</strong> the decision is simpler but stickier:
+          capability matters (retrieval-quality benchmarks), <strong>dimensionality</strong> trades
+          quality against storage and compute per comparison (1536 for
+          <code>text-embedding-3-small</code>, 3072 for its larger sibling), price per million
+          tokens is far below chat models — and above all, <em>the choice is a commitment</em>:
+          vectors from different models are not comparable, so re-choosing later means re-embedding
+          the entire corpus. Multilingual quality matters in a Romanian bank; verify it on your own
+          text before committing.</p>
+      </section>
+
+      <!-- ============ LOCAL APP ============ -->
+      <section id="local-app" class="doc-section">
+        <div>
+          <span class="eyebrow">Hands-on</span>
+          <h2>Calling your deployment from a local application</h2>
+        </div>
+        <p class="prose">A deployment is an HTTPS endpoint; any HTTP client can call it. What varies
+          is <strong>how the call authenticates</strong>, and this is where the perennial question
+          lands: <em>"do I need an API key? the Azure CLI? PowerShell?"</em> The precise answer:
+          there are <strong>two authentication lanes</strong>, and your tooling needs depend on
+          which one you take.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Lane A · API key</span>
+              <div class="dg-stack">
+                <div class="dg-box">Copy key + endpoint<br><span class="dg-note">project Overview page</span></div>
+                <div class="dg-box">App sends key with each request</div>
+                <div class="dg-box dg-box--muted">Needs: nothing else installed<br><span class="dg-note">works anywhere, instantly</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Lane B · Microsoft Entra ID (keyless)</span>
+              <div class="dg-stack">
+                <div class="dg-box">Developer signs in once<br><span class="dg-note">az login / Connect-AzAccount / VS Code</span></div>
+                <div class="dg-box">DefaultAzureCredential picks up the session,<br>exchanges it for a short-lived token</div>
+                <div class="dg-box dg-box--accent">Needs: Azure CLI <em>or</em> Az PowerShell<br><span class="dg-note">+ an RBAC role on the resource</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Two lanes to the same endpoint. Key = fastest to start, weakest to operate. Entra ID = one-time setup, then no secrets exist to leak.</p>
+        </div>
+        <p class="prose">So, concretely: <strong>with an API key you need neither the Azure CLI nor
+          PowerShell</strong> — the key and endpoint are sufficient. <strong>For keyless (Entra ID)
+          authentication from a local machine you need one sign-in source installed</strong>:
+          the Azure CLI (<code>az login</code>) is the usual choice; Azure PowerShell
+          (<code>Connect-AzAccount</code>) or VS Code's Azure sign-in work equally well.
+          <code>DefaultAzureCredential</code> probes those sources in a fixed order and uses the
+          first that responds — the same code later runs unchanged in the cloud, where a managed
+          identity satisfies the chain instead:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Environment variables</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Managed identity<br><span class="dg-note">in Azure, later</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">VS Code sign-in</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Azure CLI<br><span class="dg-note">az login — our lab path</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Azure PowerShell</div>
+          </div>
+          <p class="diagram__caption">DefaultAzureCredential's probe order (simplified): first source that yields a token wins. Locally that's your CLI login; in the cloud, the managed identity.</p>
+        </div>
+        <p class="prose">Keyless has one more prerequisite: authorization. Your identity needs a
+          <strong>data-plane RBAC role</strong> on the Foundry resource — <em>Cognitive Services
+          User</em> (or the newer <em>Azure AI User</em>) is the canonical read-and-call role.
+          Owners of a fresh personal subscription have it implicitly; in an organization it must be
+          assigned. With that in place, the code:</p>
+        <div class="code-block">
+          <span class="code-block__label">setup, once</span>
+          <pre><code>pip install azure-ai-inference azure-identity
+az login                      # opens a browser; signs your machine in</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">chat_keyless.py · Lane B (recommended)</span>
+          <pre><code>from azure.ai.inference import ChatCompletionsClient
+from azure.identity import DefaultAzureCredential
+
+ENDPOINT = "https://&lt;your-resource&gt;.services.ai.azure.com/models"
+
+client = ChatCompletionsClient(endpoint=ENDPOINT, credential=DefaultAzureCredential())
+reply = client.complete(
+    model="gpt-5.1",          # your DEPLOYMENT name
+    messages=[{"role": "user", "content": "One sentence: what is Microsoft Foundry?"}],
+)
+print(reply.choices[0].message.content)
+print(reply.usage)            # prompt_tokens / completion_tokens — your cost, per call</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">embeddings_keyless.py</span>
+          <pre><code>from azure.ai.inference import EmbeddingsClient
+from azure.identity import DefaultAzureCredential
+
+client = EmbeddingsClient(endpoint=ENDPOINT, credential=DefaultAzureCredential())
+result = client.embed(model="text-embedding-3-small",
+                      input=["my card is blocked", "frozen debit card"])
+print(len(result.data[0].embedding))   # 1536 dimensions</code></pre>
+        </div>
+        <p class="prose">The key-based variant differs in one line — and in its operational
+          consequences. Keys are two per resource, long-lived, rotatable, and grant full data-plane
+          access to whoever holds them; if you must use one (quick demos, tooling that supports
+          nothing else), load it from an environment variable, never from source code:</p>
+        <div class="code-block">
+          <span class="code-block__label">chat_with_key.py · Lane A (know it; avoid it)</span>
+          <pre><code>import os
+from azure.ai.inference import ChatCompletionsClient
+from azure.core.credentials import AzureKeyCredential
+
+client = ChatCompletionsClient(
+    endpoint=ENDPOINT,
+    credential=AzureKeyCredential(os.environ["FOUNDRY_API_KEY"]),  # from env, never hardcoded
+)</code></pre>
+        </div>
+        <div class="callout callout--danger">
+          <p class="callout__title">Why this course never ships a key</p>
+          <p>A leaked key is an unattributed, unexpiring grant of your quota and your bill — and
+            git history never forgets. Banks ban long-lived secrets in code for exactly this
+            reason. Lane B costs you one <code>az login</code> and removes the entire failure
+            class; it is the only lane our labs use.</p>
+        </div>
+        <p class="prose">One compatibility note that saves confusion: Foundry endpoints also speak
+          the <strong>OpenAI SDK dialect</strong> — the <code>openai</code> Python package can
+          target your deployment by pointing its base URL at your endpoint. Useful when porting
+          code written for OpenAI; our labs stay on <code>azure-ai-inference</code> for the clean
+          Entra integration. The full request path, whichever SDK you choose:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--accent">Your app<br><span class="dg-note">local, for now</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">HTTPS + token (or key)</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Project endpoint<br><span class="dg-note">…services.ai.azure.com</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Deployment<br><span class="dg-note">gpt-5.1 · quota applied</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Model<br><span class="dg-note">tokens back + usage object</span></div>
+          </div>
+          <p class="diagram__caption">Every call, end to end. The usage object riding back on each response is the ground truth for the next section.</p>
+        </div>
+      </section>
+
+      <!-- ============ MONITORING ============ -->
+      <section id="monitoring" class="doc-section">
+        <div>
+          <span class="eyebrow">Hands-on</span>
+          <h2>Monitoring resources &amp; consumption</h2>
+        </div>
+        <p class="prose">A metered platform must be watched from day one — not because disaster is
+          likely, but because <em>consumption is a system metric</em> exactly like latency. Foundry
+          consumption has three observation points, each answering different questions at different
+          freshness:</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--accent">Your app's calls</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Deployment</div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted">per-response <code>usage</code> object<br><span class="dg-note">exact, immediate, per call</span></div>
+              <div class="dg-box dg-box--muted">metrics → Azure Monitor<br><span class="dg-note">requests, tokens, latency — minutes</span></div>
+              <div class="dg-box dg-box--muted">costs → Cost Management<br><span class="dg-note">money, by resource/tag — hours to a day</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Three telemetry streams off every deployment: exact per-call usage in the response, operational metrics in Monitor, money in Cost Management.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Question</th><th>Where to answer it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>What did <em>this call</em> cost?</strong></td><td>The <code>usage</code> object on the response: <code>prompt_tokens</code>, <code>completion_tokens</code>. Exact and immediate — this is what our labs log to SQL in Session 5.</td></tr>
+              <tr><td><strong>How busy is the deployment?</strong></td><td>Foundry portal → your project → <em>Models + endpoints</em> → deployment metrics; or Azure portal → resource → <em>Metrics</em>: requests, processed tokens, time-to-first-token, 429 rate.</td></tr>
+              <tr><td><strong>Am I about to hit limits?</strong></td><td>The <em>quota</em> view (Foundry portal, Management/Quota) — TPM allocated vs consumed per model and region; 429 responses are the symptom of crossing it.</td></tr>
+              <tr><td><strong>What does the month cost, in money?</strong></td><td>Azure portal → <em>Cost Management</em> → cost analysis, filtered to the resource group or tags. Token prices differ per model and direction (input vs output), so cost ≠ call count.</td></tr>
+              <tr><td><strong>Why was that answer slow / wrong?</strong></td><td>Tracing: Foundry's observability integrates with Application Insights — per-request traces across your app and its model calls. We wire this in Session 6.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Set a budget before you need one</p>
+          <p>Cost Management lets you define a monthly <em>budget</em> with e-mail alerts at
+            thresholds (50%, 90%, 100%). On any experimentation subscription this is the first
+            thing to configure — it converts a surprise invoice into a Tuesday e-mail.</p>
+        </div>
+      </section>
+
+      <!-- ============ VS OPENAI ============ -->
+      <section id="vs-openai" class="doc-section">
+        <div>
+          <span class="eyebrow">Perspective</span>
+          <h2>Foundry vs taking the model directly from OpenAI</h2>
+        </div>
+        <p class="prose">The same GPT model is reachable two ways: directly from OpenAI
+          (api.openai.com, OpenAI's contract, OpenAI's infrastructure) or through your Foundry
+          deployment (your Azure tenant, Microsoft's contract, your region). The <em>model
+          weights</em> are the same; almost everything around them differs — and the difference is
+          precisely the boundary your traffic crosses:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Direct · OpenAI</span>
+              <div class="dg-stack">
+                <div class="dg-box">Your app</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ API key · public internet</span></div>
+                <div class="dg-box dg-box--muted">api.openai.com<br><span class="dg-note">OpenAI's infrastructure &amp; terms<br>region not yours to choose</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Via Foundry · your tenant</span>
+              <div class="dg-stack">
+                <div class="dg-box">Your app</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ Entra token · private networking possible</span></div>
+                <div class="dg-box dg-box--accent">Your endpoint, your region<br><span class="dg-note">Microsoft contract · your governance,<br>quotas, monitoring, RBAC</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Same model, different boundary. For a bank, the right-hand frame is usually the entire argument.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>OpenAI direct</th><th>Through Microsoft Foundry</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Contract &amp; data handling</strong></td><td>OpenAI's terms; API data not used for training by default; processed in OpenAI's infrastructure</td><td>Microsoft's enterprise terms under your existing Azure agreement; prompts/completions stay within Azure's boundary, not shared with OpenAI the company</td></tr>
+              <tr><td><strong>Residency &amp; region</strong></td><td>Limited control over processing location</td><td>You pick the region (regional deployment types); aligns with data-residency obligations</td></tr>
+              <tr><td><strong>Identity &amp; access</strong></td><td>API keys (org/project scoped)</td><td>Entra ID: RBAC, managed identities, conditional access — no standing secrets</td></tr>
+              <tr><td><strong>Networking</strong></td><td>Public endpoint</td><td>Public or fully private (Private Link/VNet) — traffic never touches the public internet if so configured</td></tr>
+              <tr><td><strong>Compliance surface</strong></td><td>OpenAI's certification set</td><td>Azure's certification portfolio + your negotiated DPA; audits inherit your Azure posture</td></tr>
+              <tr><td><strong>Throughput guarantees</strong></td><td>Rate limits by pricing tier</td><td>Quotas you manage; <em>provisioned throughput</em> (PTU) for reserved capacity and SLA-backed latency</td></tr>
+              <tr><td><strong>Model availability</strong></td><td>New OpenAI features/models land here first</td><td>Typically shortly after — plus the multi-vendor catalog OpenAI cannot offer</td></tr>
+              <tr><td><strong>Platform around the model</strong></td><td>Model API + assistants tooling</td><td>Projects, Agent Service, evaluations, tracing, content filters, one Azure bill</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The honest guidance follows from the table rather than from loyalty.
+          <strong>Direct OpenAI is a fine choice</strong> for personal prototypes, consumer-facing
+          products without residency constraints, and for touching brand-new capabilities on launch
+          day. <strong>Foundry is the default in an enterprise</strong> — and effectively mandatory
+          in a regulated one: identity-based access instead of shared secrets, region pinning,
+          private networking, provisioned capacity, and audit through the same governance the rest
+          of the estate already passes. That is why "which models are we using, and through what?"
+          is a governance question a bank tracks — and why this course runs every call through
+          Foundry.</p>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — the platform's official docs: projects, catalog, deployments, agents.</li>
+            <li><a href="https://learn.microsoft.com/azure/ai-services/openai/overview" target="_blank" rel="noopener">What is Azure OpenAI?</a> — the OpenAI-models service, its guarantees and limits.</li>
+            <li><a href="https://azure.microsoft.com/free/" target="_blank" rel="noopener">Azure free account</a> — the starting point this page's tutorial assumes.</li>
+            <li><a href="https://learn.microsoft.com/cli/azure/install-azure-cli" target="_blank" rel="noopener">Install the Azure CLI</a> — the sign-in source behind keyless local development.</li>
+            <li><a href="https://learn.microsoft.com/python/api/overview/azure/identity-readme" target="_blank" rel="noopener">Azure Identity for Python</a> — <code>DefaultAzureCredential</code> and its probe chain, authoritatively.</li>
+            <li><a href="https://learn.microsoft.com/azure/cost-management-billing/" target="_blank" rel="noopener">Cost Management documentation</a> — cost analysis, budgets and alerts.</li>
+            <li><a href="ref-cloud-computing.html">Cloud computing — a general overview</a> — this course's companion reference on the model underneath all of this.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Reference · Microsoft Foundry — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

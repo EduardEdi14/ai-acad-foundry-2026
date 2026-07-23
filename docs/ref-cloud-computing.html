@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud computing — a general overview · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Reference<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <span class="side-nav__group">The concept</span>
+      <a class="side-nav__link" href="#definition">What cloud computing is</a>
+      <a class="side-nav__link" href="#how">How it's built</a>
+      <a class="side-nav__link" href="#economics">The economics</a>
+      <span class="side-nav__group">The models</span>
+      <a class="side-nav__link" href="#service-models">Service models</a>
+      <a class="side-nav__link" href="#deployment-models">Deployment models</a>
+      <a class="side-nav__link" href="#building-blocks">How apps are composed</a>
+      <span class="side-nav__group">The trade-offs</span>
+      <a class="side-nav__link" href="#gains">What you gain</a>
+      <a class="side-nav__link" href="#challenges">What's challenging</a>
+      <a class="side-nav__link" href="#comparison">Cloud vs on-premises</a>
+      <a class="side-nav__link" href="#references">References</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Reference · Standalone explainer</span>
+          <h1>Cloud computing — a <span class="gradient-text">general overview</span></h1>
+          <p><strong>What the cloud is, what it actually gives you compared to owning servers, and where it genuinely hurts.</strong></p>
+          <p>A standalone reference for this course: read it once end to end, return to it whenever
+            a session touches infrastructure. No Azure specifics here — this page is about the
+            model itself, valid for any provider.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Reference page</span>
+            <span class="badge badge--navy">~15 min read</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ DEFINITION ============ -->
+      <section id="definition" class="doc-section">
+        <div>
+          <span class="eyebrow">The concept</span>
+          <h2>What cloud computing is</h2>
+        </div>
+        <p class="prose">Cloud computing is the delivery of computing capabilities — processing,
+          storage, networking, databases, and increasingly entire application platforms — as
+          <strong>metered services over a network</strong>, from shared pools of provider-operated
+          infrastructure. The customer consumes capacity on demand and pays for what is used; the
+          provider owns, operates and continuously renews the physical estate.</p>
+        <p class="prose">The definition most of the industry still anchors to comes from NIST
+          (the US National Institute of Standards and Technology), which names five
+          <strong>essential characteristics</strong>. They are worth knowing verbatim, because
+          together they distinguish a real cloud from "a server in someone's rack":</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Characteristic</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>On-demand self-service</strong></td><td>You provision capacity yourself, through a portal or API — no purchase order, no human in the loop.</td></tr>
+              <tr><td><strong>Broad network access</strong></td><td>Everything is reachable over standard networks and protocols, from any client platform.</td></tr>
+              <tr><td><strong>Resource pooling</strong></td><td>The provider serves many customers from shared physical infrastructure (multi-tenancy), assigning and reassigning capacity dynamically.</td></tr>
+              <tr><td><strong>Rapid elasticity</strong></td><td>Capacity scales out and back quickly — from the consumer's perspective, it appears unlimited.</td></tr>
+              <tr><td><strong>Measured service</strong></td><td>Usage is metered at fine granularity; you can observe it, and you are billed by it.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Note what the definition does <em>not</em> say: nothing about who owns the
+          hardware being "someone else". The essence is the <em>service model</em> — self-service,
+          pooled, elastic, metered — which is why large organizations can also run
+          <em>private</em> clouds that satisfy every characteristic on their own premises.</p>
+      </section>
+
+      <!-- ============ HOW IT'S BUILT ============ -->
+      <section id="how" class="doc-section">
+        <div>
+          <span class="eyebrow">The concept</span>
+          <h2>How it's built: virtualization, multi-tenancy, hyperscale</h2>
+        </div>
+        <p class="prose">The enabling technology is <strong>virtualization</strong>: a layer of
+          software (the hypervisor) that presents one physical machine as many isolated virtual
+          machines, each with its own virtual CPU, memory, disk and network. Virtualization
+          decouples the logical unit a customer rents from the physical unit the provider
+          operates — a VM can be created in seconds, resized, migrated between hosts, and
+          destroyed without a human touching hardware. Containers push the same idea one level up:
+          instead of virtualizing hardware, they isolate processes sharing one operating-system
+          kernel, which makes them lighter and faster to start — the packaging unit of modern
+          application deployment.</p>
+        <p class="prose"><strong>Multi-tenancy</strong> is the economic consequence: many customers'
+          workloads share the same physical pool, isolated by the virtualization layer and by
+          software-defined networking. Pooling is what makes elasticity affordable — individual
+          customers' peaks and troughs average out, so the provider can run its fleet at high
+          utilization while every tenant experiences apparently unlimited headroom.</p>
+        <p class="prose">Physically, the pool lives in <strong>hyperscale datacenters</strong> —
+          purpose-built facilities measured in hundreds of megawatts, grouped into
+          <strong>regions</strong> around the world, with redundant power, cooling and connectivity,
+          joined by private fiber networks. Providers place regions to balance latency to
+          population centers, energy economics, and jurisdiction — the last of which matters
+          because <em>where data physically resides determines which laws apply to it</em>
+          (data residency), a first-order concern for regulated industries such as banking.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Provider's global estate</span>
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:2;">
+                <span class="dg-label">Region A · many datacenters</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--frame" style="flex:1;">
+                    <span class="dg-label">Physical host</span>
+                    <div class="dg-row">
+                      <div class="dg-box">VM · tenant 1</div>
+                      <div class="dg-box">VM · tenant 2</div>
+                    </div>
+                  </div>
+                  <div class="dg-box dg-box--muted">…thousands of hosts</div>
+                </div>
+              </div>
+              <div class="dg-box dg-box--frame dg-box--muted" style="flex:1;">
+                <span class="dg-label">Region B, C, …</span>
+                <div class="dg-box dg-box--muted">pooled the same way</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Virtualization isolates tenants on shared hosts; pooling across hyperscale regions is what makes elasticity affordable.</p>
+        </div>
+      </section>
+
+      <!-- ============ ECONOMICS ============ -->
+      <section id="economics" class="doc-section">
+        <div>
+          <span class="eyebrow">The concept</span>
+          <h2>The economics: from CAPEX to OPEX</h2>
+        </div>
+        <p class="prose">Owning infrastructure is a capital game. You forecast demand years ahead,
+          buy for the <em>peak</em> (plus safety margin), depreciate the hardware whether it is
+          busy or idle, and staff the operation around the clock. Under-forecast and you hit a
+          capacity wall at the worst moment; over-forecast and capital sits idle. This is
+          <strong>CAPEX</strong> — capital expenditure — and its defining property is that the cost
+          is committed <em>before</em> the demand is known.</p>
+        <p class="prose">The cloud converts that commitment into <strong>OPEX</strong> — operating
+          expenditure that tracks actual consumption. Capacity follows demand instead of preceding
+          it: a nightly batch job pays for its hours; a seasonal campaign pays for its season; an
+          experiment that fails is switched off and costs nothing further. Just as important is the
+          <em>option value</em>: trying an idea no longer requires a procurement cycle, which is
+          why cloud adoption correlates so strongly with delivery speed.</p>
+        <p class="prose">Two honest footnotes. First, at very large, very steady scale, owning can
+          be cheaper than renting — the cloud's premium buys elasticity and operations you may not
+          need if your load is flat and predictable. Second, pay-per-use cuts both ways:
+          <em>waste also scales frictionlessly</em>. Idle VMs, oversized databases and forgotten
+          experiments bill by the hour, which is why mature organizations treat cost as an
+          engineering metric (the practice called <strong>FinOps</strong>) — and why every exercise
+          in this course reports what it cost.</p>
+      </section>
+
+      <!-- ============ SERVICE MODELS ============ -->
+      <section id="service-models" class="doc-section">
+        <div>
+          <span class="eyebrow">The models</span>
+          <h2>Service models: IaaS, PaaS, SaaS — and shared responsibility</h2>
+        </div>
+        <p class="prose">Cloud services are classified by <em>how much of the stack the provider
+          manages</em>. <strong>IaaS</strong> (Infrastructure as a Service) rents you the
+          fundamentals — virtual machines, disks, networks — and everything from the operating
+          system upward is yours to install, patch and secure. <strong>PaaS</strong> (Platform as a
+          Service) rents you a running platform — "a database", "a container runtime", "a model
+          endpoint" — and you bring only your application and data. <strong>SaaS</strong>
+          (Software as a Service) rents you the finished application itself, configured rather
+          than built.</p>
+        <p class="prose">The classification matters because it draws the
+          <strong>shared-responsibility</strong> line: security and operations are always split
+          between provider and customer, and the split moves with the service model. Read the
+          matrix column by column — and notice the row that never changes hands:
+          <em>identity, access and your data are yours in every model</em>. Most cloud breaches
+          are not provider failures; they are customer misconfigurations on the customer's side of
+          this line.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Layer</th><th>On-premises</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Data &amp; application</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-shared">Shared</td></tr>
+              <tr><td><strong>Identity &amp; access</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td></tr>
+              <tr><td><strong>Runtime &amp; middleware</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Operating system</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Virtualization</strong></td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Physical hosts &amp; network</strong></td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">A useful mental model: IaaS moves your <em>machines</em> to the cloud; PaaS
+          moves your <em>architecture</em>; SaaS moves your <em>process</em>. Modern AI engineering
+          is overwhelmingly a PaaS discipline — model endpoints, managed databases, container
+          platforms — because the differentiating work is the application, not the plumbing
+          underneath it.</p>
+      </section>
+
+      <!-- ============ DEPLOYMENT MODELS ============ -->
+      <section id="deployment-models" class="doc-section">
+        <div>
+          <span class="eyebrow">The models</span>
+          <h2>Deployment models: public, private, hybrid</h2>
+        </div>
+        <p class="prose">Independent of <em>what</em> is offered is <em>who may use the pool</em>.
+          The <strong>public cloud</strong> is the shared, provider-owned estate open to any
+          customer — maximum elasticity and service breadth, the default for new work. A
+          <strong>private cloud</strong> dedicates the pool to one organization (on its premises or
+          hosted), trading scale for control — chosen where regulation, data sensitivity or
+          latency demand it. In practice most large organizations, and virtually every bank, run a
+          <strong>hybrid</strong>: core systems and their most sensitive data remain on-premises or
+          private, while new capabilities — analytics, customer channels, AI — run in the public
+          cloud, with controlled connectivity between the two. A related term you will hear,
+          <strong>multi-cloud</strong>, simply means using more than one public provider —
+          usually to avoid concentration risk, at the price of duplicated skills and tooling.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Public cloud</span>
+              <div class="dg-box">Shared pool · any customer</div>
+              <div class="dg-box dg-box--accent" style="margin-top:.5rem;">New apps · analytics · AI</div>
+            </div>
+            <span class="dg-arrow">⇄</span>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Private / on-premises</span>
+              <div class="dg-box">Dedicated pool · one organization</div>
+              <div class="dg-box dg-box--muted" style="margin-top:.5rem;">Core systems · sensitive data</div>
+            </div>
+          </div>
+          <p class="diagram__caption">The hybrid pattern: sensitive cores stay private; elastic, fast-moving workloads run public — connected, governed, and increasingly AI-shaped.</p>
+        </div>
+      </section>
+
+      <!-- ============ BUILDING BLOCKS ============ -->
+      <section id="building-blocks" class="doc-section">
+        <div>
+          <span class="eyebrow">The models</span>
+          <h2>How cloud applications are composed</h2>
+        </div>
+        <p class="prose">Service and deployment models describe the <em>offer</em>; this section
+          describes the <em>shape of what you build with it</em>. Almost every cloud application
+          converges on the same layered anatomy: a thin client, a stateless application tier, a
+          set of managed data services behind it, and three cross-cutting concerns — identity,
+          secrets, observability — that touch every layer:</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Presentation layer</span>
+              <div class="dg-box">Browser / mobile client</div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ HTTPS</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Application layer · stateless, horizontally scalable</span>
+              <div class="dg-box dg-box--accent">API service — e.g. a container on a managed runtime</div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ authenticated calls</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Data &amp; AI layer · managed services</span>
+              <div class="dg-row">
+                <div class="dg-box">Relational DB<br><span class="dg-note">transactions &amp; state</span></div>
+                <div class="dg-box">Object storage<br><span class="dg-note">files at scale</span></div>
+                <div class="dg-box">Search index<br><span class="dg-note">retrieval</span></div>
+                <div class="dg-box">Model endpoint<br><span class="dg-note">inference</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Cross-cutting · touches every layer</span>
+              <div class="dg-row">
+                <div class="dg-box">Identity provider</div>
+                <div class="dg-box">Secret vault</div>
+                <div class="dg-box">Monitoring &amp; telemetry</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The standard anatomy. Layers communicate top-down over authenticated HTTPS; the cross-cutting row participates in every arrow.</p>
+        </div>
+        <p class="prose">The building blocks, and the questions each answers:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Block</th><th>Role</th><th>Azure instance</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Compute</strong></td><td>Runs your code — VMs, containers, functions</td><td>Container Apps, App Service, Functions</td></tr>
+              <tr><td><strong>Database</strong></td><td>Structured records with transactions and queries</td><td>Azure SQL, Cosmos DB, PostgreSQL</td></tr>
+              <tr><td><strong>Object storage</strong></td><td>Files and blobs, cheap and effectively unbounded</td><td>Blob Storage</td></tr>
+              <tr><td><strong>Search / retrieval</strong></td><td>Querying text by keyword or by meaning (vectors)</td><td>AI Search</td></tr>
+              <tr><td><strong>Identity</strong></td><td>Who is calling — users and workloads alike</td><td>Microsoft Entra ID</td></tr>
+              <tr><td><strong>Secrets</strong></td><td>The credentials that can't be eliminated, vaulted and audited</td><td>Key Vault</td></tr>
+              <tr><td><strong>Networking</strong></td><td>Reachability and isolation — public endpoints to private links</td><td>VNet, Private Link, Front Door</td></tr>
+              <tr><td><strong>Observability</strong></td><td>Logs, metrics, traces — "what is happening right now?"</td><td>Azure Monitor, Application Insights</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose"><strong>Identity</strong> deserves its own diagram, because in the cloud it
+          replaces the network perimeter as the primary security boundary. Workloads hold an
+          identity of their own (a <em>managed identity</em>), exchange it for short-lived tokens,
+          and present those tokens on every call — no passwords stored, nothing long-lived to
+          leak:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--accent">App<br><span class="dg-note">managed identity</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Identity provider<br><span class="dg-note">issues short-lived token</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Resource<br><span class="dg-note">validates token + role assignment</span></div>
+          </div>
+          <p class="diagram__caption">Token-based workload authentication — the pattern that makes "keyless" possible.</p>
+        </div>
+        <p class="prose"><strong>Secrets</strong> that survive the managed-identity diet —
+          third-party API keys, certificates, legacy connection strings — live in a dedicated
+          vault with independent access control and a full audit trail, fetched at runtime rather
+          than shipped in code or configuration:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--accent">App</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Secret vault<br><span class="dg-note">role-guarded, every read audited</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--muted">secret at runtime<br><span class="dg-note">never committed, rotated centrally</span></div>
+          </div>
+          <p class="diagram__caption">The vault pattern. The best secret remains the one a managed identity makes unnecessary.</p>
+        </div>
+        <p class="prose"><strong>Data</strong> is a family, not a single service — chosen by the
+          shape of the data and the query you need to run against it:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Structured records,<br>transactional integrity<br><span class="dg-note">→ relational database</span></div>
+            <div class="dg-box">Files &amp; documents,<br>cheap at any scale<br><span class="dg-note">→ object storage</span></div>
+            <div class="dg-box">Text queried by meaning<br><span class="dg-note">→ search index + embeddings</span></div>
+          </div>
+          <p class="diagram__caption">Choose the store per data shape; real applications routinely use all three side by side.</p>
+        </div>
+        <h3>Scaling patterns</h3>
+        <p class="prose">Two ways to grow. <strong>Vertical scaling</strong> (scale <em>up</em>)
+          replaces the machine with a bigger one — simple, bounded by the biggest machine money
+          rents, and briefly disruptive. <strong>Horizontal scaling</strong> (scale <em>out</em>)
+          adds identical instances behind a load balancer — effectively unbounded and
+          failure-tolerant, but it demands the application tier be <em>stateless</em>: any instance
+          must be able to serve any request, which is exactly why state lives in the data layer of
+          the anatomy above, never in the application's memory.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Vertical · scale up</span>
+              <div class="dg-box">One bigger instance<br><span class="dg-note">more CPU/RAM, same design</span></div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1.4;">
+              <span class="dg-label">Horizontal · scale out</span>
+              <div class="dg-stack">
+                <div class="dg-box">Load balancer</div>
+                <div class="dg-row">
+                  <div class="dg-box">Instance</div>
+                  <div class="dg-box">Instance</div>
+                  <div class="dg-box dg-box--muted">Instance n…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Up vs out. Cloud platforms automate "out" (autoscaling) — provided your instances share nothing.</p>
+        </div>
+      </section>
+
+      <!-- ============ GAINS ============ -->
+      <section id="gains" class="doc-section">
+        <div>
+          <span class="eyebrow">The trade-offs</span>
+          <h2>What you gain</h2>
+        </div>
+        <p class="prose"><strong>Elasticity and speed.</strong> Capacity in minutes instead of
+          months, sized to demand in both directions. The organizational effect is larger than the
+          technical one: experiments become cheap, and cheap experiments change how teams work.</p>
+        <p class="prose"><strong>Managed services.</strong> Databases that patch themselves, model
+          endpoints that simply exist, platforms operated by the provider's specialists to a
+          contractual SLA. Undifferentiated heavy lifting — backups, failover, certificate
+          rotation — leaves your team's calendar.</p>
+        <p class="prose"><strong>Global reach and resilience.</strong> Deploying near your users, in
+          any of dozens of regions, with zone- and region-level redundancy available as
+          configuration rather than construction projects.</p>
+        <p class="prose"><strong>Access to frontier capability.</strong> The clearest AI-era gain:
+          state-of-the-art models, GPU fleets and vector search engines are available per-call to
+          a two-person team. The capital barrier that once separated large organizations from
+          advanced computing has effectively dissolved — what remains is the skill to use it,
+          which is what this course is for.</p>
+      </section>
+
+      <!-- ============ CHALLENGES ============ -->
+      <section id="challenges" class="doc-section">
+        <div>
+          <span class="eyebrow">The trade-offs</span>
+          <h2>What's challenging</h2>
+        </div>
+        <p class="prose"><strong>Security and compliance stay yours.</strong> The provider's
+          certifications cover their side of the shared-responsibility line; a world-class
+          datacenter does not save a storage account left open to the internet. Regulated
+          industries add residency, auditability and vendor-risk obligations that constrain which
+          services, regions and configurations are permissible — in a bank, "can we use this
+          service?" is a governance question before it is a technical one.</p>
+        <p class="prose"><strong>Cost requires governance.</strong> The meter never stops. Without
+          ownership of the bill — budgets, alerts, tagging, regular review — elasticity produces
+          surprise invoices instead of savings. Treat cost as a first-class system metric, exactly
+          like latency or error rate.</p>
+        <p class="prose"><strong>Lock-in and data gravity.</strong> The most productive services are
+          the most proprietary — the deeper you integrate a provider's platform, the more an exit
+          costs. Data compounds this: large datasets are slow and expensive to move (egress is
+          billed), and workloads gravitate to where the data is. The mature posture is not avoiding
+          lock-in at all costs — that forfeits most of the cloud's value — but knowing, per system,
+          what an exit would take.</p>
+        <p class="prose"><strong>New failure modes and skills.</strong> Distributed systems fail in
+          distributed ways: throttling, transient faults, regional incidents. Teams must learn to
+          design for retry and degradation, and operations shifts from racking hardware to
+          governing configuration — a genuine reskilling, not a simplification.</p>
+      </section>
+
+      <!-- ============ COMPARISON ============ -->
+      <section id="comparison" class="doc-section">
+        <div>
+          <span class="eyebrow">The trade-offs</span>
+          <h2>Cloud vs on-premises, side by side</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>On-premises</th><th>Cloud</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Time to capacity</strong></td><td>Weeks–months (procurement)</td><td>Minutes (API call)</td></tr>
+              <tr><td><strong>Cost shape</strong></td><td>CAPEX — committed ahead of demand</td><td>OPEX — tracks consumption (and waste)</td></tr>
+              <tr><td><strong>Scaling</strong></td><td>Bounded by owned hardware</td><td>Elastic, effectively unbounded</td></tr>
+              <tr><td><strong>Operations</strong></td><td>Yours, full stack</td><td>Split per shared-responsibility line</td></tr>
+              <tr><td><strong>Control &amp; customization</strong></td><td>Total — down to firmware</td><td>Bounded by provider's service surface</td></tr>
+              <tr><td><strong>Data location</strong></td><td>Known precisely</td><td>Chosen by region; verify residency guarantees</td></tr>
+              <tr><td><strong>Frontier AI access</strong></td><td>Requires owning GPU fleets</td><td>Per-call, immediate</td></tr>
+              <tr><td><strong>Best fit</strong></td><td>Flat, predictable, highly regulated cores</td><td>Variable, fast-moving, experiment-heavy work</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The comparison explains the hybrid reality of banking: both columns are
+          rational, for different workloads. The engineering skill is placing each system on the
+          right side — and building the connections between them safely.</p>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-145.pdf" target="_blank" rel="noopener">NIST SP 800-145 — The NIST Definition of Cloud Computing</a> — two pages, still the canonical definition.</li>
+            <li><a href="https://learn.microsoft.com/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/" target="_blank" rel="noopener">Azure Fundamentals: describe cloud concepts</a> — free learning path expanding every section of this page.</li>
+            <li><a href="https://learn.microsoft.com/azure/security/fundamentals/shared-responsibility" target="_blank" rel="noopener">Shared responsibility in the cloud</a> — Microsoft's formal statement of the responsibility split.</li>
+            <li><a href="https://azure.microsoft.com/explore/global-infrastructure/" target="_blank" rel="noopener">Azure global infrastructure</a> — regions, availability zones and the physical estate.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Reference · Cloud computing — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

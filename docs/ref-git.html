@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How git works · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Reference<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <span class="side-nav__group">The model</span>
+      <a class="side-nav__link" href="#why">Why version control</a>
+      <a class="side-nav__link" href="#model">Snapshots, not diffs</a>
+      <a class="side-nav__link" href="#areas">The three areas</a>
+      <a class="side-nav__link" href="#branches">Branches &amp; HEAD</a>
+      <a class="side-nav__link" href="#merging">Merging</a>
+      <a class="side-nav__link" href="#remotes">Remotes &amp; collaboration</a>
+      <span class="side-nav__group">In practice</span>
+      <a class="side-nav__link" href="#commands">Everyday commands</a>
+      <a class="side-nav__link" href="#references">References</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Reference · Standalone explainer</span>
+          <h1>How <span class="gradient-text">git</span> works</h1>
+          <p><strong>Version control from first principles — the model in your head, then the commands in your hands.</strong></p>
+          <p>Git is the version-control system behind essentially all modern software work,
+            including this course: the starter application arrives as a git repository, and every
+            lab builds on it. Git is famously confusing when learned as a list of commands and
+            famously simple once you know the model underneath. This page teaches the model first.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Reference page</span>
+            <span class="badge badge--navy">~15 min read</span>
+            <span class="badge badge--gold">Used from Session 3 onward</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ WHY ============ -->
+      <section id="why" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>Why version control exists</h2>
+        </div>
+        <p class="prose">Software is text that changes constantly, usually at the hands of several
+          people at once. Without tooling, that reality degenerates fast — files named
+          <code>final_v2_REALLY_FINAL.py</code>, changes overwriting each other, no way to answer
+          "what did we change, when, and why?", and no safe path back when something breaks. A
+          <strong>version control system (VCS)</strong> solves this by making history a
+          first-class object: every meaningful state of the project is recorded as a
+          <strong>commit</strong> — who changed what, when, and (via the commit message) why —
+          and any recorded state can be revisited, compared or restored at will.</p>
+        <p class="prose">Version control also unlocks <em>parallel work</em>. Two people — or you
+          and an AI coding agent — can change the same project simultaneously on separate
+          <strong>branches</strong> and merge the results deliberately, with conflicts surfaced
+          explicitly instead of silently lost. In this course you will feel both benefits directly:
+          the starter app reaches you as a repository with history, and every lab session ends with
+          your own work committed — a checkpoint you can always return to.</p>
+      </section>
+
+      <!-- ============ MODEL ============ -->
+      <section id="model" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>Git's model: distributed, and snapshots rather than diffs</h2>
+        </div>
+        <p class="prose">Two design decisions distinguish git from its predecessors. First, git is
+          <strong>distributed</strong>: every clone of a repository contains the <em>complete
+          history</em>, not a working copy checked out from a central server. You commit, branch
+          and inspect history locally, at local speed, offline; synchronization with other copies
+          is a separate, explicit step. The "central" repository on GitHub is central only by team
+          convention — structurally it is a clone like yours.</p>
+        <p class="prose">Second, git stores <strong>snapshots, not differences</strong>. Each commit
+          conceptually records the state of <em>the entire project tree</em> at that moment —
+          not a patch relative to the previous version. Under the hood git is a
+          <strong>content-addressed database</strong>: every stored object — a file's content
+          (<em>blob</em>), a directory listing (<em>tree</em>), a commit — is identified by the
+          cryptographic hash of its content. Identical content is stored once, which is what makes
+          full-tree snapshots cheap; and because every commit's identity includes its parent's
+          hash, history forms a tamper-evident chain — change anything in the past and every hash
+          after it changes. Diffs, when you view them, are <em>computed</em> between snapshots on
+          demand.</p>
+        <p class="prose">Because each commit points to its parent commit (or parents, plural, for
+          merges), history is a <strong>directed acyclic graph (DAG)</strong> of snapshots. Every
+          other git concept — branches, merging, remotes — is an operation on this graph.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">C1<br><span class="dg-note">initial commit</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">C2</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">C3</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">C4<br><span class="dg-note">← main</span></div>
+          </div>
+          <p class="diagram__caption">History as a graph: each commit is a full-tree snapshot pointing to its parent (arrows drawn in time order). A branch is merely a name for the rightmost commit of a line of work.</p>
+        </div>
+      </section>
+
+      <!-- ============ THREE AREAS ============ -->
+      <section id="areas" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>The three areas: working tree, index, repository</h2>
+        </div>
+        <p class="prose">Git's day-to-day mechanics revolve around three places a change can be.
+          The <strong>working tree</strong> is the ordinary folder of files you edit. The
+          <strong>index</strong> (also called the <em>staging area</em>) is a draft of the next
+          commit: <code>git add</code> copies a file's current state into it. The
+          <strong>repository</strong> (the hidden <code>.git</code> directory) holds the permanent
+          object database of commits: <code>git commit</code> seals whatever the index contains
+          into a new snapshot. This two-step design is deliberate — it lets you edit freely and
+          then <em>compose</em> a precise, reviewable commit from exactly the changes that belong
+          together, leaving half-done work out.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Working tree<br><span class="dg-note">files you edit</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Index / staging<br><span class="dg-note">draft of next commit</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Repository<br><span class="dg-note">permanent history</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--muted">Remote<br><span class="dg-note">shared copy</span></div>
+          </div>
+          <div class="dg-row" style="margin-top:.4rem;">
+            <div class="dg-note" style="margin-inline:auto;"><code>git add</code> moves changes right · <code>git commit</code> seals the draft · <code>git push</code> publishes</div>
+          </div>
+          <p class="diagram__caption">The lifecycle of a change. <code>git status</code> tells you, at any moment, what sits where.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">the everyday loop</span>
+          <pre><code>git status                  # what changed, and where does it sit?
+git add app/chat.py         # stage exactly what belongs in this commit
+git commit -m "Add retry logic to the chat client"
+git log --oneline           # the story so far, one line per commit</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Commit messages are documentation</p>
+          <p>A commit message answers <em>why</em>, not just what. Six months from now —
+            or six minutes, when an AI agent reads your history for context — "Fix stuff" helps
+            nobody.</p>
+        </div>
+      </section>
+
+      <!-- ============ BRANCHES ============ -->
+      <section id="branches" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>Branches, HEAD and refs</h2>
+        </div>
+        <p class="prose">Here is the insight that makes git's branching famously cheap: a
+          <strong>branch is not a copy of anything</strong>. It is a <em>ref</em> — a 41-byte file
+          containing the hash of one commit. Creating a branch creates that pointer; committing on
+          a branch simply moves the pointer forward to the new snapshot. <strong>HEAD</strong> is
+          the special ref marking <em>where you currently are</em> — normally it points at a
+          branch, so your next commit advances that branch. Switching branches
+          (<code>git switch</code>) repoints HEAD and rewrites your working tree to match the
+          target snapshot.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">C1</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">C2</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">C3</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">C4<br><span class="dg-note">← main</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted" style="visibility:hidden; flex:2.1;"></div>
+              <span class="dg-arrow">↘</span>
+              <div class="dg-box">C5</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">C6<br><span class="dg-note">← feature/rag · HEAD</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Two branches: work diverged after C3. Each branch name is just a pointer to the tip of its line; HEAD marks the one you're on.</p>
+        </div>
+        <p class="prose">The practical convention this enables: <code>main</code> stays releasable,
+          and each unit of work — a feature, a fix, an experiment — happens on its own short-lived
+          branch, merged back when ready. Cheap branches are also what make AI-assisted development
+          safe: give an agent its own branch, review the result, and merging is a decision rather
+          than an accident.</p>
+        <div class="code-block">
+          <span class="code-block__label">branching</span>
+          <pre><code>git switch -c feature/rag     # create the branch and move HEAD onto it
+# ... edit, add, commit as usual — main is untouched ...
+git switch main               # back to the stable line
+git branch                    # list branches; * marks HEAD</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ MERGING ============ -->
+      <section id="merging" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>Merging: bringing lines of work back together</h2>
+        </div>
+        <p class="prose">Merging reunites diverged branches, and git distinguishes two cases. If the
+          target branch has not moved since the feature branched off, git performs a
+          <strong>fast-forward</strong>: it simply slides the branch pointer ahead — no new commit,
+          because no reconciliation was needed. If <em>both</em> lines advanced, git performs a
+          <strong>three-way merge</strong>: it compares the two tips against their common ancestor
+          in the DAG and combines the changes into a new <strong>merge commit</strong> with two
+          parents — the graph joins back together.</p>
+        <p class="prose">When both branches changed the <em>same lines</em>, git cannot decide for
+          you and declares a <strong>conflict</strong>: the file is marked up with both versions
+          between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>
+          markers, and you resolve it by editing the file to the correct final state, staging it,
+          and completing the merge. Conflicts are not failures — they are the system refusing to
+          guess about genuinely ambiguous intent. One related concept deserves a sentence:
+          <strong>rebase</strong> replays your branch's commits on top of the target's tip,
+          producing a straight-line history instead of a merge commit. It is tidy but rewrites
+          commits; the working rule for this course is simple — merge, and never rebase anything
+          already pushed.</p>
+        <div class="code-block">
+          <span class="code-block__label">merging</span>
+          <pre><code>git switch main
+git merge feature/rag         # fast-forward, or three-way merge with a merge commit
+# if conflicts: edit the marked files, then
+git add app/chat.py
+git commit                    # completes the merge</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ REMOTES ============ -->
+      <section id="remotes" class="doc-section">
+        <div>
+          <span class="eyebrow">The model</span>
+          <h2>Remotes &amp; collaboration</h2>
+        </div>
+        <p class="prose">A <strong>remote</strong> is another copy of the repository that yours
+          knows by name — conventionally <code>origin</code>, the copy on a hosting service such
+          as GitHub, GitLab or Azure DevOps. <code>git clone &lt;url&gt;</code> creates your local
+          copy and wires up <code>origin</code> automatically. From then on, synchronization is
+          explicit and two-directional: <code>git fetch</code> downloads new commits from the
+          remote without touching your work; <code>git pull</code> is fetch plus merging the
+          remote branch into yours; <code>git push</code> uploads your commits. Nothing moves
+          unless you ask — which is why git works on a plane, and why "it's committed" and "it's
+          pushed" are different statements.</p>
+        <p class="prose">Hosting services add the collaboration layer on top of the protocol,
+          centered on the <strong>pull request</strong> (PR): a proposal to merge one branch into
+          another, packaged with the diff, a discussion thread, review and approval, and usually
+          automated checks. The PR is where teams enforce quality — human review, tests, and
+          increasingly AI review — before anything reaches <code>main</code>. The full loop of
+          modern collaborative development, the one we practice from Session 3:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">clone<br><span class="dg-note">get the repo</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">branch<br><span class="dg-note">isolate the work</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">commit<br><span class="dg-note">checkpoint locally</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">push<br><span class="dg-note">publish the branch</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">pull request<br><span class="dg-note">review &amp; merge</span></div>
+          </div>
+          <p class="diagram__caption">The collaboration loop. Review happens at the pull request — before the work lands on <code>main</code>, never after.</p>
+        </div>
+      </section>
+
+      <!-- ============ COMMANDS ============ -->
+      <section id="commands" class="doc-section">
+        <div>
+          <span class="eyebrow">In practice</span>
+          <h2>Everyday commands, mapped to the model</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Command</th><th>What it does, in model terms</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>git clone &lt;url&gt;</code></td><td>Copy a complete repository (all history) and register the source as <code>origin</code>.</td></tr>
+              <tr><td><code>git status</code></td><td>Show what differs between working tree, index and HEAD — your orientation command.</td></tr>
+              <tr><td><code>git add &lt;path&gt;</code></td><td>Copy a file's current state into the index (stage it for the next commit).</td></tr>
+              <tr><td><code>git commit -m "…"</code></td><td>Seal the index into a new snapshot; advance the current branch to it.</td></tr>
+              <tr><td><code>git log --oneline --graph</code></td><td>Show the commit DAG — history as it actually is.</td></tr>
+              <tr><td><code>git diff</code> / <code>git diff --staged</code></td><td>Compute changes: working tree vs index / index vs last commit.</td></tr>
+              <tr><td><code>git switch -c &lt;branch&gt;</code></td><td>Create a new pointer at the current commit and move HEAD onto it.</td></tr>
+              <tr><td><code>git merge &lt;branch&gt;</code></td><td>Join that branch's line into yours — fast-forward or three-way.</td></tr>
+              <tr><td><code>git fetch</code> / <code>git pull</code> / <code>git push</code></td><td>Download new commits / download + merge / upload yours.</td></tr>
+              <tr><td><code>git restore &lt;path&gt;</code></td><td>Discard working-tree changes to a file (careful — they're gone).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">If you learn one habit</p>
+          <p>Run <code>git status</code> before and after anything you're unsure about. Nearly every
+            git confusion dissolves once you can see which of the three areas a change is sitting in.</p>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://git-scm.com/book/en/v2" target="_blank" rel="noopener">Pro Git</a> — the definitive free book; chapters 1–3 cover everything on this page in depth.</li>
+            <li><a href="https://git-scm.com/docs" target="_blank" rel="noopener">Git reference documentation</a> — the authoritative command reference.</li>
+            <li><a href="https://docs.github.com/en/get-started/using-git/about-git" target="_blank" rel="noopener">GitHub: About Git</a> — the hosting-service perspective, including pull requests.</li>
+            <li><a href="https://learn.microsoft.com/training/paths/intro-to-vc-git/" target="_blank" rel="noopener">Microsoft Learn: Introduction to version control with Git</a> — a hands-on beginner path.</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Reference · How git works — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

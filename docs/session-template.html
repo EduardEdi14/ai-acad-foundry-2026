@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session NN — Title · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <!-- Optional: Inter for the full brand type. Remove for a purely offline page. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!--
+    TEMPLATE — clone to docs/sNN-<slug>.html and fill in.
+    Anatomy: side-nav (one link per section id) · sections (#overview #agenda
+    #outcomes #topic-* #conclusions #takeaways #references #assignment) ·
+    page-nav · site-footer.
+
+    REGISTER — this is OFFICIAL COURSE MATERIAL, presented on a shared screen:
+    · Sections are tutorial-length: multi-paragraph prose, h3 subsections,
+      tables, diagrams, code. NOT viewport-sized slides, NOT card mosaics.
+    · Cards are for summaries only (outcomes, takeaways).
+    · Technically robust language; every term defined on first use.
+    · Every visible string student-ready — no internal or planning talk.
+
+    Agenda badge convention (must match the chart slice tokens):
+    theory=navy · walkthrough=cyan · live coding=crimson · lab=gold ·
+    Q&A/discussion=coral · break=plain text.
+  -->
+
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV — one link per section ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session NN<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Today's topics</span>
+      <a class="side-nav__link" href="#topic-1">Topic one</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW: title, subtitle, summary of the day ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session NN · AI Engineering on Azure</span>
+          <h1>Session title, with a <span class="gradient-text">key phrase</span> that pops</h1>
+          <p><strong>Subtitle — one line on what this session is about.</strong></p>
+          <p>Summary of the day: two or three sentences, addressed to the participant, on what
+            we cover, how the time is split, and what will exist by noon that didn't at 09:30.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Day NN Mon 00 Jul · 09:30–12:00</span>
+            <span class="badge badge--navy">Online</span>
+            <span class="badge badge--gold">Hands-on lab</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA: timed table + time-split donut ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Framing &amp; recap of last session</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>09:40</td><td>Core concept block</td><td>25</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:05</td><td>Watch it done in Azure</td><td>25</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>10:30</td><td>Concept in code, explained line by line</td><td>20</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>10:50</td><td>Break</td><td>10</td><td>—</td></tr>
+              <tr><td>11:00</td><td>You build: lab on your machine</td><td>45</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>11:45</td><td>Questions, debrief &amp; next session</td><td>15</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Donut: slice order is FIXED (lab → coding → theory → walkthrough → qa → break)
+             and colours come from the validated --chart-* tokens. Update the arc paths
+             and percentages to this session's minutes (arcs precomputed per page). -->
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: lab 45, live coding 20, theory 35, walkthrough 25, questions 15, break 10.">
+            <path fill="var(--chart-lab)" stroke="var(--surface)" stroke-width="2" d="M 50 4 A 46 46 0 0 1 93.75 64.21 L 75.68 58.34 A 27 27 0 0 0 50 23 Z"><title>Lab — 45′ (30%)</title></path>
+            <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 93.75 64.21 A 46 46 0 0 1 68.71 92.02 L 60.98 74.67 A 27 27 0 0 0 75.68 58.34 Z"><title>Live coding — 20′ (13%)</title></path>
+            <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 68.71 92.02 A 46 46 0 0 1 10.16 73.00 L 26.62 63.50 A 27 27 0 0 0 60.98 74.67 Z"><title>Theory — 35′ (23%)</title></path>
+            <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 10.16 73.00 A 46 46 0 0 1 10.16 27.00 L 26.62 36.50 A 27 27 0 0 0 26.62 63.50 Z"><title>Walkthrough — 25′ (17%)</title></path>
+            <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 10.16 27.00 A 46 46 0 0 1 31.29 7.98 L 39.02 25.33 A 27 27 0 0 0 26.62 36.50 Z"><title>Q&amp;A — 15′ (10%)</title></path>
+            <path fill="var(--chart-break)" stroke="var(--surface)" stroke-width="2" d="M 31.29 7.98 A 46 46 0 0 1 50 4 L 50 23 A 27 27 0 0 0 39.02 25.33 Z"><title>Break — 10′ (7%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-lab)"></span>Lab — 45′ (30%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 20′ (13%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 35′ (23%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 25′ (17%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Q&amp;A — 15′ (10%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-break)"></span>Break — 10′ (7%)</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES (cards are allowed here — summary content) ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Learning outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card card--accent hover">
+            <h3>Outcome one</h3>
+            <p>Concrete, verifiable capability — phrased as something you <em>do</em>, not something you've "seen".</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Outcome two</h3>
+            <p>Ties back to the running build — the assistant grows every session.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ TOPIC SECTIONS — tutorial-length, as long as the material needs ============ -->
+      <section id="topic-1" class="doc-section">
+        <div>
+          <span class="eyebrow">Topic one</span>
+          <h2>A topic, treated as course material</h2>
+        </div>
+        <p class="prose">Open with two or three paragraphs of real prose: define the concept
+          precisely, give the terminology its exact meaning, and explain why the topic matters in
+          practice. Write for a reader who will revisit this page after the session — the page must
+          stand on its own without the spoken narration.</p>
+        <p class="prose">Follow with the mechanism: how the thing actually works, what its moving
+          parts are, and where its limits sit. Prefer precise technical language with a one-line
+          definition on first use over vague simplification.</p>
+
+        <h3>A subsection with structure</h3>
+        <p class="prose">Use h3 subsections to pace long topics. Tables carry comparisons:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Option</th><th>Strength</th><th>Limit</th></tr></thead>
+            <tbody>
+              <tr><td>Alternative A</td><td>Where it shines</td><td>Where it breaks</td></tr>
+              <tr><td>Alternative B</td><td>Where it shines</td><td>Where it breaks</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>A subsection with a diagram</h3>
+        <p class="prose">Use the diagram kit for hierarchies and flows — token-true, theme-aware:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Input</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Process</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Output</div>
+          </div>
+          <p class="diagram__caption">Caption: one line stating what the diagram shows.</p>
+        </div>
+
+        <h3>A subsection in code</h3>
+        <div class="code-block">
+          <span class="code-block__label">first_call.py</span>
+          <pre><code>from azure.ai.inference import ChatCompletionsClient
+from azure.identity import DefaultAzureCredential
+
+client = ChatCompletionsClient(
+    endpoint="https://&lt;your-project&gt;.services.ai.azure.com/models",
+    credential=DefaultAzureCredential(),
+)
+resp = client.complete(model="gpt-5.1", messages=[
+    {"role": "user", "content": "Say hello from Foundry."}
+])
+print(resp.choices[0].message.content)</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Good habit</p>
+          <p>We sign in without keys — <code>DefaultAzureCredential</code> everywhere, from the very first call.</p>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What today changed</h2>
+        </div>
+        <p class="prose">A closing narrative paragraph or two: where we started at 09:30, what we
+          built or established, and how the next session stands on it.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS (cards allowed — summary content) ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>If you remember five things</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card"><p><strong>1.</strong> Short, memorable, quotable.</p></article>
+          <article class="card"><p><strong>2.</strong> One sentence each.</p></article>
+          <article class="card"><p><strong>3.</strong> The habit, not the syntax.</p></article>
+          <article class="card"><p><strong>4.</strong> What to tell a colleague tomorrow.</p></article>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — the official docs.</li>
+            <li><a href="https://learn.microsoft.com/" target="_blank" rel="noopener">Microsoft Learn</a> — free, structured learning paths.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>Before next session</h2>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">≈ 30 minutes</p>
+          <p>What to do between sessions, phrased as concrete, checkable steps.</p>
+        </div>
+        <div class="card">
+          <ol style="margin:0; padding-left:1.2rem;">
+            <li>Step one — specific and verifiable.</li>
+            <li>Step two — with the exact command or link.</li>
+            <li>If anything fails, note the exact error and bring it to the next session.</li>
+          </ol>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Session NN · Title — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

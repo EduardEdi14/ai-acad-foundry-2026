@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session 2 — Microsoft Foundry · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session 2<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Today's topics</span>
+      <a class="side-nav__link" href="#env">Everyone green</a>
+      <a class="side-nav__link" href="#foundry-gateway">Foundry &amp; the gateway</a>
+      <a class="side-nav__link" href="#three-lanes">The three lanes</a>
+      <a class="side-nav__link" href="#portal">Portal walkthrough</a>
+      <a class="side-nav__link" href="#first-call">Live: the first call</a>
+      <a class="side-nav__link" href="#spec-driven">How we'll build</a>
+      <a class="side-nav__link" href="#lab">Lab — first real calls</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session 2 · AI Engineering on Azure</span>
+          <h1>Microsoft Foundry — models, gateways &amp; your <span class="gradient-text">first deployment</span></h1>
+          <p><strong>Hands-on begins: by noon, a model you deployed answers code you wrote.</strong></p>
+          <p>Today we cross from concepts to keyboards. We make every environment green, understand
+            what an LLM gateway actually does and why enterprises route model traffic through one,
+            walk the Foundry portal from catalog to a live deployment, and then you make your first
+            authenticated <code>gpt-5.1</code> calls from Python — keylessly, like an engineer, with
+            the token meter in view. We close by introducing the way we will build software from
+            tomorrow on: spec-first, with AI coding agents.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Thu 23 Jul · 09:30–12:00 · online</span>
+            <span class="badge badge--gold">Laptop required — hands-on session</span>
+            <span class="badge badge--navy">gpt-5.1 · first real calls</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Environment check — everyone green before anything else</td><td>20</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>09:50</td><td>Microsoft Foundry &amp; what an LLM gateway does</td><td>25</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:15</td><td>The three lanes: provider-direct vs Azure vs local</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:30</td><td>Foundry portal: catalog → deployment → playground</td><td>20</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>10:50</td><td>Break</td><td>10</td><td>—</td></tr>
+              <tr><td>11:00</td><td>The first authenticated call, explained line by line</td><td>15</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>11:15</td><td>How we'll build from Session 3: spec-driven, AI-assisted</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>11:25</td><td><strong>Lab: your first real calls — gpt-5.1 from Python</strong></td><td>30</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>11:55</td><td>Questions &amp; a preview of Session 3</td><td>5</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: lab 50, live coding 15, theory 50, walkthrough 20, questions 5, break 10.">
+            <path fill="var(--chart-lab)" stroke="var(--surface)" stroke-width="2" d="M 50 4 A 46 46 0 0 1 89.84 73.00 L 73.38 63.50 A 27 27 0 0 0 50 23 Z"><title>Lab — 50′ (34%)</title></path>
+            <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 89.84 73.00 A 46 46 0 0 1 68.71 92.02 L 60.98 74.67 A 27 27 0 0 0 73.38 63.50 Z"><title>Live coding — 15′ (10%)</title></path>
+            <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 68.71 92.02 A 46 46 0 0 1 4.25 45.19 L 23.15 47.18 A 27 27 0 0 0 60.98 74.67 Z"><title>Theory — 50′ (33%)</title></path>
+            <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 4.25 45.19 A 46 46 0 0 1 22.96 12.79 L 34.13 28.16 A 27 27 0 0 0 23.15 47.18 Z"><title>Walkthrough — 20′ (13%)</title></path>
+            <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 22.96 12.79 A 46 46 0 0 1 31.29 7.98 L 39.02 25.33 A 27 27 0 0 0 34.13 28.16 Z"><title>Q&amp;A — 5′ (3%)</title></path>
+            <path fill="var(--chart-break)" stroke="var(--surface)" stroke-width="2" d="M 31.29 7.98 A 46 46 0 0 1 50 4 L 50 23 A 27 27 0 0 0 39.02 25.33 Z"><title>Break — 10′ (7%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-lab)"></span>Lab — 50′ (34%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 15′ (10%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 50′ (33%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 20′ (13%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Q&amp;A — 5′ (3%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-break)"></span>Break — 10′ (7%)</li>
+          </ul>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">A third of today is your hands on keys</p>
+          <p>Two lab blocks: we open by making every environment work, and we close with your own
+            calls against your own deployment. Everything in between exists to make those thirty
+            final minutes effortless.</p>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Learning outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card card--accent hover">
+            <h3>Explain the gateway</h3>
+            <p>Say what an LLM gateway adds on top of a raw model API — and why a bank refuses to
+              live without one.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Argue the three lanes</h3>
+            <p>Provider-direct, through Azure, or local — choose per workload, on privacy,
+              compliance, cost and capability grounds.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Deploy a model</h3>
+            <p>Navigate the Foundry catalog, deploy a model with a sensible type and quota, and
+              test it in the playground.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Call it from Python</h3>
+            <p>Make an authenticated, keyless <code>gpt-5.1</code> call with
+              <code>azure-ai-inference</code> — and explain every line of it.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Read the meter</h3>
+            <p>Find prompt and completion tokens on every response, and reason about what a
+              workload costs before it runs at scale.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Describe spec-driven building</h3>
+            <p>State the difference between vibe coding and spec-first development with AI
+              agents — the method Session 3 uses to build our app.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ ENV ============ -->
+      <section id="env" class="doc-section">
+        <div>
+          <span class="eyebrow">09:30 · Lab · 20′</span>
+          <h2>Everyone green — the environment check</h2>
+        </div>
+        <p class="prose">Nothing today works without a working machine, so we start there — together,
+          unhurried, until every hand is up. Yesterday's assignment asked for four things; we verify
+          them now and fix whatever resists. If your setup already passes, help a neighbour — the
+          fastest way to master an environment is to debug someone else's.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Check</th><th>Command / action</th><th>Pass looks like</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Python present</td><td><code>python --version</code></td><td><code>Python 3.11+</code></td></tr>
+              <tr><td>2</td><td>VS Code + Python extension</td><td>Open VS Code → Extensions</td><td>"Python" by Microsoft installed</td></tr>
+              <tr><td>3</td><td>Azure sign-in works</td><td>portal.azure.com in a browser</td><td>Portal opens under the academy account</td></tr>
+              <tr><td>4</td><td>Azure CLI present</td><td><code>az version</code></td><td>A JSON block with a version number</td></tr>
+              <tr><td>5</td><td>CLI signed in</td><td><code>az login</code></td><td>Browser opens, sign-in completes, subscription listed</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Why the CLI matters today</p>
+          <p>Our code authenticates keylessly: <code>DefaultAzureCredential</code> will look for a
+            signed-in Azure CLI on your machine and borrow that identity. <code>az login</code> once
+            now is what makes every call this morning "just work" — no keys, nothing to leak.</p>
+        </div>
+      </section>
+
+      <!-- ============ FOUNDRY & GATEWAY ============ -->
+      <section id="foundry-gateway" class="doc-section">
+        <div>
+          <span class="eyebrow">09:50 · Theory · 25′</span>
+          <h2>Microsoft Foundry &amp; what an <span class="gradient-text">LLM gateway</span> does</h2>
+        </div>
+        <p class="prose">Yesterday you saw where Microsoft Foundry sits on the map of Azure; today we
+          use it. The mental model that makes everything click is the <strong>gateway</strong>. A raw
+          model API answers exactly one question: <em>"here are tokens, give me tokens back."</em>
+          Everything an organization actually needs around that — who may call, how much, with what
+          safeguards, at what cost, observed how — is missing by design. An
+          <strong>LLM gateway</strong> is the layer that adds it: a managed front door between your
+          applications and the models.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">Your scripts</div>
+              <div class="dg-box">Libra Assist (soon)</div>
+              <div class="dg-box dg-box--muted">Any team's app</div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ one authenticated front door ↓</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">The gateway layer · what Foundry adds around models</span>
+              <div class="dg-row">
+                <div class="dg-box">Identity &amp; RBAC<br><span class="dg-note">who may call</span></div>
+                <div class="dg-box">Quotas<br><span class="dg-note">how much, per minute</span></div>
+                <div class="dg-box">Content filters<br><span class="dg-note">what gets through</span></div>
+                <div class="dg-box">Metering<br><span class="dg-note">tokens → cost</span></div>
+                <div class="dg-box">Monitoring<br><span class="dg-note">what happened</span></div>
+              </div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓</span></div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--accent">gpt-5.1<br><span class="dg-note">your deployment</span></div>
+              <div class="dg-box dg-box--accent">text-embedding-3-small<br><span class="dg-note">your deployment</span></div>
+              <div class="dg-box dg-box--muted">any catalog model<br><span class="dg-note">same door</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">The gateway pattern: applications never talk to "the model" — they talk to a governed deployment behind one authenticated, metered, filtered front door.</p>
+        </div>
+        <p class="prose">Each gateway concern maps to something concrete you will touch today.
+          <strong>Identity</strong>: calls are authorized by Entra ID roles, not by secrets in code —
+          your <code>az login</code> this morning is literally your access badge.
+          <strong>Quota</strong>: every deployment carries a tokens-per-minute (TPM) and
+          requests-per-minute budget; exceeding it returns HTTP 429, which is why production code
+          retries politely (Session 3's topic). <strong>Content filtering</strong>: prompts and
+          completions pass safety classifiers — in a bank, configurable but never optional.
+          <strong>Metering</strong>: every response reports its exact token consumption, the number
+          your cost model is built on. <strong>Observability</strong>: requests, latencies and
+          errors land in Azure Monitor, where an operator can answer "what is happening right now?"
+          — a question you will personally ask in Session 6.</p>
+        <p class="prose">One term deserves precision: a <strong>deployment</strong> is <em>your named
+          instance of a model behind the gateway</em> — the catalog model (<code>gpt-5.1</code>)
+          plus your configuration (deployment name, type, quota, filters). Code never calls "GPT";
+          it calls <em>your deployment by its name</em>. That indirection is what lets an
+          organization upgrade, throttle or swap models without touching application code.</p>
+      </section>
+
+      <!-- ============ THREE LANES ============ -->
+      <section id="three-lanes" class="doc-section">
+        <div>
+          <span class="eyebrow">10:15 · Theory · 15′</span>
+          <h2>The three lanes: provider-direct, through Azure, <span class="gradient-text">or local</span></h2>
+        </div>
+        <p class="prose">Every organization consuming LLMs chooses between three lanes, and the
+          choice is rarely about model quality — the same or similar models exist in all three. It
+          is about <em>where data flows, who governs the door, and what you must operate
+          yourself</em>.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Lane 1 · Provider-direct</span>
+              <div class="dg-stack">
+                <div class="dg-box">app → api.openai.com</div>
+                <div class="dg-box dg-box--muted">Provider's infrastructure &amp; terms<br><span class="dg-note">API-key auth · newest features first</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Lane 2 · Through Azure (Foundry)</span>
+              <div class="dg-stack">
+                <div class="dg-box">app → your endpoint, your region</div>
+                <div class="dg-box dg-box--accent">Your tenant's boundary<br><span class="dg-note">Entra ID · quotas · filters · one bill</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Lane 3 · Local / self-hosted</span>
+              <div class="dg-stack">
+                <div class="dg-box">app → your own hardware</div>
+                <div class="dg-box dg-box--muted">Open-weight models (Foundry Local, Ollama)<br><span class="dg-note">nothing leaves the machine</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Three lanes to an LLM. The decision is about boundaries and operations, not model quality.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>Provider-direct</th><th>Through Azure</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Data boundary</strong></td><td>Provider's infrastructure</td><td>Your tenant, your chosen region</td><td>Your hardware — nothing leaves</td></tr>
+              <tr><td><strong>Identity &amp; access</strong></td><td>API keys</td><td>Entra ID, RBAC, managed identities</td><td>Whatever you build</td></tr>
+              <tr><td><strong>Compliance posture</strong></td><td>Provider's certifications</td><td>Azure portfolio + your existing agreements</td><td>Entirely on you</td></tr>
+              <tr><td><strong>Model range</strong></td><td>That provider's models</td><td>Multi-vendor catalog</td><td>Open-weight models only</td></tr>
+              <tr><td><strong>Capability ceiling</strong></td><td>Frontier, day one</td><td>Frontier, typically shortly after</td><td>Below frontier; improving fast</td></tr>
+              <tr><td><strong>Cost shape</strong></td><td>Per token</td><td>Per token (or reserved capacity)</td><td>Hardware + power + your time</td></tr>
+              <tr><td><strong>Fits</strong></td><td>Prototypes, consumer apps</td><td>Enterprises, regulated industries</td><td>Air-gapped, edge, data-cannot-move cases</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Why lane 2 for a bank is nearly axiomatic: banking regulation demands
+          knowing <em>where data resides</em>, <em>who accessed what</em>, and <em>proving both to
+          an auditor</em>. Lane 2 inherits all three from the platform (region pinning, Entra ID,
+          Azure's audit surface); lane 1 makes each a negotiation, lane 3 makes each a construction
+          project. Lane 3 still matters — genuinely sensitive data that must never leave a machine,
+          offline scenarios, and cost experiments with small models — which is why Foundry ships
+          <em>Foundry Local</em> to run catalog models on your own hardware. Know all three lanes;
+          default to the governed one.</p>
+      </section>
+
+      <!-- ============ PORTAL ============ -->
+      <section id="portal" class="doc-section">
+        <div>
+          <span class="eyebrow">10:30 · Walkthrough · 20′</span>
+          <h2>Foundry portal: catalog → deployment → <span class="gradient-text">playground</span></h2>
+        </div>
+        <p class="prose">Screen share time — I drive, you follow the map. We open
+          <strong>ai.azure.com</strong>, enter our project, and walk the exact path you would walk
+          in any organization: find a model, deploy it, prove it answers. This section is your
+          revisit guide; the full click-by-click tutorial (including creating everything from an
+          empty account) lives in the <a href="ref-foundry.html">Foundry reference page</a>.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Model catalog<br><span class="dg-note">filter by task · compare</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Deploy<br><span class="dg-note">name · type · TPM quota</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Deployment<br><span class="dg-note">an endpoint with a name</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Playground<br><span class="dg-note">zero-code sanity check</span></div>
+          </div>
+          <p class="diagram__caption">The deployment path. After the playground answers, every remaining problem is client-side — which is exactly where the lab picks up.</p>
+        </div>
+        <p class="prose">What to notice while I click. In the <strong>catalog</strong>: the task
+          filter (chat vs embeddings), the provider spread, context-window sizes, and per-token
+          prices — input and output priced separately. In the <strong>deploy dialog</strong>: the
+          deployment <em>name</em> (what your code will reference), the <em>type</em> (global
+          standard pay-as-you-go for us; regional when residency pins traffic; provisioned
+          throughput for reserved capacity), and the <em>TPM quota</em> slider — the budget that
+          protects you from yourself. In the <strong>playground</strong>: the system-prompt box
+          (persona lives here), the parameter panel (temperature, max tokens), and the view of the
+          conversation as raw messages — the exact structure your code sends in the lab.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Our project already has both deployments</p>
+          <p><code>gpt-5.1</code> (chat) and <code>text-embedding-3-small</code> (embeddings) are
+            deployed for this course — the walkthrough shows you the path so you can do it yourself
+            in any subscription you'll ever be handed.</p>
+        </div>
+      </section>
+
+      <!-- ============ FIRST CALL ============ -->
+      <section id="first-call" class="doc-section">
+        <div>
+          <span class="eyebrow">11:00 · Live coding · 15′</span>
+          <h2>The first authenticated call, <span class="gradient-text">line by line</span></h2>
+        </div>
+        <p class="prose">Eight lines, every one earning its place. I write and run this in front of
+          you; in twenty-five minutes you run it yourself. Read it top to bottom before we dissect
+          it:</p>
+        <div class="code-block">
+          <span class="code-block__label">hello_foundry.py</span>
+          <pre><code>from azure.ai.inference import ChatCompletionsClient
+from azure.identity import DefaultAzureCredential
+
+ENDPOINT = "https://&lt;your-project&gt;.services.ai.azure.com/models"   # Foundry portal → Overview
+
+client = ChatCompletionsClient(endpoint=ENDPOINT, credential=DefaultAzureCredential())
+
+reply = client.complete(
+    model="gpt-5.1",                          # your DEPLOYMENT name, not "the model"
+    messages=[
+        {"role": "system", "content": "You are a precise assistant. Answer in two sentences."},
+        {"role": "user", "content": "What does an LLM gateway add on top of a raw model API?"},
+    ],
+)
+
+print(reply.choices[0].message.content)
+print(reply.usage)                            # prompt_tokens, completion_tokens — the meter</code></pre>
+        </div>
+        <p class="prose">The dissection, line by line. The <strong>imports</strong> pair the
+          inference client with the identity library — model access and authentication are separate
+          concerns, deliberately. The <strong>endpoint</strong> is your project's front door from
+          the portal's Overview page; note there is no key in this file, and there never will be.
+          <strong><code>DefaultAzureCredential</code></strong> is the magic that isn't magic: it
+          probes a fixed chain of identity sources — environment variables, managed identity,
+          VS Code, <em>the Azure CLI you signed into this morning</em>, Azure PowerShell — and uses
+          the first that yields a token. Locally that is your CLI login; in Session 6, deployed to
+          the cloud, the identical line will find a managed identity instead. Same code, both
+          worlds.</p>
+        <p class="prose">The <strong><code>complete()</code></strong> call carries the two ideas
+          from yesterday made concrete: <code>model=</code> names <em>your deployment</em> (the
+          gateway indirection — this string is yours, not OpenAI's), and <code>messages=</code> is
+          the context window being assembled — a system role setting standing behaviour, a user
+          role carrying the question. The <strong>response</strong> gives you the generated message
+          and, riding along, the <code>usage</code> object: exact prompt and completion token
+          counts. That object is the raw material of cost engineering, and from today it appears in
+          everything we build.</p>
+      </section>
+
+      <!-- ============ SPEC-DRIVEN ============ -->
+      <section id="spec-driven" class="doc-section">
+        <div>
+          <span class="eyebrow">11:15 · Theory · 10′</span>
+          <h2>How we'll build from Session 3: <span class="gradient-text">spec-driven</span>, AI-assisted</h2>
+        </div>
+        <p class="prose">Tomorrow we build a real application — and we will not type most of it.
+          Modern engineering teams increasingly delegate implementation to <strong>AI coding
+          agents</strong> (tools like GitHub Copilot and Claude Code that read a codebase, plan,
+          and write code across files). What separates professionals from hobbyists in that world
+          is not typing speed; it is <em>specification discipline</em>. The failure mode has a
+          name — <strong>vibe coding</strong>: prompting an agent with a vague wish, accepting
+          whatever appears, and iterating by complaint. It feels fast and produces systems nobody
+          can explain, extend or trust.</p>
+        <p class="prose"><strong>Spec-driven development</strong> inverts the flow: you write down
+          <em>what</em> should exist — goals, interfaces, constraints, non-goals — the agent
+          proposes a plan, <em>you review the plan</em>, the agent implements, and you verify the
+          result against the spec before anything is committed. The human owns intent and judgment;
+          the agent owns keystrokes. Tomorrow you will watch the entire loop run for real, building
+          the skeleton of Libra Assist from a one-page spec:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Idea</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Spec<br><span class="dg-note">what &amp; why, written</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Plan<br><span class="dg-note">agent proposes · you review</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Implement<br><span class="dg-note">agent writes the code</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Verify<br><span class="dg-note">against the spec, then commit</span></div>
+          </div>
+          <p class="diagram__caption">The spec-driven loop. Every arrow survives because the artifact before it is written down — the spec is the contract.</p>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Why this is in a bank's course</p>
+          <p>Reviewability. A spec and a plan are documents a colleague — or a regulator — can
+            read. "The AI wrote it and it seems to work" is not a sentence you will ever say in
+            production; "it implements this spec, verified point by point" is.</p>
+        </div>
+      </section>
+
+      <!-- ============ LAB ============ -->
+      <section id="lab" class="doc-section">
+        <div>
+          <span class="eyebrow">11:25 · Lab · 30′</span>
+          <h2>Lab — your first real calls: <span class="gradient-text">gpt-5.1 from Python</span></h2>
+        </div>
+        <p class="prose">Your turn. Work through the steps in order; raise a hand the moment
+          anything resists — thirty minutes is generous for this if the environment is green, and
+          the stretch goals will keep fast finishers busy. Everything you write today is the seed
+          of the application we grow for the rest of the course.</p>
+
+        <h3>Step 1 — a clean project (≈5′)</h3>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>mkdir libra-lab && cd libra-lab
+python -m venv .venv
+.venv\Scripts\activate           # Windows      (macOS/Linux: source .venv/bin/activate)
+pip install azure-ai-inference azure-identity
+az login                         # if you haven't this morning</code></pre>
+        </div>
+        <p class="prose">The virtual environment keeps today's packages out of your system Python —
+          the same hygiene every project in this course will use.</p>
+
+        <h3>Step 2 — the first call (≈5′)</h3>
+        <p class="prose">Create <code>hello_foundry.py</code> with the live-coding program from the
+          <a href="#first-call">previous section</a>, set the endpoint to our project's URL (in the
+          session chat), and run it:</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>python hello_foundry.py</code></pre>
+        </div>
+        <p class="prose">Success is two things printed: an answer, and a <code>usage</code> line.
+          If instead you meet an error, jump to the troubleshooting table below — the four failures
+          it lists cover essentially everything.</p>
+
+        <h3>Step 3 — Libra Assist speaks its first words (≈5′)</h3>
+        <p class="prose">Change the system prompt — nothing else — and observe how completely it
+          changes the product:</p>
+        <div class="code-block">
+          <span class="code-block__label">hello_foundry.py · the persona line</span>
+          <pre><code>{"role": "system", "content":
+    "You are Libra Assist, the internal AI assistant of a retail bank. "
+    "Answer precisely and professionally, in English, two short paragraphs maximum. "
+    "If a question needs data you don't have, say exactly what is missing."},</code></pre>
+        </div>
+        <p class="prose">Ask it something a colleague would: <em>"A customer says their card is
+          blocked — what should I check first?"</em> This one line is the beginning of the persona
+          we will ground, measure and equip with tools all week.</p>
+
+        <h3>Step 4 — turn the two dials (≈8′)</h3>
+        <p class="prose">Run the same question three ways and note what changes:
+          <code>temperature=0.0</code>, then <code>temperature=1.0</code> (run it twice — is the
+          answer identical?), then add <code>max_tokens=30</code> and watch the answer stop
+          mid-thought. Check <code>reply.choices[0].finish_reason</code>: <code>"stop"</code> means
+          the model finished; <code>"length"</code> means <em>you</em> cut it off — a distinction
+          production code must handle.</p>
+
+        <h3>Step 5 — read the meter like an engineer (≈7′)</h3>
+        <div class="code-block">
+          <span class="code-block__label">add to the end</span>
+          <pre><code>u = reply.usage
+print(f"prompt={u.prompt_tokens}  completion={u.completion_tokens}  total={u.total_tokens}")
+print(f"a day of 10,000 such calls ≈ {10_000 * u.total_tokens:,} tokens")</code></pre>
+        </div>
+        <p class="prose">That last number, multiplied by the per-million-token price you saw in the
+          catalog, is how AI features get budgeted. From now on, every lab prints its own
+          consumption — cost awareness is a habit, not a chapter.</p>
+
+        <h3>Stretch goals — if you're ahead</h3>
+        <p class="prose"><strong>Streaming.</strong> Long answers should render as they generate,
+          token by token — the pattern behind every chat UI you have ever used:</p>
+        <div class="code-block">
+          <span class="code-block__label">stream.py</span>
+          <pre><code>stream = client.complete(
+    model="gpt-5.1", stream=True,
+    messages=[{"role": "user", "content": "Explain, step by step, how an IBAN is validated."}],
+)
+for update in stream:
+    if update.choices and update.choices[0].delta.content:
+        print(update.choices[0].delta.content, end="", flush=True)</code></pre>
+        </div>
+        <p class="prose"><strong>Embeddings.</strong> Reproduce yesterday's geometry demo yourself:
+          embed <em>"my card is blocked"</em> and <em>"frozen debit card"</em> with
+          <code>EmbeddingsClient</code> and <code>model="text-embedding-3-small"</code>, and compute
+          their cosine similarity — Session 5 will thank you.</p>
+
+        <div class="callout callout--success">
+          <p class="callout__title">✅ You are done when</p>
+          <p>The model answers <em>as Libra Assist</em> from your own script, you can say how many
+            tokens the call consumed, and you can explain why there is no key anywhere in your
+            code.</p>
+        </div>
+
+        <h3>Troubleshooting</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Symptom</th><th>Meaning</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>CredentialUnavailableError</code> / "failed to acquire token"</td><td>No identity source found</td><td><code>az login</code> in the same terminal; retry</td></tr>
+              <tr><td><code>401</code> / <code>PermissionDenied</code></td><td>Signed in, but no data-plane role</td><td>Wave — role assignment is on me, fixed in a minute</td></tr>
+              <tr><td><code>404</code> deployment not found</td><td><code>model=</code> doesn't match a deployment name</td><td>Use the exact deployment name from the portal</td></tr>
+              <tr><td><code>429</code> too many requests</td><td>The room is sharing one TPM quota</td><td>Wait ten seconds, run again — and remember this feeling for Session 3's retry logic</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What today changed</h2>
+        </div>
+        <p class="prose">This morning "the model" stopped being an abstraction. You now hold the
+          gateway model of enterprise AI — identity, quota, filtering, metering and monitoring
+          wrapped around every call — and you have felt it concretely: your CLI sign-in was the
+          badge, your deployment name was the indirection, the <code>usage</code> object was the
+          meter. You can argue the three lanes like an architect and default to the governed one
+          for bank work. And Libra Assist exists — one system prompt old, already answering in
+          character from your own script. Tomorrow it becomes an application: a spec on one page,
+          an AI agent building the skeleton, and by noon a chat interface on your own machine
+          talking to your own deployment.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>If you remember six things</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card"><p><strong>1.</strong> A gateway turns a raw model API into something an organization can govern: identity, quota, filters, metering, monitoring.</p></article>
+          <article class="card"><p><strong>2.</strong> Code calls a <em>deployment by name</em>, never "the model" — that indirection is how enterprises swap and throttle models safely.</p></article>
+          <article class="card"><p><strong>3.</strong> Three lanes — provider-direct, through Azure, local. The choice is about boundaries and governance, not model quality.</p></article>
+          <article class="card"><p><strong>4.</strong> <code>DefaultAzureCredential</code> = the same code authenticating via your CLI login today and a managed identity in production.</p></article>
+          <article class="card"><p><strong>5.</strong> Every response carries its own meter — read <code>usage</code>, always. Cost is an engineering metric.</p></article>
+          <article class="card"><p><strong>6.</strong> Spec first, then plan, then code, then verify. The spec is the contract — vibe coding is the anti-pattern.</p></article>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <p class="card__meta">Course reference pages</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="ref-foundry.html">Microsoft Foundry — the platform, step by step</a> — today's walkthrough as a click-by-click tutorial, plus monitoring and the auth lanes in depth.</li>
+            <li><a href="ref-git.html">How git works</a> — read before Session 3: the starter app arrives as a git repository.</li>
+            <li><a href="ref-cloud-computing.html">Cloud computing — a general overview</a> — the model underneath everything we touched today.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__meta">Official documentation</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — catalog, deployments, quotas, playground.</li>
+            <li><a href="https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme" target="_blank" rel="noopener">azure-ai-inference for Python</a> — the SDK behind today's calls, with full examples.</li>
+            <li><a href="https://learn.microsoft.com/python/api/overview/azure/identity-readme" target="_blank" rel="noopener">Azure Identity for Python</a> — <code>DefaultAzureCredential</code> and its probe chain.</li>
+            <li><a href="https://learn.microsoft.com/cli/azure/install-azure-cli" target="_blank" rel="noopener">Install the Azure CLI</a> — the sign-in source behind keyless local development.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>Before Session 3: git, and one feature idea</h2>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">≈ 25 minutes</p>
+          <p>Tomorrow the application skeleton arrives as a git repository and grows by
+            specification. Two small preparations make that morning smooth.</p>
+        </div>
+        <div class="card">
+          <ol style="margin:0; padding-left:1.2rem;">
+            <li>Finish today's lab if anything is left — through Step 5 at minimum.</li>
+            <li>Install <a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git</a>
+              and verify: <code>git --version</code> prints a version.</li>
+            <li>Read the first three sections of <a href="ref-git.html">How git works</a> —
+              "Why version control", "Snapshots, not diffs" and "The three areas" (~8 minutes).</li>
+            <li>Write down <strong>one feature you would want Libra Assist to have</strong>, in two
+              or three sentences. Tomorrow we turn ideas exactly like it into specifications — and
+              some of them into code.</li>
+          </ol>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">If the lab didn't finish for you</p>
+          <p>Note where it stopped and the exact error — the first minutes of Session 3 are for
+            unblocking, and your notes make it fast.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Session 2 · Microsoft Foundry — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

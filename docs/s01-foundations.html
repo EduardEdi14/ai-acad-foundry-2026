@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session 1 — Foundations · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session 1<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Today's topics</span>
+      <a class="side-nav__link" href="#welcome">Welcome</a>
+      <a class="side-nav__link" href="#python">Why Python</a>
+      <a class="side-nav__link" href="#ai-concepts">Generative AI</a>
+      <a class="side-nav__link" href="#live-demo">Live in code</a>
+      <a class="side-nav__link" href="#cloud">Cloud architecture</a>
+      <a class="side-nav__link" href="#azure-tour">Azure tour</a>
+      <a class="side-nav__link" href="#foundry">Microsoft Foundry</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session 1 · AI Engineering on Azure</span>
+          <h1>Foundations — Python, GenAI &amp; your <span class="gradient-text">Azure environment</span></h1>
+          <p><strong>The mental map for everything we build in the next two weeks.</strong></p>
+          <p>Today is a discussion day: we meet each other and set expectations, then work through
+            the foundations of this module — why AI engineering happens in Python, how generative
+            AI works beneath the marketing (including a live demonstration in running code), and
+            what actually changes when software runs in the cloud. We close with a guided tour of
+            Azure and of Microsoft Foundry, the AI platform where tomorrow's hands-on work begins.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Wed 22 Jul · 09:30–12:00 · online</span>
+            <span class="badge badge--navy">Discussion day — no laptop needed</span>
+            <span class="badge badge--gold">Hands-on starts in Session 2</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Welcome &amp; introductions — meet each other, set expectations</td><td>30</td><td><span class="badge badge--coral">Discussion</span></td></tr>
+              <tr><td>10:00</td><td>Why Python is the language of AI</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:10</td><td>Generative AI: the concepts that carry the module</td><td>20</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:30</td><td>Generative AI, live in code — tokens, a model call, embeddings</td><td>30</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>11:00</td><td>Cloud architecture — what changes in the cloud</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>11:15</td><td>A guided tour of Azure &amp; Microsoft Foundry</td><td>35</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>11:50</td><td>Questions &amp; a preview of Session 2</td><td>10</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: live coding 30, theory 45, walkthrough 35, discussion and questions 40.">
+            <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 50 4 A 46 46 0 0 1 93.75 35.79 L 75.68 41.66 A 27 27 0 0 0 50 23 Z"><title>Live coding — 30′ (20%)</title></path>
+            <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 93.75 35.79 A 46 46 0 0 1 50 96 L 50 77 A 27 27 0 0 0 75.68 41.66 Z"><title>Theory — 45′ (30%)</title></path>
+            <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 50 96 A 46 46 0 0 1 4.25 54.81 L 23.15 52.82 A 27 27 0 0 0 50 77 Z"><title>Walkthrough — 35′ (23%)</title></path>
+            <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 4.25 54.81 A 46 46 0 0 1 50 4 L 50 23 A 27 27 0 0 0 23.15 52.82 Z"><title>Discussion &amp; Q&amp;A — 40′ (27%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 30′ (20%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 45′ (30%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 35′ (23%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Discussion &amp; Q&amp;A — 40′ (27%)</li>
+          </ul>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Questions are welcome any time</p>
+          <p>You don't need to save them for the end — interrupt, ask, and if a topic needs more
+            time, we take it. We pause for a short breather when the room needs one.</p>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Learning outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card card--accent hover">
+            <h3>Explain why Python owns AI</h3>
+            <p>Describe the scientific Python stack, the glue-language architecture, and why every
+              AI platform ships Python SDKs first.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Describe how an LLM works</h3>
+            <p>Tokens, attention, training, context windows, embeddings, sampling — precisely
+              enough to reason about cost, latency and failure modes.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Say what the cloud changes</h3>
+            <p>Elasticity, managed services, the shared-responsibility model — and the standard
+              anatomy of a cloud application.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Navigate Azure</h3>
+            <p>Tenant, subscription, resource group, resource — and choose the right management
+              tool for a given job.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Situate Microsoft Foundry</h3>
+            <p>Place Foundry among Azure's AI services and explain how it differs from Azure
+              OpenAI — and when to choose which.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Prepare for Session 2</h3>
+            <p>Know exactly what your machine needs tomorrow, and verify it with the assignment
+              checklist.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ WELCOME ============ -->
+      <section id="welcome" class="doc-section">
+        <div>
+          <span class="eyebrow">09:30 · Discussion · 30′</span>
+          <h2>Welcome &amp; how this module works</h2>
+        </div>
+        <p class="prose">We start with the room, not the slides. In the first half hour everyone
+          introduces themselves briefly — three things are enough: <strong>your name and role</strong>,
+          <strong>one thing you would love to build with AI</strong>, and <strong>your honest comfort
+          with Python on a scale of 1 to 10</strong>. There are no wrong answers; the spread in this
+          room is exactly what we design the pace around. This is also the moment to say what you
+          want from these two weeks — concrete expectations help me calibrate every session that
+          follows.</p>
+        <p class="prose">The module itself is one continuous build. Across seven sessions you grow a
+          single application — <strong>Libra Assist</strong>, a banking assistant — from a first
+          authenticated model call into a complete solution: a Python service with a web chat
+          interface, grounded in documents, persisting its state to a cloud database, orchestrating
+          multi-step work, and measured rather than merely admired. Nothing is throwaway; each
+          session's result is the next session's starting point.</p>
+        <p class="prose">Sessions mix five working formats, and the agenda of every session declares
+          them explicitly: <em>theory</em> (concepts, on slides), <em>walkthrough</em> (watch it done
+          live in Azure), <em>live coding</em> (code written and explained in front of you),
+          <em>lab</em> (you build, on your machine), and <em>Q&amp;A</em>. Today your hands stay
+          off the keyboard — the live coding block is mine to drive and yours to interrogate;
+          your own hands-on work starts tomorrow.</p>
+        <div class="callout callout--tip">
+          <p class="callout__title">What you'll need from Session 2</p>
+          <p>A laptop with Visual Studio Code and Python installed, and your Azure sign-in.
+            Today's assignment (last section of this page) walks you through verifying all three.</p>
+        </div>
+      </section>
+
+      <!-- ============ WHY PYTHON ============ -->
+      <section id="python" class="doc-section">
+        <div>
+          <span class="eyebrow">10:00 · Theory · 10′</span>
+          <h2>Why Python is the <span class="gradient-text">language of AI</span></h2>
+        </div>
+        <p class="prose">Python did not win artificial intelligence because it is the fastest
+          language — it is not — but because it accumulated, layer by layer over two decades, the
+          entire numerical and machine-learning ecosystem. The foundation was laid by
+          <strong>NumPy</strong>, which gave Python an efficient n-dimensional array and, crucially,
+          a convention: heavy numerical work is executed not by the Python interpreter but by
+          compiled C and Fortran kernels (BLAS/LAPACK) that Python merely orchestrates. Everything
+          since — pandas for tabular data, scikit-learn for classical machine learning, PyTorch for
+          deep learning, Hugging Face Transformers for pretrained models — follows the same
+          pattern and interoperates through the same array conventions.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">NumPy<br><span class="dg-note">2006 · arrays</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">pandas<br><span class="dg-note">2008 · dataframes</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">scikit-learn<br><span class="dg-note">2010 · classical ML</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">PyTorch<br><span class="dg-note">2016 · deep learning</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Transformers<br><span class="dg-note">2018 · pretrained models</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">LLM &amp; agent SDKs<br><span class="dg-note">2020s · this course</span></div>
+          </div>
+          <p class="diagram__caption">Two decades of compounding: each layer of the scientific Python stack builds on the conventions of the previous one.</p>
+        </div>
+        <p class="prose">This history produced a powerful <strong>network effect</strong>: research
+          papers publish Python code, university courses teach in Python, and every model provider —
+          OpenAI, Microsoft, Anthropic, Google, Meta — ships its Python SDK first and most
+          completely. Architecturally, Python plays the role of a <strong>glue language</strong>:
+          the interpreter executes orchestration logic — reading configuration, calling APIs,
+          moving data between systems — while the performance-critical work happens elsewhere, in
+          compiled kernels, on GPUs, or, in this course, on the other side of an HTTPS call inside
+          an Azure datacenter. Python coordinates; optimized systems compute. And it spans the whole
+          lifecycle: the same language runs in a Jupyter notebook where experiments live and in the
+          production service that ships — no rewrite between "it works on my laptop" and "it runs
+          for users".</p>
+      </section>
+
+      <!-- ============ GENERATIVE AI ============ -->
+      <section id="ai-concepts" class="doc-section">
+        <div>
+          <span class="eyebrow">10:10 · Theory · 20′</span>
+          <h2>Generative AI: the concepts that <span class="gradient-text">carry the module</span></h2>
+        </div>
+        <p class="prose">Classical software is <em>programmed</em>: a developer writes explicit
+          rules, and the system does exactly what the rules say. Machine learning inverts this: a
+          model's behaviour is <em>learned</em> from data, encoded as numerical parameters adjusted
+          during training to minimize prediction error. A <strong>large language model (LLM)</strong>
+          is the current apex of that approach — a neural network, almost always based on the
+          <strong>transformer architecture</strong> (introduced in 2017), trained on enormous text
+          corpora with a deceptively simple objective: <em>predict the next token</em>.</p>
+        <p class="prose">That objective explains almost everything about how these systems behave.
+          Generation is <strong>autoregressive</strong>: the model produces one token, appends it to
+          the input, and predicts again — a loop, not a lookup. What you experience as fluent
+          writing is a long chain of conditional probability distributions being sampled, token by
+          token.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Prompt<br><span class="dg-note">text in</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Tokenizer<br><span class="dg-note">text → tokens</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Transformer<br><span class="dg-note">next-token probabilities</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Sampling<br><span class="dg-note">temperature</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Token out<br><span class="dg-note">append &amp; repeat</span></div>
+          </div>
+          <p class="diagram__caption">The autoregressive loop: every token of the answer is one full pass through this pipeline.</p>
+        </div>
+
+        <h3>Inside the transformer</h3>
+        <p class="prose">A transformer is a stack of identical layers, each combining two
+          operations. <strong>Self-attention</strong> lets every token compute a relevance-weighted
+          view of every other token in the input — this is how "it" finds its referent and how
+          "rate" learns whether the sentence is about interest or speed. A
+          <strong>feed-forward network</strong> then transforms each of those contextualized
+          representations independently. Stack the pair dozens of times and the representations grow
+          progressively more abstract; a final projection turns the last layer into a probability
+          distribution over the entire vocabulary — the next-token prediction.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-box">Token embeddings + position information</div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">One transformer layer · repeated N times</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--accent">Self-attention<br><span class="dg-note">every token looks at every token</span></div>
+                <span class="dg-arrow">→</span>
+                <div class="dg-box">Feed-forward<br><span class="dg-note">per-token transformation</span></div>
+              </div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓</span></div>
+            <div class="dg-box">Probability distribution over the vocabulary — the next token</div>
+          </div>
+          <p class="diagram__caption">The transformer stack. "Large" in LLM counts the learned parameters inside these layers — from billions to trillions of weights.</p>
+        </div>
+        <p class="prose">The learned parameters — the <strong>weights</strong> — are where all
+          capability lives; a model file is essentially those numbers. Inference is one forward
+          pass through the stack per generated token, which is why the work is dominated by matrix
+          multiplication, why it runs on GPUs, and why latency grows with answer length.</p>
+
+        <h3>How a model is made</h3>
+        <p class="prose">Training happens in stages, and each stage explains a behaviour you will
+          observe all module long. <strong>Pretraining</strong> — next-token prediction over
+          web-scale corpora — builds capability and knowledge, and fixes the
+          <strong>knowledge cutoff</strong>: the model knows nothing after its data ends.
+          <strong>Supervised fine-tuning</strong> teaches the instruction-following format from
+          curated example dialogues. <strong>Preference alignment</strong> (methods such as RLHF —
+          reinforcement learning from human feedback) tunes outputs toward what human raters prefer —
+          the origin of both the model's helpfulness and its characteristic failure modes: refusals,
+          hedging, and the eagerness-to-please that can shade into flattery. What you call
+          <code>gpt-5.1</code> is the artifact of all three stages, served behind an endpoint.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Pretraining<br><span class="dg-note">next-token, web-scale corpus</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Supervised fine-tuning<br><span class="dg-note">instruction examples</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Preference alignment<br><span class="dg-note">human feedback (RLHF)</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--accent">Deployed model<br><span class="dg-note">behind your endpoint</span></div>
+          </div>
+          <p class="diagram__caption">The training pipeline. Capability comes from stage one; behaviour — including refusals and flattery — largely from stage three.</p>
+        </div>
+
+        <h3>Tokens: the unit of everything</h3>
+        <p class="prose">Models do not read characters or words; they read <strong>tokens</strong> —
+          subword fragments produced by algorithms such as byte-pair encoding (BPE). "Banking" may
+          be one token; a rare Romanian compound may be five. Three consequences matter to an
+          engineer: <strong>cost</strong> (providers price per token, input and output separately),
+          <strong>latency</strong> (each output token is a full pass through the model, which is
+          why long answers stream), and <strong>capacity</strong> — the limit on how much the model
+          can consider at once, which brings us to the context window.</p>
+
+        <h3>The context window: anatomy of a request</h3>
+        <p class="prose">The <strong>context window</strong> is the maximum number of tokens the
+          model can attend to in one call — its working memory. Everything you want the model to
+          consider must be serialized into it, and every token inside it is billed on
+          <em>every</em> call. A real request is therefore a composed artifact with a budget:</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Context window · the token budget (tens of thousands to millions of tokens)</span>
+            <div class="dg-stack">
+              <div class="dg-box">System prompt<br><span class="dg-note">standing instructions: role, tone, rules</span></div>
+              <div class="dg-box">Conversation history<br><span class="dg-note">grows every turn — and is re-sent, and re-billed, every turn</span></div>
+              <div class="dg-box">Retrieved documents<br><span class="dg-note">grounding material — Session 5's job</span></div>
+              <div class="dg-box dg-box--accent">User message<br><span class="dg-note">the actual question</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Anatomy of one request. The completion the model writes back consumes output tokens on top of this input budget.</p>
+        </div>
+        <p class="prose">Two engineering habits follow directly. Because history is re-sent each
+          turn, long conversations grow linearly in cost — production systems truncate or
+          summarize. And because instructions, examples (<em>few-shot prompting</em>) and evidence
+          all compete for the same budget, prompt design is partly a resource-allocation problem —
+          the discipline Session 4 turns into measurement.</p>
+
+        <h3>Embeddings: meaning as geometry</h3>
+        <p class="prose">Alongside generative models sit <strong>embedding models</strong>, which map
+          text to a <strong>dense vector representation</strong> — a point in a high-dimensional
+          space. The model this course deploys, <code>text-embedding-3-small</code>, produces
+          1536-dimensional vectors with a learned property: texts with similar meaning land close
+          together, where "close" is measured by <strong>cosine similarity</strong> between
+          vectors. Similarity search over embeddings is what powers semantic search and
+          retrieval-augmented generation — Session 5's core.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Embedding space · 1536 dimensions, projected to two</span>
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:1;">
+                <span class="dg-label">Neighbourhood: card issues</span>
+                <div class="dg-row">
+                  <div class="dg-box">"my card is blocked"</div>
+                  <div class="dg-box">"frozen debit card"</div>
+                </div>
+              </div>
+              <div class="dg-box dg-box--frame" style="flex:1;">
+                <span class="dg-label">Neighbourhood: lending</span>
+                <div class="dg-row">
+                  <div class="dg-box">"mortgage rate"</div>
+                  <div class="dg-box">"home-loan interest"</div>
+                </div>
+              </div>
+              <div class="dg-box dg-box--muted" style="flex:0.7; align-self:center;">"the weather in Cluj"<br><span class="dg-note">far from both</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Semantic similarity as distance: paraphrases cluster despite sharing no words; unrelated text lands far away.</p>
+        </div>
+
+        <h3>A map of model kinds</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Kind</th><th>What it's optimized for</th><th>In this course</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Chat / instruct LLM</strong></td><td>Dialogue and instruction-following text generation</td><td><code>gpt-5.1</code> — our workhorse from Session 2</td></tr>
+              <tr><td><strong>Reasoning model</strong></td><td>Extended internal deliberation on hard problems — slower, costlier, stronger</td><td>Model-selection trade-offs, Session 3</td></tr>
+              <tr><td><strong>Embedding model</strong></td><td>Text → vectors for similarity and retrieval; generates nothing</td><td><code>text-embedding-3-small</code>, Session 5</td></tr>
+              <tr><td><strong>Multimodal model</strong></td><td>Images, audio or video as input and/or output</td><td>In the Foundry catalog; out of our build's scope</td></tr>
+              <tr><td><strong>Small language model (SLM)</strong></td><td>Efficiency — running on modest or local hardware</td><td>The local-hosting lane, Session 2</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Determinism, temperature and sampling</h3>
+        <p class="prose">The model's output layer is a probability distribution;
+          <strong>sampling</strong> chooses the actual token. The <strong>temperature</strong>
+          parameter rescales that distribution before the choice: low temperature sharpens it
+          toward the single most probable token (near-deterministic, focused, repetitive at the
+          extreme), high temperature flattens it (varied, creative, riskier). A companion
+          parameter, <em>top-p</em>, restricts sampling to the smallest set of tokens whose
+          probabilities sum to p. One practical caveat: even at temperature 0, bit-identical runs
+          are not guaranteed — floating-point arithmetic and server-side batching introduce small
+          nondeterminism. Treat determinism as a dial, not a promise.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>Temperature ≈ 0</th><th>Temperature ≈ 1</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Behaviour</strong></td><td>Picks the most probable continuation almost every time</td><td>Samples broadly across plausible continuations</td></tr>
+              <tr><td><strong>Suits</strong></td><td>Extraction, classification, structured output, reproducible tests</td><td>Drafting, brainstorming, variety in tone</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Capabilities and limits</h3>
+        <p class="prose">A next-token predictor optimizes plausibility, not truth. When the training
+          distribution offers no strong signal, the model produces confident, fluent, wrong text —
+          <strong>hallucination</strong> (more precisely, confabulation). Add the fixed
+          <strong>knowledge cutoff</strong>, biases inherited from the corpus, and sampling's
+          inherent variability, and the engineering agenda of this module writes itself: ground the
+          model in real documents, measure output quality systematically, and put guardrails around
+          actions.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">Fluent is not correct</p>
+          <p>An LLM states falsehoods with the same confidence as facts. This is not a reason to
+            avoid the technology — it is the reason this course exists. Grounding (Session 5),
+            systematic evaluation (Session 4) and guardrails (Session 6) are what turn a
+            plausible-text generator into a dependable system.</p>
+        </div>
+      </section>
+
+      <!-- ============ LIVE DEMO ============ -->
+      <section id="live-demo" class="doc-section">
+        <div>
+          <span class="eyebrow">10:30 · Live coding · 30′</span>
+          <h2>Generative AI, <span class="gradient-text">live in code</span></h2>
+        </div>
+        <p class="prose">Concepts earn their keep when they run. In this block I write and execute
+          three small programs in front of you — your job is to watch, predict what each will
+          print, and interrupt when reality surprises you. Everything shown here becomes
+          <em>your</em> exercise in Session 2, so treat this page as the preview of tomorrow's lab.</p>
+
+        <h3>Demo 1 — tokens made visible</h3>
+        <p class="prose">The tokenizer is public — we can run the exact algorithm the model uses
+          and count what a sentence costs. Watch what happens to English versus Romanian, and to
+          rare words versus common ones:</p>
+        <div class="code-block">
+          <span class="code-block__label">demo_1_tokens.py</span>
+          <pre><code>import tiktoken
+
+enc = tiktoken.get_encoding("o200k_base")   # the tokenizer family behind recent GPT models
+
+for text in [
+    "The card is blocked.",
+    "Cardul este blocat.",
+    "Retrieval-augmented generation",
+]:
+    tokens = enc.encode(text)
+    print(f"{len(tokens):>3} tokens | {text}")</code></pre>
+        </div>
+        <p class="prose">The observation that matters: token counts — not character counts — are
+          what you pay for and what fills the context window. Non-English text and rare terminology
+          tokenize less efficiently, which has real cost consequences for a Romanian bank.</p>
+
+        <h3>Demo 2 — talking to gpt-5.1, twice</h3>
+        <p class="prose">One authenticated call to the deployed model, then the same question at two
+          temperatures. Watch the role of the system prompt — and how variability is a parameter,
+          not an accident:</p>
+        <div class="code-block">
+          <span class="code-block__label">demo_2_chat.py</span>
+          <pre><code>from azure.ai.inference import ChatCompletionsClient
+from azure.identity import DefaultAzureCredential
+
+client = ChatCompletionsClient(endpoint=ENDPOINT, credential=DefaultAzureCredential())
+
+for temperature in (0.0, 1.0):
+    reply = client.complete(
+        model="gpt-5.1",
+        temperature=temperature,
+        messages=[
+            {"role": "system", "content": "You are a precise banking assistant. Two sentences maximum."},
+            {"role": "user", "content": "Explain what an IBAN is."},
+        ],
+    )
+    print(f"--- temperature={temperature} ---")
+    print(reply.choices[0].message.content)</code></pre>
+        </div>
+
+        <h3>Demo 3 — meaning as geometry</h3>
+        <p class="prose">Finally, the embedding space from the previous section, for real: four
+          phrases, their vectors, and the cosine-similarity matrix. Predict which pair wins before
+          the numbers print:</p>
+        <div class="code-block">
+          <span class="code-block__label">demo_3_embeddings.py</span>
+          <pre><code>import numpy as np
+from azure.ai.inference import EmbeddingsClient
+from azure.identity import DefaultAzureCredential
+
+client = EmbeddingsClient(endpoint=ENDPOINT, credential=DefaultAzureCredential())
+
+phrases = ["my card is blocked", "frozen debit card",
+           "mortgage interest rate", "the weather in Cluj"]
+
+vectors = [np.array(item.embedding)
+           for item in client.embed(model="text-embedding-3-small", input=phrases).data]
+
+def cosine(a, b):
+    return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+for i, a in enumerate(phrases):
+    for j, b in enumerate(phrases):
+        if i &lt; j:
+            print(f"{cosine(vectors[i], vectors[j]):.3f}  {a!r} vs {b!r}")</code></pre>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Tomorrow, this is yours</p>
+          <p>Session 2 starts by getting every environment green, and by noon you will have run
+            all three demos against your own deployment — plus deployed the model behind them.</p>
+        </div>
+      </section>
+
+      <!-- ============ CLOUD ARCHITECTURE ============ -->
+      <section id="cloud" class="doc-section">
+        <div>
+          <span class="eyebrow">11:00 · Theory · 15′</span>
+          <h2>The cloud is not just <span class="gradient-text">someone else's computer</span></h2>
+        </div>
+        <p class="prose">Strip the marketing and cloud computing is this: computing capacity —
+          servers, storage, networking, and increasingly entire managed platforms — consumed
+          <em>as a metered service over the network</em> rather than owned as hardware. Owning
+          servers means capacity planning years ahead, paying for peak load around the clock, and
+          operating everything from firmware to backups yourself. The cloud model replaces that
+          with three structural shifts: <strong>elasticity</strong> (capacity pooled across many
+          tenants through virtualization scales with demand and back), a new cost shape
+          (capital expenditure becomes metered <strong>operating expenditure</strong> — which is
+          why cost becomes an engineering metric), and <strong>managed services</strong> — you rent
+          outcomes ("a database", "a model endpoint") operated to a contractual SLA, and the unit
+          of thought moves up from servers to capabilities.</p>
+
+        <h3>The anatomy of a cloud application</h3>
+        <p class="prose">Nearly every cloud application — including the one you will build —
+          converges on the same layered shape: a client, a stateless application tier, a set of
+          managed data and AI services behind it, and three cross-cutting concerns (identity,
+          secrets, observability) that touch everything:</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Presentation layer</span>
+              <div class="dg-box">Browser / mobile client — the web chat UI</div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ HTTPS</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Application layer</span>
+              <div class="dg-box dg-box--accent">Your Python API — a container on a managed runtime</div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ authenticated calls</span></div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Data &amp; AI layer · managed services</span>
+              <div class="dg-row">
+                <div class="dg-box">Azure SQL<br><span class="dg-note">transactions &amp; state</span></div>
+                <div class="dg-box">Blob storage<br><span class="dg-note">files &amp; documents</span></div>
+                <div class="dg-box">AI Search<br><span class="dg-note">retrieval</span></div>
+                <div class="dg-box">Model endpoint<br><span class="dg-note">inference</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Cross-cutting · touches every layer</span>
+              <div class="dg-row">
+                <div class="dg-box">Entra ID<br><span class="dg-note">identity</span></div>
+                <div class="dg-box">Key Vault<br><span class="dg-note">secrets</span></div>
+                <div class="dg-box">Azure Monitor<br><span class="dg-note">observability</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The standard anatomy — and, by Session 7, the architecture diagram of Libra Assist.</p>
+        </div>
+
+        <h3>The building blocks, one by one</h3>
+        <p class="prose"><strong>Identity.</strong> In the cloud, identity replaces the network
+          perimeter as the primary security boundary. Every call between blocks is authenticated:
+          the application holds a <em>managed identity</em>, exchanges it with Entra ID for a
+          short-lived token, and presents that token to the database or model endpoint — no
+          passwords stored anywhere, nothing long-lived to leak:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--accent">App<br><span class="dg-note">managed identity</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Entra ID<br><span class="dg-note">issues short-lived token</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Resource<br><span class="dg-note">validates token + RBAC role</span></div>
+          </div>
+          <p class="diagram__caption">Token-based authentication: the pattern behind every keyless call in this course.</p>
+        </div>
+        <p class="prose"><strong>Secrets.</strong> Whatever cannot be eliminated by managed identity
+          — third-party API keys, certificates, legacy connection strings — lives in a dedicated,
+          audited vault with its own access control, never in code or configuration files:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--accent">App</div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Key Vault<br><span class="dg-note">RBAC-guarded, every read audited</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box dg-box--muted">secret returned at runtime<br><span class="dg-note">never committed, rotated centrally</span></div>
+          </div>
+          <p class="diagram__caption">The vault pattern — and the best secret remains the one managed identity makes unnecessary.</p>
+        </div>
+        <p class="prose"><strong>Data.</strong> "The database" is really a family of services chosen
+          by the shape of the data and the query you need: relational rows with transactions,
+          unstructured files, or searchable meaning:</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Structured records,<br>transactions<br><span class="dg-note">→ Azure SQL</span></div>
+            <div class="dg-box">Files &amp; documents,<br>cheap at scale<br><span class="dg-note">→ Blob storage</span></div>
+            <div class="dg-box">Text you query by meaning<br><span class="dg-note">→ AI Search + embeddings</span></div>
+          </div>
+          <p class="diagram__caption">Pick the store by data shape — Libra Assist will use all three.</p>
+        </div>
+        <p class="prose"><strong>Compute, networking, observability.</strong> The application itself
+          runs on a managed compute service (in our case, a container platform) reachable over
+          managed networking (public endpoints now, private networking in stricter setups), and
+          everything emits telemetry — logs, metrics, traces — into Azure Monitor, because in a
+          distributed system the question "what is happening right now?" must have a queryable
+          answer.</p>
+
+        <h3>The shared-responsibility model</h3>
+        <p class="prose">What the cloud never removes is responsibility for <em>your</em> side of the
+          system. Security and operations are split between provider and customer along a boundary
+          that depends on the service model — infrastructure (IaaS), platform (PaaS), or software
+          (SaaS) as a service. Read the matrix column by column — and notice the row that never
+          changes hands: identity and data are yours in every column.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Layer</th><th>On-premises</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Data &amp; application</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-shared">Shared</td></tr>
+              <tr><td><strong>Identity &amp; access</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-you">You</td></tr>
+              <tr><td><strong>Runtime &amp; middleware</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Operating system</strong></td><td class="dg-you">You</td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Virtualization</strong></td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+              <tr><td><strong>Physical hosts &amp; network</strong></td><td class="dg-you">You</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td><td class="dg-provider">Provider</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Example instances on Azure: a virtual machine is IaaS (you own the OS
+          upward); Azure SQL Database and Container Apps are PaaS (you own your schema and your
+          container image, nothing beneath); Microsoft 365 is SaaS. Almost everything in this
+          module lives in PaaS — precisely so that our attention stays on the application. As for
+          what remains genuinely hard — security configuration, cost governance, data gravity and
+          lock-in — the reference page below treats each honestly.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Full write-up</p>
+          <p>This topic has a standalone reference page with the complete treatment — definitions,
+            the five NIST characteristics, how applications are composed, deployment models and the
+            challenges in depth: <a href="ref-cloud-computing.html">Cloud computing — a general overview</a>.</p>
+        </div>
+      </section>
+
+      <!-- ============ AZURE TOUR ============ -->
+      <section id="azure-tour" class="doc-section">
+        <div>
+          <span class="eyebrow">11:15 · Walkthrough, part one</span>
+          <h2>A guided tour of <span class="gradient-text">Azure</span>, section by section</h2>
+        </div>
+        <p class="prose">Azure is Microsoft's cloud platform: more than 60 regions offering
+          compute, storage, networking, data and AI services under one management, identity and
+          billing model. In the live walkthrough I take you through it in four passes — the
+          physical layer, the identity layer, the resource model, and the tools. Each subsection
+          below matches what you will see on screen, so this page works as your revisit guide.</p>
+
+        <h3>1 · The global infrastructure</h3>
+        <p class="prose">At the bottom sit the physical facilities. A <strong>region</strong> is a
+          set of datacenters in one geographic area (West Europe, Sweden Central, …) connected by
+          low-latency links; many regions are organized into <strong>availability zones</strong> —
+          physically separate datacenter groups with independent power, cooling and networking, so
+          that a facility-level failure does not take the region down. Regions are joined by
+          Microsoft's private fiber backbone, and many form <strong>region pairs</strong> for
+          disaster recovery. Why it matters to you: the region you deploy into determines latency
+          to your users, which services and models are available, the price sheet — and, decisive
+          in banking, <strong>where the data physically resides</strong> for residency and
+          sovereignty obligations.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Geography (e.g. Europe)</span>
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:2;">
+                <span class="dg-label">Region · West Europe</span>
+                <div class="dg-row">
+                  <div class="dg-box">AZ 1</div>
+                  <div class="dg-box">AZ 2</div>
+                  <div class="dg-box">AZ 3</div>
+                </div>
+              </div>
+              <div class="dg-box dg-box--frame dg-box--muted" style="flex:1;">
+                <span class="dg-label">Paired region</span>
+                <div class="dg-box dg-box--muted">DR copy</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Geography → region → availability zones; a paired region backs disaster recovery. Each AZ is one or more physical datacenters.</p>
+        </div>
+
+        <h3>2 · Identity: the tenant and Microsoft Entra ID</h3>
+        <p class="prose">Before any resource exists, there is a directory. A <strong>tenant</strong>
+          is an organization's dedicated instance of <strong>Microsoft Entra ID</strong> (formerly
+          Azure Active Directory) — the identity system holding every <em>user</em>,
+          <em>group</em>, <em>application</em> and <em>managed identity</em>. Every sign-in and
+          every API call in Azure is authenticated against the tenant, and authorization is granted
+          through <strong>role-based access control (RBAC)</strong>: an assignment of a role (what
+          actions are allowed) to an identity at a scope (where). Remember the phrase
+          <em>identity is the security perimeter</em> — in the cloud there is no firewall around
+          everything; there are identities and the roles they hold. This is also why this course
+          never touches an API key: our code will authenticate as an identity, keylessly.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Tenant · Microsoft Entra ID</span>
+            <div class="dg-row">
+              <div class="dg-box">Users</div>
+              <div class="dg-box">Groups</div>
+              <div class="dg-box">Applications</div>
+              <div class="dg-box">Managed identities</div>
+            </div>
+            <div class="dg-row" style="margin-top:.5rem;">
+              <span class="dg-note" style="margin-inline:auto;">↓ RBAC: role + identity + scope ↓</span>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--accent">Subscriptions · resource groups · resources</div>
+            </div>
+          </div>
+          <p class="diagram__caption">One directory authenticates everything; RBAC assignments authorize it at a chosen scope.</p>
+        </div>
+
+        <h3>3 · The resource hierarchy</h3>
+        <p class="prose">Everything you create in Azure is a <strong>resource</strong> — a database,
+          a model deployment, a container app. Resources live in <strong>resource groups</strong>,
+          the unit of lifecycle: things that are deployed, secured and deleted together share a
+          group. Resource groups belong to a <strong>subscription</strong> — the boundary for
+          billing, quotas and policy, and the classic unit handed to a team or project.
+          Subscriptions can be organized under <strong>management groups</strong> for
+          organization-wide governance. Two mechanisms ride this tree: RBAC assignments and
+          <em>Azure Policy</em> rules applied at any level <em>inherit downward</em>, and
+          <em>tags</em> (key–value labels) cut across it for cost attribution. When something in
+          Azure confuses you, the first question is always: <em>where in this hierarchy am I?</em></p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Management group</span>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Subscription · billing, quota &amp; policy boundary</span>
+              <div class="dg-box dg-box--frame">
+                <span class="dg-label">Resource group · lifecycle unit</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--accent">Foundry resource</div>
+                  <div class="dg-box">Azure SQL DB</div>
+                  <div class="dg-box">Container App</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The governance tree — RBAC and policy inherit top-down. The three resources shown are exactly the ones this course creates.</p>
+        </div>
+
+        <h3>4 · Management surfaces</h3>
+        <p class="prose">All management flows through one control plane — <strong>Azure Resource
+          Manager (ARM)</strong>, a REST API that every tool below ultimately calls. Because the
+          control plane is uniform, anything you can click can also be scripted, templated and
+          audited; teams describe entire environments declaratively (ARM/Bicep templates,
+          Terraform) and let the platform converge to the description. You will use the first two
+          tools daily; know the rest exist.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Tool</th><th>What it is</th><th>Reach for it when…</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Azure portal</strong></td><td>The web UI at portal.azure.com</td><td>Exploring, inspecting state, one-off changes, dashboards</td></tr>
+              <tr><td><strong>Azure CLI</strong> (<code>az</code>)</td><td>Cross-platform command-line client</td><td>Anything you'll repeat — scriptable, copy-pasteable, versionable</td></tr>
+              <tr><td><strong>Azure PowerShell</strong> (Az module)</td><td>PowerShell cmdlets returning objects</td><td>Windows-centric automation and pipeline-style scripting</td></tr>
+              <tr><td><strong>Cloud Shell</strong></td><td>Browser terminal with az/PowerShell pre-installed and pre-authenticated</td><td>No local install available, quick fixes from anywhere</td></tr>
+              <tr><td><strong>Azure Copilot</strong></td><td>AI assistant embedded in the portal</td><td>"Which of my resources…?" — ask instead of hunting through blades</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ MICROSOFT FOUNDRY ============ -->
+      <section id="foundry" class="doc-section">
+        <div>
+          <span class="eyebrow">11:15 · Walkthrough, part two</span>
+          <h2>Microsoft Foundry: a tour of the <span class="gradient-text">AI platform</span></h2>
+        </div>
+        <p class="prose"><strong>Microsoft Foundry</strong> is the umbrella platform where Azure's
+          AI work happens: one place to browse and deploy models, build and run agents, connect
+          knowledge sources, evaluate quality and monitor usage. It is the current name of a
+          product line you may know under older names — Azure's <em>Cognitive Services</em> became
+          <em>Azure AI services</em>, gained a unified portal as <em>Azure AI Studio</em>, was
+          renamed <em>Azure AI Foundry</em>, and in late 2025 became simply
+          <em>Microsoft Foundry</em>. The renames matter only so you can read older documentation;
+          the direction is one platform consolidating what used to be a dozen separate services.</p>
+        <p class="prose">Foundry shows two faces. In the <strong>Azure portal</strong> you manage it
+          as infrastructure — the resource, its networking, identity and cost, sitting in the
+          resource hierarchy you just learned. In the <strong>Foundry portal</strong>
+          (ai.azure.com) you work in it as a builder — projects, model catalog, playground,
+          agents, evaluations. Same objects, two lenses: one for governance, one for building.
+          In the walkthrough we open both.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Deep dive available</p>
+          <p>Foundry has its own reference page — a step-by-step tutorial from an empty Azure
+            account to a deployed model called from your local machine, plus monitoring and the
+            Foundry-vs-OpenAI comparison: <a href="ref-foundry.html">Microsoft Foundry — the platform, step by step</a>.</p>
+        </div>
+
+        <h3>Reading the portal menu</h3>
+        <p class="prose">Open <em>Microsoft Foundry</em> in the Azure portal and the left menu is a
+          map of Microsoft's entire AI estate, in three groups. <strong>"Use with Foundry"</strong>
+          lists the building blocks of the modern platform:</p>
+        <p class="prose"><strong>Foundry</strong> is the platform resource itself. Creating one
+          gives you access to the <strong>model catalog</strong> — OpenAI models alongside models
+          from Meta, Mistral, DeepSeek, xAI and many open-weight families — plus
+          <strong>projects</strong> (workspaces that hold deployments, connections and access
+          control), the <strong>Agent Service</strong> for tool-using agents, and built-in
+          evaluation and tracing. This is what our course runs on.
+          <strong>AI Hubs</strong> are the previous generation of Foundry workspaces: a
+          <em>hub</em> centralizes shared storage, connections and compute, and projects hang off
+          it. Hubs remain fully supported and you will meet them in existing estates, but new work
+          defaults to projects created directly on a Foundry resource — lighter and simpler.
+          <strong>Azure OpenAI</strong> is the dedicated resource type for OpenAI models
+          specifically — more on it below, because the distinction is today's most practical
+          question. <strong>AI Search</strong> is Azure's retrieval engine: full-text, vector and
+          hybrid search over your documents, with semantic ranking. It is how grounding works at
+          production quality, and it returns as a main character in Session 5.</p>
+        <p class="prose"><strong>"More services"</strong> lists the specialized AI services — each
+          also usable standalone, many of them predating the LLM era and still carrying serious
+          enterprise workloads:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Service</th><th>What it does</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Bot services</strong></td><td>Framework and hosting for conversational bots across channels (Teams, web chat, telephony).</td></tr>
+              <tr><td><strong>Computer vision</strong></td><td>Prebuilt image analysis: object and scene detection, OCR (text in images), spatial analysis.</td></tr>
+              <tr><td><strong>Custom vision</strong></td><td>Train your own image classifiers and object detectors on your own labelled examples.</td></tr>
+              <tr><td><strong>Content safety</strong></td><td>Detects harmful, unsafe or policy-violating content in text and images — the moderation layer behind model filters.</td></tr>
+              <tr><td><strong>Document intelligence</strong></td><td>Extracts structured data from documents: invoices, receipts, contracts, custom forms (formerly Form Recognizer).</td></tr>
+              <tr><td><strong>Face API</strong></td><td>Face detection and recognition — access-restricted given its sensitivity.</td></tr>
+              <tr><td><strong>Health Insights</strong></td><td>Healthcare-specific models over clinical data (radiology, patient timelines).</td></tr>
+              <tr><td><strong>Machine Learning</strong></td><td>Azure Machine Learning: the full train-your-own-models platform — experiments, pipelines, registries, MLOps.</td></tr>
+              <tr><td><strong>Immersive reader</strong></td><td>Reading-assistance service (read-aloud, translation, comprehension aids) embeddable in apps.</td></tr>
+              <tr><td><strong>Language service</strong></td><td>Text analytics: sentiment, entity recognition, key phrases, summarization, conversational language understanding.</td></tr>
+              <tr><td><strong>Speech service</strong></td><td>Speech-to-text, text-to-speech with neural voices, speech translation, speaker recognition.</td></tr>
+              <tr><td><strong>Translator</strong></td><td>Neural machine translation across 100+ languages, for text and documents.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose"><strong>"Classic AI services"</strong> holds the legacy generation —
+          multi-service accounts and retired offerings such as Anomaly Detector. You will
+          encounter "classic" resources in any organization that adopted AI early; treat the label
+          as a signal to check migration guidance before building anything new on them.</p>
+
+        <h3>Foundry vs Azure OpenAI — the distinction that matters</h3>
+        <p class="prose">Click <em>+ Create</em> on the Azure OpenAI blade and the portal offers two
+          choices: <strong>"Foundry (Recommended)"</strong> and <strong>"Azure OpenAI"</strong>.
+          They are two different resource types with a real history. <strong>Azure OpenAI</strong>
+          arrived first: a dedicated service exposing OpenAI's models (GPT chat models, o-series
+          reasoning models, embeddings, image and audio models) under Azure's enterprise contract —
+          your data is not used to train the models, traffic stays inside your tenant's boundary,
+          private networking and content filters apply. Thousands of organizations, banks included,
+          built on it and hold estates of Azure OpenAI resources today.
+          <strong>Foundry</strong> is the platform that grew around and beyond it: the same OpenAI
+          models, plus the multi-vendor catalog, plus projects, agents, evaluations and tracing —
+          one resource for the whole AI application lifecycle rather than one model family.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>Microsoft Foundry</th><th>Azure OpenAI</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Model scope</strong></td><td>Full catalog: OpenAI + Meta, Mistral, DeepSeek, xAI, open-weight families</td><td>OpenAI models only</td></tr>
+              <tr><td><strong>Projects &amp; portal</strong></td><td>Native: projects, playground, catalog in ai.azure.com</td><td>Usable from Foundry via connection; also standalone</td></tr>
+              <tr><td><strong>Agents, evaluations, tracing</strong></td><td>Built in (Agent Service, evaluators, observability)</td><td>Not included — model endpoint only</td></tr>
+              <tr><td><strong>Typical role</strong></td><td>The default for new AI platform work</td><td>Existing estates; OpenAI-only workloads</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The practical guidance is the one Microsoft encodes in that dropdown:
+          <em>new work starts on Foundry</em> — you keep every Azure OpenAI capability and gain the
+          platform around it. An existing Azure OpenAI resource is not a dead end: it connects to
+          Foundry projects, so organizations migrate by addition rather than by rebuild. When you
+          join a company and find both in the subscription, you now know exactly what you are
+          looking at — and why both exist.</p>
+
+        <h3>Where this course lives</h3>
+        <p class="prose">Everything we build runs in a Foundry project with two model deployments:
+          <code>gpt-5.1</code> for chat and reasoning, and <code>text-embedding-3-small</code> for
+          embeddings. Your code will reach them through the project endpoint, authenticated as your
+          identity — keylessly — exactly as the identity section promised. Tomorrow's session
+          starts by signing in and proving that path works.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Microsoft Foundry resource</span>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Project</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--accent">gpt-5.1<br><span class="dg-note">chat deployment</span></div>
+                <div class="dg-box dg-box--accent">text-embedding-3-small<br><span class="dg-note">embeddings deployment</span></div>
+              </div>
+              <div class="dg-row" style="margin-top:.5rem;">
+                <div class="dg-box">Connections<br><span class="dg-note">AI Search · storage · Azure OpenAI</span></div>
+                <div class="dg-box">Agent Service<br><span class="dg-note">Session 6</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The course topology: one Foundry resource, one project, two deployments — extended session by session.</p>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What today set up</h2>
+        </div>
+        <p class="prose">We now share a map. <strong>Python</strong>, because two decades of
+          compounding ecosystem made it the language every AI capability speaks first.
+          <strong>Generative AI</strong> as it actually is: autoregressive next-token prediction
+          over tokens, attention inside, training stages behind the behaviour, embeddings turning
+          meaning into geometry — and you watched all of it run in live code, priced per token.
+          <strong>The cloud</strong> as elasticity, managed services and shared responsibility,
+          with a standard application anatomy we will instantiate piece by piece.
+          And <strong>Azure</strong> as the concrete stage: identities in a tenant, resources in a
+          governed hierarchy, and <strong>Microsoft Foundry</strong> as the AI platform where our
+          project, models and — from Session 6 — agents live. From tomorrow morning we stop
+          describing and start building: you sign in, reach your Foundry project, and make
+          <code>gpt-5.1</code> answer you from your own code.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>If you remember six things</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card"><p><strong>1.</strong> Python won AI by network effect — every model, library and SDK meets you there, and Python orchestrates while compiled kernels compute.</p></article>
+          <article class="card"><p><strong>2.</strong> LLMs predict the next token: context is their working memory, tokens are your cost, and generation is a loop.</p></article>
+          <article class="card"><p><strong>3.</strong> Fluent is not correct — grounding, evaluation and guardrails are what make AI dependable.</p></article>
+          <article class="card"><p><strong>4.</strong> Cloud = elasticity + managed services + shared responsibility; identity and data are always yours.</p></article>
+          <article class="card"><p><strong>5.</strong> Azure in one line: resource → resource group → subscription → tenant, with RBAC and policy inheriting down.</p></article>
+          <article class="card"><p><strong>6.</strong> Microsoft Foundry is the platform; Azure OpenAI is one lane inside it. New work starts on Foundry.</p></article>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <p class="card__meta">Course reference pages</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="ref-foundry.html">Microsoft Foundry — the platform, step by step</a> — from an empty Azure account to a deployed model called from your machine.</li>
+            <li><a href="ref-cloud-computing.html">Cloud computing — a general overview</a> — the full treatment of today's cloud topic.</li>
+            <li><a href="ref-git.html">How git works</a> — version control from first principles; we start using git with the starter code in Session 3.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__meta">Official documentation &amp; learning paths</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — the platform we toured, in depth.</li>
+            <li><a href="https://learn.microsoft.com/azure/ai-services/openai/overview" target="_blank" rel="noopener">What is Azure OpenAI?</a> — the service, its models and enterprise guarantees.</li>
+            <li><a href="https://learn.microsoft.com/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/" target="_blank" rel="noopener">Azure Fundamentals: cloud concepts</a> — free Microsoft Learn path behind today's cloud topic.</li>
+            <li><a href="https://azure.microsoft.com/explore/global-infrastructure/" target="_blank" rel="noopener">Azure global infrastructure</a> — the regions and datacenters we toured.</li>
+            <li><a href="https://learn.microsoft.com/entra/fundamentals/whatis" target="_blank" rel="noopener">What is Microsoft Entra ID?</a> — identities, tenants and sign-in.</li>
+            <li><a href="https://learn.microsoft.com/training/paths/beginner-python/" target="_blank" rel="noopener">Take your first steps with Python</a> — a refresher path if you want more practice.</li>
+            <li><a href="https://code.visualstudio.com/docs/python/python-tutorial" target="_blank" rel="noopener">Python in VS Code</a> — the editor setup we use all module.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>Before Session 2: environment check</h2>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">≈ 30 minutes · do this today if you can</p>
+          <p>Session 2 is hands-on from the start. Five checks now save us thirty minutes tomorrow.</p>
+        </div>
+        <div class="card">
+          <ol style="margin:0; padding-left:1.2rem;">
+            <li>Install <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">Visual Studio Code</a>.</li>
+            <li>Install <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">Python 3.11 or newer</a> — on Windows, tick <em>"Add python.exe to PATH"</em> during setup.</li>
+            <li>In VS Code, install the <strong>Python</strong> extension (by Microsoft).</li>
+            <li>Verify: open a terminal and run <code>python --version</code> — you should see 3.11+.</li>
+            <li>Sign in to the <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure portal</a> with the account provided for the academy, and confirm the portal opens.</li>
+          </ol>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">If anything fails</p>
+          <p>Don't spend your evening on it. Note the exact error message and bring it along —
+            the first minutes of Session 2 are reserved for getting every environment green, together.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Session 1 · Foundations — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curriculum · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">AI Engineering on Azure<small>Libra Bank Academy</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#outcomes">What you'll learn</a>
+      <a class="side-nav__link" href="#rhythm">How sessions run</a>
+      <span class="side-nav__group">The sessions</span>
+      <a class="side-nav__link" href="#s1">1 · Foundations</a>
+      <a class="side-nav__link" href="#s2">2 · Microsoft Foundry</a>
+      <a class="side-nav__link" href="#s3">3 · Model Integration</a>
+      <a class="side-nav__link" href="#s4">4 · Prompts &amp; Evaluation</a>
+      <a class="side-nav__link" href="#s5">5 · Data &amp; RAG</a>
+      <a class="side-nav__link" href="#s6">6 · Orchestration</a>
+      <a class="side-nav__link" href="#s7">7 · Project</a>
+      <span class="side-nav__group">Reference</span>
+      <a class="side-nav__link" href="#library">Reference library</a>
+      <a class="side-nav__link" href="ref-foundry.html">· Microsoft Foundry</a>
+      <a class="side-nav__link" href="ref-cloud-computing.html">· Cloud computing</a>
+      <a class="side-nav__link" href="ref-git.html">· How git works</a>
+      <span class="side-nav__group">Beyond</span>
+      <a class="side-nav__link" href="#next">What's next</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Libra Bank Academy · Module curriculum</span>
+          <h1>AI Engineering on <span class="gradient-text">Azure</span></h1>
+          <p><strong>From your first model call to a working AI assistant for banking — in seven sessions.</strong></p>
+          <p>This module takes you through the full craft of building AI applications on Microsoft Azure:
+            models and how to talk to them, prompts and how to judge them, documents and data,
+            multi-step workflows, and shipping to the cloud. Session by session, you grow one
+            application — <strong>Libra&nbsp;Assist</strong>, a banking assistant — from a single
+            authenticated call into an end-to-end solution.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">22 – 30 July 2026</span>
+            <span class="badge badge--navy">7 sessions × 2.5h · 09:30–12:00 · online</span>
+            <span class="badge badge--gold">Hands-on from Session 2</span>
+          </div>
+        </header>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
+          <span class="badge badge--cyan">Foundations</span><span aria-hidden="true">→</span>
+          <span class="badge badge--cyan">Foundry</span><span aria-hidden="true">→</span>
+          <span class="badge badge--cyan">Integrate</span><span aria-hidden="true">→</span>
+          <span class="badge badge--cyan">Evaluate</span><span aria-hidden="true">→</span>
+          <span class="badge badge--cyan">Ground</span><span aria-hidden="true">→</span>
+          <span class="badge badge--cyan">Automate</span><span aria-hidden="true">→</span>
+          <span class="badge badge--teal">Project</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Date</th><th>Session</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Wed 22 Jul</td><td>Foundations — Python, GenAI &amp; your Azure environment</td></tr>
+              <tr><td>2</td><td>Thu 23 Jul</td><td>Microsoft Foundry — models, gateways &amp; your first deployment</td></tr>
+              <tr><td>3</td><td>Fri 24 Jul</td><td>Model Integration &amp; Inference — LLMs in applications, model selection &amp; trade-offs</td></tr>
+              <tr><td>4</td><td>Mon 27 Jul</td><td>Prompt Engineering &amp; Systematic Evaluation — metrics, benchmarking &amp; Foundry evaluations</td></tr>
+              <tr><td>5</td><td>Tue 28 Jul</td><td>Data Integration &amp; RAG — vector stores, embeddings &amp; grounding with Azure AI Search</td></tr>
+              <tr><td>6</td><td>Wed 29 Jul</td><td>Orchestration &amp; Agentic Workflows — multi-step pipelines &amp; automation</td></tr>
+              <tr><td>7</td><td>Thu 30 Jul</td><td>Project — an end-to-end AI solution on Azure</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">What you'll learn</span>
+          <h2>By the end of this module you can…</h2>
+        </div>
+        <div class="grid grid-3">
+          <article class="card card--accent hover animate-in">
+            <h3>Speak Python for AI</h3>
+            <p>Explain why the AI world runs on Python — and use it to connect models, data and services.</p>
+          </article>
+          <article class="card card--accent hover animate-in">
+            <h3>Build with AI tools</h3>
+            <p>Drive AI coding assistants with clear specifications — plan first, review, then build.</p>
+          </article>
+          <article class="card card--accent hover animate-in">
+            <h3>Ship a real application</h3>
+            <p>A Python backend and a web chat interface, powered by models you deployed on Azure AI Foundry.</p>
+          </article>
+          <article class="card card--accent hover animate-in">
+            <h3>Ground it in data</h3>
+            <p>Embeddings and retrieval with citations, plus an Azure SQL database that remembers every conversation.</p>
+          </article>
+          <article class="card card--accent hover animate-in">
+            <h3>Measure quality</h3>
+            <p>Evaluate prompts and answers with metrics and benchmarks — evidence, not impressions.</p>
+          </article>
+          <article class="card card--accent hover animate-in">
+            <h3>Orchestrate &amp; deploy</h3>
+            <p>Multi-step workflows, agents with tools, and a container deployment pipeline into Azure.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ RHYTHM ============ -->
+      <section id="rhythm" class="doc-section">
+        <div>
+          <span class="eyebrow">How sessions run</span>
+          <h2>Every session mixes five formats</h2>
+        </div>
+        <div class="grid grid-auto">
+          <article class="card">
+            <span class="badge badge--navy">Theory</span>
+            <p style="margin-top:.7rem;">The concepts, on slides — short, visual, no jargon without a definition.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge--cyan">Walkthrough</span>
+            <p style="margin-top:.7rem;">Watch it done live in Azure — portals, services, and the craft around them.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge--teal">Live coding</span>
+            <p style="margin-top:.7rem;">The concept written as code in front of you, explained line by line.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge--gold">Lab</span>
+            <p style="margin-top:.7rem;">You build, on your machine — the assistant grows a little every session.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge--coral">Q&amp;A</span>
+            <p style="margin-top:.7rem;">Ask anything — including "can we go back to that?" Yes, we can.</p>
+          </article>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Session 1 is a discussion day</p>
+          <p>No laptop needed on day one — we meet, set expectations, and build the mental map.
+            Hands-on work starts in Session 2.</p>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Three habits, from day one</p>
+          <p>We never hardcode credentials — keyless sign-in from the very first call.
+            Every exercise shows what it costs, in tokens and money.
+            And nothing is thrown away — each session builds on the last.</p>
+        </div>
+      </section>
+
+      <!-- ============ S1 ============ -->
+      <section id="s1" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 1 · Wed 22 Jul · 09:30–12:00 · discussion day</p>
+          <h2>Foundations — Python, GenAI &amp; your Azure environment</h2>
+          <p class="prose">The discussion day: we meet each other, set expectations, and build the
+            module's mental map — no laptops, all concepts. Everything later sessions do with your
+            hands, this session first puts in your head.</p>
+          <ul>
+            <li>Welcome &amp; introductions — who you are, what you want from these two weeks</li>
+            <li>Why Python is the language of AI</li>
+            <li>Generative AI concepts: models, tokens, embeddings, prompts — and their limits</li>
+            <li>Generative AI live in code — tokens counted, a model call, embedding similarity, demonstrated</li>
+            <li>Cloud architecture — what actually changes when software moves to the cloud</li>
+            <li>A guided tour of Azure: regions, resource hierarchy, Entra ID, portal, CLI &amp; Copilot</li>
+            <li>Microsoft Foundry: a tour of the AI platform, and how it differs from Azure OpenAI</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> the mental map for everything we build — and a checklist to prepare your environment for Session 2.</p>
+          <a class="btn btn-accent" href="s01-foundations.html">Open the Session 1 agenda →</a>
+        </article>
+      </section>
+
+      <!-- ============ S2 ============ -->
+      <section id="s2" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 2 · Thu 23 Jul · 09:30–12:00 · hands-on begins</p>
+          <h2>Microsoft Foundry — models, gateways &amp; your first deployment</h2>
+          <p class="prose">Hands-on begins. Why enterprises consume models through a gateway rather
+            than calling providers directly, what that buys a bank — and by the end of the morning,
+            a model you deployed yourself answering your first authenticated calls.</p>
+          <ul>
+            <li>What Microsoft Foundry is, and what an LLM gateway does</li>
+            <li>Using models provider-direct vs through Azure — privacy, compliance, cost</li>
+            <li>The third lane: hosting models locally — when and why</li>
+            <li>Walkthrough: the Foundry portal — model catalog, deployments, playground</li>
+            <li>Lab: your first authenticated <code>gpt-5.1</code> call from Python</li>
+            <li>How we'll build from here: AI-assisted, spec-driven development — an introduction</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> a model deployment you understand end to end, and your first real calls against it.</p>
+          <a class="btn btn-accent" href="s02-foundry.html">Open the Session 2 agenda →</a>
+        </article>
+      </section>
+
+      <!-- ============ S3 ============ -->
+      <section id="s3" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 3 · Fri 24 Jul · 09:30–12:00</p>
+          <h2>Model Integration &amp; Inference — LLMs in applications, model selection &amp; trade-offs</h2>
+          <p class="prose">The model becomes a dependency inside real software: SDKs, parameters,
+            structured outputs, failure handling — and the application skeleton arrives, built
+            spec-first with an AI coding agent, then running on your machine.</p>
+          <ul>
+            <li>The SDK surface: talking to Foundry models from Python</li>
+            <li>Anatomy of a chat completion: messages, roles, parameters</li>
+            <li>Structured outputs and streaming; handling failures like an engineer</li>
+            <li>Choosing a model: the quality / latency / cost triangle</li>
+            <li>Walkthrough: an application skeleton built spec-first with an AI coding agent</li>
+            <li>Lab: run the starter app — Python API + web chat — on your machine</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> Libra Assist running locally, talking to your own deployment.</p>
+          <a class="btn btn-accent" href="s03-model-integration.html">Open the Session 3 agenda →</a>
+        </article>
+      </section>
+
+      <!-- ============ S4 ============ -->
+      <section id="s4" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 4 · Mon 27 Jul · 09:30–12:00</p>
+          <h2>Prompt Engineering &amp; Systematic Evaluation — metrics, benchmarking &amp; Foundry evaluations</h2>
+          <p class="prose">Prompting as an engineering discipline: prompts are specifications, and
+            specifications get tested. You'll leave able to prove — with measurements, not
+            impressions — which of two prompts is better.</p>
+          <ul>
+            <li>Prompting as specification: system prompts, examples, decomposition</li>
+            <li>Why "it looks good to me" doesn't scale — measuring quality</li>
+            <li>Golden datasets, evaluators, and LLM-as-judge</li>
+            <li>Walkthrough: evaluations in Azure AI Foundry</li>
+            <li>Lab: compare two prompt variants on a golden set — ship the winner on evidence</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> numbers that prove which prompt is better — and the habit of asking for them.</p>
+        </article>
+      </section>
+
+      <!-- ============ S5 ============ -->
+      <section id="s5" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 5 · Tue 28 Jul · 09:30–12:00</p>
+          <h2>Data Integration &amp; RAG — vector stores, embeddings &amp; grounding with Azure AI Search</h2>
+          <p class="prose">The assistant learns your documents and gains memory: retrieval-augmented
+            generation with citations on one side, an Azure SQL database persisting conversations
+            and costs on the other.</p>
+          <ul>
+            <li>Embeddings and chunking: how documents become searchable meaning</li>
+            <li>Vector stores, Azure AI Search, and answering with citations</li>
+            <li>Data integration: provisioning an Azure SQL database and connecting from Python</li>
+            <li>Lab: ground the assistant in a banking document set — and persist chat history
+              and token spend to your own database</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> an assistant that answers from documents and remembers its conversations.</p>
+        </article>
+      </section>
+
+      <!-- ============ S6 ============ -->
+      <section id="s6" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 6 · Wed 29 Jul · 09:30–12:00</p>
+          <h2>Orchestration &amp; Agentic Workflows — multi-step pipelines &amp; automation</h2>
+          <p class="prose">From answering to acting: the agent loop, tools, and the guardrails that
+            keep autonomy inside an approval boundary — plus the automation that ships the app to
+            Azure in a container.</p>
+          <ul>
+            <li>When one call isn't enough: workflows vs agents — principles, then Azure specifics</li>
+            <li>Tool calling; guardrails and approval gates</li>
+            <li>Foundry Agent Service and multi-step pipelines</li>
+            <li>Automation: containerize the app and deploy to Azure — registry to Container Apps</li>
+            <li>Lab: give your assistant tools — query your database, look up documents</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> an assistant that acts — and a deployment pipeline into the cloud.</p>
+        </article>
+      </section>
+
+      <!-- ============ S7 ============ -->
+      <section id="s7" class="doc-section">
+        <article class="card card--accent">
+          <p class="card__meta">Session 7 · Thu 30 Jul · 09:30–12:00 · build day</p>
+          <h2>Project — an end-to-end AI solution on Azure</h2>
+          <p class="prose">The build day. Models, prompts, data, retrieval and tools come together
+            into one working, demonstrable solution — yours.</p>
+          <ul>
+            <li>The brief: consolidate everything into one working solution</li>
+            <li>Supervised build: models, prompts, data, retrieval, tools — together</li>
+            <li>Demo &amp; feedback round</li>
+            <li>Where to go next: what to deepen, what to read, what to build</li>
+          </ul>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> your own working AI solution on Azure — and the confidence to demo it.</p>
+        </article>
+      </section>
+
+      <!-- ============ REFERENCE LIBRARY ============ -->
+      <section id="library" class="doc-section">
+        <div>
+          <span class="eyebrow">Reference library</span>
+          <h2>Standalone explainers</h2>
+        </div>
+        <p class="prose">Some concepts deserve their own page, independent of any single session.
+          These references are stable companions to the whole module — sessions link to them, and
+          you can return to them at any time.</p>
+        <div class="grid grid-3">
+          <a class="card card--accent hover" href="ref-foundry.html" style="display:block;">
+            <h3>Microsoft Foundry — step by step</h3>
+            <p>From an empty Azure account to a deployed model called from your machine: services,
+              auth, monitoring, and Foundry vs OpenAI direct.</p>
+          </a>
+          <a class="card card--accent hover" href="ref-cloud-computing.html" style="display:block;">
+            <h3>Cloud computing — a general overview</h3>
+            <p>What the cloud is, what you actually get compared to on-premises, and what remains
+              genuinely hard. The full treatment behind Session 1's cloud topic.</p>
+          </a>
+          <a class="card card--accent hover" href="ref-git.html" style="display:block;">
+            <h3>How git works</h3>
+            <p>Version control from first principles — snapshots, branches, merging and the
+              collaboration loop. We rely on it from Session 3 onward.</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- ============ NEXT ============ -->
+      <section id="next" class="doc-section">
+        <div class="panel-dark">
+          <span class="eyebrow">Where this lands</span>
+          <h2 style="color:inherit;">The academy's final project</h2>
+          <p>The academy closes with a final project: a banking-domain AI assistant using RAG or
+            agent logic — a complete, end-to-end GenAI solution. After these seven sessions, that
+            brief will read as a description of the system you have already built. The last mile is yours.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    AI Engineering on Azure · Libra Bank Academy · 22 – 30 July 2026
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>

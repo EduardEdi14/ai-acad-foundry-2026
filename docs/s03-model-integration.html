@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session 3 — Model Integration &amp; Inference · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session 3<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Today's topics</span>
+      <a class="side-nav__link" href="#recap">Where we are</a>
+      <a class="side-nav__link" href="#sdk">The SDK surface</a>
+      <a class="side-nav__link" href="#anatomy">Chat completion anatomy</a>
+      <a class="side-nav__link" href="#robust">Live: robust calls</a>
+      <a class="side-nav__link" href="#selection">Choosing a model</a>
+      <a class="side-nav__link" href="#skeleton">The skeleton, spec-first</a>
+      <a class="side-nav__link" href="#lab">Lab — run it locally</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session 3 · AI Engineering on Azure</span>
+          <h1>Model Integration &amp; Inference — LLMs <span class="gradient-text">inside applications</span></h1>
+          <p><strong>From a script that calls a model to an application a user can open.</strong></p>
+          <p>Yesterday you made a model answer; today the model becomes a dependency inside real
+            software. We master the request itself — messages, parameters, structured outputs,
+            streaming — and the discipline around it: handling the failures a network guarantees,
+            and choosing models on the quality–latency–cost triangle. Then the promised moment:
+            a one-page specification, an AI coding agent, and the skeleton of
+            <strong>Libra&nbsp;Assist</strong> — a Python API with a web chat interface — built in
+            front of you and then running on your machine.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Fri 24 Jul · 09:30–12:00 · online</span>
+            <span class="badge badge--gold">Laptop required — hands-on session</span>
+            <span class="badge badge--navy">Libra Assist runs locally today</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Recap, unblocking &amp; where today lands</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>09:40</td><td>The SDK surface &amp; anatomy of a chat completion</td><td>25</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:05</td><td>Structured outputs, streaming &amp; surviving failures</td><td>25</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>10:30</td><td>Choosing a model: quality · latency · cost</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:45</td><td>Break</td><td>10</td><td>—</td></tr>
+              <tr><td>10:55</td><td>The app skeleton, built spec-first with an AI coding agent</td><td>30</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>11:25</td><td><strong>Lab: run Libra Assist locally — API + web chat</strong></td><td>30</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>11:55</td><td>Questions &amp; a preview of Session 4</td><td>5</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: lab 30, live coding 25, theory 50, walkthrough 30, questions 5, break 10.">
+            <path fill="var(--chart-lab)" stroke="var(--surface)" stroke-width="2" d="M 50 4 A 46 46 0 0 1 93.75 35.79 L 75.68 41.66 A 27 27 0 0 0 50 23 Z"><title>Lab — 30′ (20%)</title></path>
+            <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 93.75 35.79 A 46 46 0 0 1 84.18 80.78 L 70.06 68.07 A 27 27 0 0 0 75.68 41.66 Z"><title>Live coding — 25′ (17%)</title></path>
+            <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 84.18 80.78 A 46 46 0 0 1 6.25 64.21 L 24.32 58.34 A 27 27 0 0 0 70.06 68.07 Z"><title>Theory — 50′ (33%)</title></path>
+            <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 6.25 64.21 A 46 46 0 0 1 22.96 12.79 L 34.13 28.16 A 27 27 0 0 0 24.32 58.34 Z"><title>Walkthrough — 30′ (20%)</title></path>
+            <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 22.96 12.79 A 46 46 0 0 1 31.29 7.98 L 39.02 25.33 A 27 27 0 0 0 34.13 28.16 Z"><title>Q&amp;A — 5′ (3%)</title></path>
+            <path fill="var(--chart-break)" stroke="var(--surface)" stroke-width="2" d="M 31.29 7.98 A 46 46 0 0 1 50 4 L 50 23 A 27 27 0 0 0 39.02 25.33 Z"><title>Break — 10′ (7%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-lab)"></span>Lab — 30′ (20%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 25′ (17%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 50′ (33%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 30′ (20%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Q&amp;A — 5′ (3%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-break)"></span>Break — 10′ (7%)</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Learning outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card card--accent hover">
+            <h3>Pick the right SDK</h3>
+            <p>Say when to reach for <code>azure-ai-inference</code>, the project SDK, or the
+              OpenAI-compatible surface — and why they all hit the same endpoint.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Compose requests deliberately</h3>
+            <p>Build multi-turn message lists and set temperature, max tokens and stop conditions
+              knowing exactly what each changes.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Get structured output</h3>
+            <p>Make the model return schema-conforming JSON a program can consume — reliably, not
+              by hoping.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Survive real networks</h3>
+            <p>Handle 429s with exponential backoff, distinguish truncation from completion, and
+              stream long answers token by token.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Argue a model choice</h3>
+            <p>Place any workload on the quality–latency–cost triangle and defend the model class
+              it lands on.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Run Libra Assist locally</h3>
+            <p>Clone, configure and run the starter application — and explain what each file does
+              and where yesterday's client lives inside it.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ RECAP ============ -->
+      <section id="recap" class="doc-section">
+        <div>
+          <span class="eyebrow">09:30 · Theory · 10′</span>
+          <h2>Where we are, and where today lands</h2>
+        </div>
+        <p class="prose">Inventory after two sessions: a governed model deployment
+          (<code>gpt-5.1</code>) and an embedding deployment behind your project's endpoint; a
+          working keyless toolchain on every laptop (<code>az login</code> →
+          <code>DefaultAzureCredential</code>); a script that speaks as Libra Assist; and the habit
+          of reading the token meter. Anyone whose lab stalled yesterday: this first block is the
+          unblocking window — flag it now.</p>
+        <p class="prose">Today's arc is one sentence: <em>a call is not an application</em>. A
+          script that works once on a good network, with a happy path and a human reading stdout,
+          is a demo. An application is called by strangers, on flaky networks, with malformed
+          inputs, at inconvenient volumes — and it must answer as structured data other code can
+          parse. The morning gives you the four missing pieces — richer requests, structured
+          outputs, streaming, failure handling — and the afternoon assembles them into a real
+          service with a web face, built the way we said we would: spec first.</p>
+      </section>
+
+      <!-- ============ SDK ============ -->
+      <section id="sdk" class="doc-section">
+        <div>
+          <span class="eyebrow">09:40 · Theory · part one</span>
+          <h2>The SDK surface: three doors, <span class="gradient-text">one endpoint</span></h2>
+        </div>
+        <p class="prose">Python code can reach your deployment through three SDK surfaces, and all
+          three are thin layers over the same HTTPS endpoint — the choice is ergonomic, not
+          architectural. <strong><code>azure-ai-inference</code></strong> is the one we use: a
+          focused inference client (chat, embeddings, streaming) with first-class Entra ID support —
+          small API, clean integration, our default. <strong><code>azure-ai-projects</code></strong>
+          sits one level higher: it talks to the <em>project</em> (list deployments, open
+          connections, later: agents and evaluations) and can hand you an inference client — the
+          administrative surface around the calls. And the <strong>OpenAI-compatible
+          surface</strong>: your endpoint also accepts the ubiquitous <code>openai</code> package
+          pointed at your URL — valuable for porting existing code and examples, at the price of a
+          less native identity story.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--accent">azure-ai-inference<br><span class="dg-note">our default · calls</span></div>
+              <div class="dg-box">azure-ai-projects<br><span class="dg-note">project &amp; platform ops</span></div>
+              <div class="dg-box dg-box--muted">openai (compat)<br><span class="dg-note">porting existing code</span></div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ all three speak HTTPS to ↓</span></div>
+            <div class="dg-box">Your project endpoint · …services.ai.azure.com</div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓</span></div>
+            <div class="dg-box dg-box--accent">Deployment · gpt-5.1</div>
+          </div>
+          <p class="diagram__caption">Three doors, one building. Choosing an SDK never locks you in — the wire protocol underneath is shared.</p>
+        </div>
+      </section>
+
+      <!-- ============ ANATOMY ============ -->
+      <section id="anatomy" class="doc-section">
+        <div>
+          <span class="eyebrow">09:40 · Theory · part two</span>
+          <h2>Anatomy of a chat completion</h2>
+        </div>
+        <p class="prose">Everything you send is a list of <strong>messages</strong>, each with a
+          <strong>role</strong>. <code>system</code> sets standing behaviour — persona, rules,
+          format contracts; it speaks with the most authority and the user never sees it.
+          <code>user</code> carries the human's turns; <code>assistant</code> carries the model's
+          own previous answers. And here is the fact that shapes every chat application ever built:
+          <strong>the model has no memory</strong>. Each call stands alone; "conversation" exists
+          only because your code re-sends the relevant history every turn:</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">messages = [ … ]  ·  what one multi-turn call actually sends</span>
+            <div class="dg-stack">
+              <div class="dg-box">system · "You are Libra Assist…"<br><span class="dg-note">sent every single turn</span></div>
+              <div class="dg-box">user · "A customer's card is blocked…"<br><span class="dg-note">turn 1</span></div>
+              <div class="dg-box">assistant · "First, verify identity…"<br><span class="dg-note">the model's own turn 1 answer, echoed back</span></div>
+              <div class="dg-box dg-box--accent">user · "And if verification fails?"<br><span class="dg-note">the new turn</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Statelessness made visible: turn 2 re-sends turn 1. History grows linearly — and is re-billed every turn, which Session 1's context-window budget predicted.</p>
+        </div>
+        <p class="prose">Around the messages sit the <strong>parameters</strong>, each answering one
+          production question:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Parameter</th><th>What it controls</th><th>Production stance</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>temperature</code></td><td>Sampling sharpness: 0 ≈ deterministic, 1 ≈ varied</td><td>Low for extraction/classification; moderate for prose</td></tr>
+              <tr><td><code>max_tokens</code></td><td>Hard cap on the completion length</td><td>Always set — it is your cost &amp; latency ceiling</td></tr>
+              <tr><td><code>top_p</code></td><td>Nucleus sampling: restrict to the most probable mass</td><td>Tune one of temperature/top_p, not both</td></tr>
+              <tr><td><code>stop</code></td><td>Sequences that end generation early</td><td>Handy for delimited formats</td></tr>
+              <tr><td><code>response_format</code></td><td>Free text vs schema-conforming JSON</td><td>The structured-output mechanism — next block</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">And on the way back: <code>choices[0].message</code> (the answer),
+          <code>finish_reason</code> (<code>"stop"</code> = model finished; <code>"length"</code> =
+          your cap cut it off; <code>"content_filter"</code> = the gateway intervened), and the
+          <code>usage</code> meter you already read by reflex.</p>
+      </section>
+
+      <!-- ============ ROBUST ============ -->
+      <section id="robust" class="doc-section">
+        <div>
+          <span class="eyebrow">10:05 · Live coding · 25′</span>
+          <h2>Structured outputs, streaming &amp; <span class="gradient-text">surviving failures</span></h2>
+        </div>
+        <p class="prose">Three upgrades, live, each turning yesterday's script one notch more
+          production-shaped.</p>
+        <h3>1 · Structured output — JSON a program can trust</h3>
+        <p class="prose">Free text is for humans; applications need fields. Asking nicely
+          ("answer in JSON") works until it doesn't — the robust mechanism is
+          <strong><code>response_format</code> with a JSON schema</strong>, which constrains
+          generation itself to the shape you declare:</p>
+        <div class="code-block">
+          <span class="code-block__label">structured.py</span>
+          <pre><code>from azure.ai.inference.models import JsonSchemaFormat
+
+reply = client.complete(
+    model="gpt-5.1",
+    messages=[
+        {"role": "system", "content": "Extract the transfer request from the user's message."},
+        {"role": "user", "content": "Please send 2,500 lei to Maria Ionescu today, it's urgent."},
+    ],
+    response_format=JsonSchemaFormat(
+        name="transfer_request",
+        schema={
+            "type": "object",
+            "properties": {
+                "beneficiary": {"type": "string"},
+                "amount_ron":  {"type": "number"},
+                "urgent":      {"type": "boolean"},
+            },
+            "required": ["beneficiary", "amount_ron", "urgent"],
+            "additionalProperties": False,
+        },
+    ),
+)
+import json
+data = json.loads(reply.choices[0].message.content)   # guaranteed to match the schema
+print(data["beneficiary"], data["amount_ron"], data["urgent"])</code></pre>
+        </div>
+        <p class="prose">Notice what changed philosophically: the prompt stopped being a wish and
+          became an <em>interface definition</em>. This is the mechanism behind tool calling in
+          Session 6 — an agent is, mechanically, a model emitting schema-conforming decisions.</p>
+        <h3>2 · Streaming — perceived latency is a design choice</h3>
+        <p class="prose">A 400-token answer takes seconds to generate but the first token arrives
+          fast. Streaming renders tokens as they exist — the difference between an app that feels
+          broken and one that feels alive. You saw the pattern in yesterday's stretch goal; today
+          it goes into the product: the skeleton's chat endpoint streams.</p>
+        <h3>3 · Failure is the normal case</h3>
+        <p class="prose">On a shared quota, under real traffic, <code>429 Too Many Requests</code>
+          is not an accident — it is Tuesday. The engineering response is <strong>retry with
+          exponential backoff</strong>: wait, double, try again, give up loudly after a budget:</p>
+        <div class="code-block">
+          <span class="code-block__label">robust_call.py</span>
+          <pre><code>import time
+from azure.core.exceptions import HttpResponseError
+
+def complete_with_retry(client, attempts=5, **kwargs):
+    for attempt in range(attempts):
+        try:
+            return client.complete(**kwargs)
+        except HttpResponseError as e:
+            retriable = e.status_code in (429, 500, 503)
+            if not retriable or attempt == attempts - 1:
+                raise
+            time.sleep(2 ** attempt)          # 1, 2, 4, 8 s — then give up loudly
+</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Failure</th><th>Meaning</th><th>Correct response</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>429</code></td><td>Quota exceeded (TPM/RPM)</td><td>Backoff and retry — never a tight loop</td></tr>
+              <tr><td><code>401 / 403</code></td><td>Identity or role problem</td><td>Fail fast; fix auth — retrying cannot help</td></tr>
+              <tr><td><code>404</code></td><td>Deployment name wrong</td><td>Fail fast; it's configuration</td></tr>
+              <tr><td><code>500 / 503</code> / timeout</td><td>Transient service/network fault</td><td>Retry with backoff, bounded</td></tr>
+              <tr><td><code>finish_reason == "length"</code></td><td>Your own cap truncated the answer</td><td>Handle in logic — bigger cap or summarize</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ SELECTION ============ -->
+      <section id="selection" class="doc-section">
+        <div>
+          <span class="eyebrow">10:30 · Theory · 15′</span>
+          <h2>Choosing a model: the <span class="gradient-text">quality · latency · cost</span> triangle</h2>
+        </div>
+        <p class="prose">"Which model?" is an engineering decision with three axes in permanent
+          tension. <strong>Quality</strong>: task performance — but benchmark scores are screening
+          evidence, not verdicts; only evaluation on <em>your</em> task (Session 4) settles it.
+          <strong>Latency</strong>: time-to-first-token and tokens-per-second — a chat user feels
+          both; a batch job feels neither. <strong>Cost</strong>: price per million tokens, input
+          and output separately — multiplied by context length and traffic, which is why the meter
+          habit exists. You cannot maximize all three; you choose which corner to sacrifice
+          <em>per workload</em>.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--accent" style="flex:1.2;">Quality<br><span class="dg-note">task performance — proven by YOUR eval, not leaderboards</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box">Latency<br><span class="dg-note">time-to-first-token · tokens/s</span></div>
+              <div class="dg-box">Cost<br><span class="dg-note">€ / million tokens, in + out</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">The selection triangle. Every workload picks a corner to sacrifice — pretending otherwise just picks one at random.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Model class</th><th>Trade</th><th>Reach for it when</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Flagship chat</strong> (our <code>gpt-5.1</code>)</td><td>High quality, moderate latency &amp; cost</td><td>Customer-facing language, complex instructions — Libra Assist's voice</td></tr>
+              <tr><td><strong>Small / mini models</strong></td><td>Fraction of the cost &amp; latency, lower ceiling</td><td>Classification, routing, extraction at volume — most calls in mature systems</td></tr>
+              <tr><td><strong>Reasoning models</strong></td><td>Deliberate longer for hard problems — slow, costly</td><td>Multi-step analysis where wrong is expensive; never for chit-chat</td></tr>
+              <tr><td><strong>Embedding models</strong></td><td>No generation at all; cents at scale</td><td>Search and retrieval — Session 5's engine</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Two production patterns to know by name: the <strong>router</strong> (a
+          cheap model classifies each request and forwards only the hard ones to the expensive
+          model) and the <strong>fallback chain</strong> (primary deployment fails or throttles →
+          secondary answers). Both are just the triangle, applied per request instead of per
+          product — and both become trivial to build once model access is behind one gateway.</p>
+      </section>
+
+      <!-- ============ SKELETON ============ -->
+      <section id="skeleton" class="doc-section">
+        <div>
+          <span class="eyebrow">10:55 · Walkthrough · 30′</span>
+          <h2>The skeleton, built <span class="gradient-text">spec-first</span> with an AI agent</h2>
+        </div>
+        <p class="prose">Yesterday's closing theory becomes practice. I have an idea — "a local web
+          chat talking to our deployment" — and instead of typing it, I wrote it down. This is the
+          entire specification; read it as a contract:</p>
+        <div class="code-block">
+          <span class="code-block__label">SPEC.md · Libra Assist skeleton, v0</span>
+          <pre><code># Libra Assist — starter skeleton (v0)
+
+Goal      : a local web chat talking to our Foundry deployment.
+
+Backend   : Python 3.11+, FastAPI
+  POST /chat      {message, history}  ->  {reply, usage}
+  GET  /          serves the chat page (static)
+Frontend  : ONE html file, no framework — input box, message list,
+            token counter under every answer
+Model     : gpt-5.1 via azure-ai-inference, keyless (DefaultAzureCredential)
+Config    : endpoint from env var AZURE_AI_ENDPOINT — never hardcoded
+Behaviour : system prompt = Libra Assist banking persona; history sent
+            each turn (the API stays stateless); errors surface as
+            readable messages, 429 retried with backoff
+Non-goals : no database, no retrieval, no login, no deployment
+            (each arrives in a later session)</code></pre>
+        </div>
+        <p class="prose">Watch the loop run for real: the agent reads the spec, proposes a plan
+          (file layout, endpoints, order of work) — <em>we review the plan before any code
+          exists</em> — then it implements, and we verify the result against the spec, point by
+          point, before committing. Along the way you will see me push back at least once: agents
+          propose confidently, and the review is where engineering lives. What comes out is the
+          repository you clone in the lab:</p>
+        <div class="code-block">
+          <span class="code-block__label">repository layout</span>
+          <pre><code>libra-assist/
+├── app/
+│   ├── main.py          # FastAPI app: POST /chat + serves the static page
+│   └── llm.py           # yesterday's client, wrapped: retry, usage, persona
+├── static/
+│   └── index.html       # the chat UI — one file, zero frameworks
+├── requirements.txt
+├── SPEC.md              # the contract above — the repo's most important file
+└── README.md</code></pre>
+        </div>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box">Browser<br><span class="dg-note">static/index.html</span></div>
+            <span class="dg-arrow">⇄</span>
+            <div class="dg-box dg-box--accent">FastAPI service<br><span class="dg-note">app/main.py · POST /chat</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">llm.py<br><span class="dg-note">client + retry + persona</span></div>
+            <span class="dg-arrow">→</span>
+            <div class="dg-box">Foundry deployment<br><span class="dg-note">gpt-5.1 · keyless</span></div>
+          </div>
+          <p class="diagram__caption">The skeleton's request path — Session 1's application-layer diagram, now with file names. Every later session upgrades exactly one box.</p>
+        </div>
+      </section>
+
+      <!-- ============ LAB ============ -->
+      <section id="lab" class="doc-section">
+        <div>
+          <span class="eyebrow">11:25 · Lab · 30′</span>
+          <h2>Lab — Libra Assist on <span class="gradient-text">your machine</span></h2>
+        </div>
+        <p class="prose">Clone it, run it, own it. The repository URL is in the session chat.</p>
+        <h3>Step 1 — clone and install (≈7′)</h3>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>git clone &lt;starter-repo-url&gt;          # from the session chat
+cd libra-assist
+python -m venv .venv
+.venv\Scripts\activate               # Windows   (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements.txt</code></pre>
+        </div>
+        <h3>Step 2 — configure and launch (≈5′)</h3>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code># the endpoint from the session chat — set it as an environment variable:
+$env:AZURE_AI_ENDPOINT = "https://&lt;your-project&gt;.services.ai.azure.com/models"   # PowerShell
+# export AZURE_AI_ENDPOINT="https://…"                                            # macOS/Linux
+
+az login                             # if this terminal isn't signed in yet
+uvicorn app.main:app --reload</code></pre>
+        </div>
+        <p class="prose">Open <strong>http://127.0.0.1:8000</strong> — and say hello to your
+          assistant. Ask it yesterday's card-blocked question; watch the token counter under the
+          answer.</p>
+        <h3>Step 3 — read the code you didn't write (≈10′)</h3>
+        <p class="prose">AI-built code you haven't read is a liability; reading it is a skill we
+          practice from day one. Trace one request end to end with this map, and find where each
+          familiar piece landed:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>File</th><th>What lives there</th><th>You already know it as…</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>app/main.py</code></td><td>FastAPI app, <code>POST /chat</code>, static serving</td><td>The application layer from the cloud anatomy</td></tr>
+              <tr><td><code>app/llm.py</code></td><td>Client construction, persona, retry, usage extraction</td><td>Yesterday's <code>hello_foundry.py</code>, grown up</td></tr>
+              <tr><td><code>static/index.html</code></td><td>Chat page: input, message list, token counter</td><td>The presentation layer</td></tr>
+              <tr><td><code>SPEC.md</code></td><td>The contract the agent built against</td><td>This morning's walkthrough</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Step 4 — make one deliberate change (≈8′)</h3>
+        <p class="prose">Find the system prompt in <code>app/llm.py</code>. Add one rule of your
+          own — for instance: <em>"Always end with a one-line summary prefixed 'In short:'"</em> —
+          save, let <code>--reload</code> restart the server, and verify the behaviour changed in
+          the browser. You have just done a full modify-verify loop on an AI-built codebase:
+          exactly how Sessions 4–7 will feel.</p>
+        <p class="prose"><strong>Stretch.</strong> Change the page title in
+          <code>static/index.html</code> to carry your name; or set <code>temperature</code>
+          explicitly in <code>llm.py</code> and re-ask the same question twice; or add a
+          <code>max_tokens</code> cap and find the <code>finish_reason</code> in the server logs
+          when it triggers.</p>
+        <div class="callout callout--success">
+          <p class="callout__title">✅ You are done when</p>
+          <p>The chat answers in your browser from your own machine, the token counter moves, and
+            your rule from Step 4 visibly shapes every answer.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Symptom</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>git</code> not recognized</td><td>Yesterday's assignment, step 2 — install git, reopen the terminal</td></tr>
+              <tr><td><code>AZURE_AI_ENDPOINT</code> missing error</td><td>Set the env var <em>in the same terminal</em> that runs uvicorn</td></tr>
+              <tr><td>Auth errors on <code>/chat</code></td><td><code>az login</code> in that terminal; then restart uvicorn</td></tr>
+              <tr><td>Port 8000 busy</td><td><code>uvicorn app.main:app --reload --port 8001</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What today changed</h2>
+        </div>
+        <p class="prose">The model became a dependency. You now compose requests deliberately —
+          roles, history, parameters — and you know the model remembers nothing unless your code
+          re-sends it. You can demand structured JSON and get it by schema, not by luck; you treat
+          429 as weather, not catastrophe; and you place workloads on the quality–latency–cost
+          triangle like someone who will be asked to defend the bill. Above all: Libra Assist is no
+          longer a script. It is an application with a spec, a repository, an API and a face —
+          built by an AI agent under review, running on your machine. On Monday we stop admiring
+          its answers and start measuring them.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>If you remember six things</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card"><p><strong>1.</strong> The model is stateless — "conversation" is your code re-sending history, and re-paying for it, every turn.</p></article>
+          <article class="card"><p><strong>2.</strong> Structured output by schema turns a prompt into an interface — the foundation tool calling stands on.</p></article>
+          <article class="card"><p><strong>3.</strong> 429 is normal. Exponential backoff is the polite, professional answer; a tight retry loop is a self-inflicted outage.</p></article>
+          <article class="card"><p><strong>4.</strong> <code>finish_reason</code> tells you <em>why</em> generation ended — "length" means you cut the model off, and code must care.</p></article>
+          <article class="card"><p><strong>5.</strong> Quality, latency, cost — pick which to sacrifice per workload; routers and fallbacks are that choice made per request.</p></article>
+          <article class="card"><p><strong>6.</strong> Spec → plan → implement → verify. The agent types; you own intent, review and judgment.</p></article>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <p class="card__meta">Course reference pages</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="ref-git.html">How git works</a> — you cloned today; branches and commits start mattering Monday.</li>
+            <li><a href="ref-foundry.html">Microsoft Foundry — the platform, step by step</a> — deployment types, quotas and the auth lanes behind today's calls.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__meta">Official documentation</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/python/api/overview/azure/ai-inference-readme" target="_blank" rel="noopener">azure-ai-inference for Python</a> — chat, streaming, structured output, embeddings.</li>
+            <li><a href="https://fastapi.tiangolo.com/" target="_blank" rel="noopener">FastAPI documentation</a> — the framework carrying Libra Assist from today on.</li>
+            <li><a href="https://www.uvicorn.org/" target="_blank" rel="noopener">Uvicorn</a> — the server behind <code>--reload</code>.</li>
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — the platform reference.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>Before Session 4: five questions for your assistant</h2>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">≈ 30 minutes · due Monday</p>
+          <p>Session 4 is about measuring quality. Your homework is to create the thing we will
+            measure against.</p>
+        </div>
+        <div class="card">
+          <ol style="margin:0; padding-left:1.2rem;">
+            <li>Make sure Libra Assist still runs on your machine (30 seconds — start it, ask one
+              question).</li>
+            <li>Write down <strong>five realistic questions</strong> a bank customer or a colleague
+              would ask Libra Assist — real phrasing, not textbook phrasing.</li>
+            <li>For <strong>two</strong> of them, also write the answer you would consider
+              <em>correct and complete</em> — two or three sentences each.</li>
+            <li>Ask your running assistant all five, and note — honestly — which answers you would
+              not ship to a customer, and why.</li>
+          </ol>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Why this matters</p>
+          <p>On Monday your questions become a golden set — the benchmark we run prompts against,
+            in code and in Foundry's evaluation tooling. You are not doing homework; you are
+            writing the first test suite of your product.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Session 3 · Model Integration &amp; Inference — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../resources/nav.js"></script>
+</body>
+</html>
