@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "RAG Teaching API",
+    "description": "Demo flow for the Libra Bank Academy RAG backend. Run top to bottom: Ops → Chunking (compare the four strategies on the same text) → Ingestion → Retrieval → Generation (ask with use_rag false, then true, and compare prompt_sent).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:7799" },
+    { "key": "sampleText", "value": "Libra Bank issues debit and credit cards to retail customers. A card can be blocked automatically after three failed PIN attempts, after a suspicious transaction is detected by the fraud engine, or at the customer's own request through the mobile application. A blocked card can be unblocked in the branch after identity verification, or through the call center using the phone banking password.\\n\\nFor lost or stolen cards, the customer must call the 24/7 support line immediately. The card is cancelled and a replacement is issued within five working days. Replacement fees are waived for premium accounts. Transactions made after the loss was reported are fully covered by the bank.\\n\\nMortgage loans at Libra Bank require a down payment of at least fifteen percent for a first home. The interest rate can be fixed for the first five years, then variable, indexed to IRCC plus a fixed margin. Early repayment is possible at any time; for the fixed-rate period an early repayment fee of one percent applies, while in the variable period early repayment is free of charge.\\n\\nTerm deposits can be opened in RON, EUR or USD, with maturities from one month to two years. Interest is paid at maturity. Breaking a deposit before maturity forfeits the accrued interest, and the principal is returned in full to the current account." }
+  ],
+  "item": [
+    {
+      "name": "0 · Ops",
+      "item": [
+        { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/health" } },
+        { "name": "Config (sanitized)", "request": { "method": "GET", "url": "{{baseUrl}}/config" } }
+      ]
+    },
+    {
+      "name": "1 · Chunking — same text, four strategies",
+      "item": [
+        {
+          "name": "Chunk · static (cuts mid-sentence!)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chunk",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"static\",\n  \"chunk_size\": 300,\n  \"chunk_overlap\": 50\n}" }
+          }
+        },
+        {
+          "name": "Chunk · sentence (3 per chunk)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chunk",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"sentence\",\n  \"sentences_per_chunk\": 3\n}" }
+          }
+        },
+        {
+          "name": "Chunk · dynamic (structure-aware)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chunk",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80\n}" }
+          }
+        },
+        {
+          "name": "Chunk · semantic (needs embedding provider)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/chunk",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"semantic\",\n  \"semantic_threshold\": 0.75\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Ingestion",
+      "item": [
+        {
+          "name": "Ingest sample text (dynamic)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ingest",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80,\n  \"source\": \"retail-faq\"\n}" }
+          }
+        },
+        { "name": "Collection info", "request": { "method": "GET", "url": "{{baseUrl}}/collection" } },
+        { "name": "Reset collection (clean slate)", "request": { "method": "DELETE", "url": "{{baseUrl}}/collection" } }
+      ]
+    },
+    {
+      "name": "3 · Retrieval",
+      "item": [
+        {
+          "name": "Search · card blocked (paraphrase, no shared words)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/search",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"query\": \"my card got frozen, what do I do?\",\n  \"top_k\": 3\n}" }
+          }
+        },
+        {
+          "name": "Search · early repayment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/search",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"query\": \"can I pay my mortgage back sooner and does it cost anything?\",\n  \"top_k\": 3\n}" }
+          }
+        },
+        {
+          "name": "Search · off-topic (watch the scores drop)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/search",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"query\": \"what is the weather like in Cluj?\",\n  \"top_k\": 3\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 · Generation — the RAG difference",
+      "item": [
+        {
+          "name": "Ask · WITHOUT rag (model guesses)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": false\n}" }
+          }
+        },
+        {
+          "name": "Ask · WITH rag (grounded, cites [1], [2]…)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}" }
+          }
+        },
+        {
+          "name": "Ask · WITH rag, answer not in corpus (should admit it)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What is the interest rate for student loans?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

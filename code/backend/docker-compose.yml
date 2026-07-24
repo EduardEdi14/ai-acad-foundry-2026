@@ -1,0 +1,30 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-qdrant
+    ports:
+      - "7833:6333"   # HTTP + web dashboard  → http://localhost:7833/dashboard
+      - "7834:6334"   # gRPC
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  api:
+    build: .
+    container_name: rag-api
+    ports:
+      - "7799:7799"
+    env_file: .env
+    environment:
+      # inside the compose network the DB is a hostname, not a mapped port
+      QDRANT_URL: http://qdrant:6333
+      # uncomment to reach LM Studio running on the HOST from inside the container:
+      # LMSTUDIO_BASE_URL: http://host.docker.internal:1234/v1
+    volumes:
+      - ./app:/srv/app          # live reload: edit locally, uvicorn restarts in-container
+    depends_on:
+      - qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # makes host LM Studio reachable on Linux too
+
+volumes:
+  qdrant-data:
