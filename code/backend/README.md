@@ -80,7 +80,7 @@ vector spaces). `DELETE /collection` and re-ingest.
 
 1. You need a Foundry resource with two deployments (`gpt-5.1`,
    `text-embedding-3-small`). Full click-by-click from an empty account:
-   `docs/ref-foundry.html` in this repo (or the course session pages).
+   `docs/topics/ref-foundry.html` in this repo (or the course session pages).
 2. Find the **endpoint**: Foundry portal ([ai.azure.com](https://ai.azure.com)) →
    your project → **Overview** → copy the endpoint that looks like
    `https://<resource>.services.ai.azure.com/models` → put it in `AZURE_AI_ENDPOINT`.

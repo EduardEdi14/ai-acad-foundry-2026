@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Microsoft Foundry — step by step · AI Engineering on Azure</title>
-  <link rel="stylesheet" href="../resources/theme.css">
+  <link rel="stylesheet" href="../../resources/theme.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -116,44 +116,128 @@
           <span class="eyebrow">The platform</span>
           <h2>The platform, mapped to the portal menu</h2>
         </div>
-        <p class="prose">Open <em>Microsoft Foundry</em> in the Azure portal and its left menu
-          organizes Microsoft's whole AI estate into three groups. <strong>"Use with
-          Foundry"</strong> holds the four modern building blocks: <strong>Foundry</strong> (the
-          platform resource described above), <strong>AI Hubs</strong> (the previous workspace
-          generation — a <em>hub</em> centralizes shared storage, connections and compute with
-          projects hanging off it; still supported, no longer the default for new work),
-          <strong>Azure OpenAI</strong> (the dedicated OpenAI-models resource that predates
-          Foundry — see the comparison at the end of this page), and <strong>AI Search</strong>
-          (the retrieval engine: full-text, vector and hybrid search with semantic ranking — the
-          production backbone of RAG).</p>
-        <p class="prose"><strong>"More services"</strong> lists the specialized, task-specific AI
-          services. Each is independently consumable and many predate the LLM era; in an
-          agent-shaped world they increasingly appear as <em>tools an agent calls</em>:</p>
+        <p class="prose">Open <em>Microsoft Foundry</em> in the Azure portal and its left menu is
+          a complete map of Microsoft's AI estate. It is worth reading deliberately, because the
+          menu's three groups encode a real taxonomy: <strong>the modern platform</strong> (what
+          new work builds on), <strong>the specialist services</strong> (task-specific AI, much of
+          it predating the LLM era), and <strong>the legacy shelf</strong>. The diagram mirrors
+          the blade one-to-one — every box below is a row you can click in the portal:</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Azure portal · Microsoft Foundry — the left menu, mapped</span>
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted">Overview<br><span class="dg-note">the blade's landing page</span></div>
+              <div class="dg-box dg-box--muted">All resources<br><span class="dg-note">every AI resource you can see</span></div>
+            </div>
+            <div class="dg-box dg-box--frame" style="margin-top:.5rem;">
+              <span class="dg-label">Use with Foundry · the modern building blocks</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--accent">Foundry<br><span class="dg-note">the platform resource</span></div>
+                <div class="dg-box">AI Hubs<br><span class="dg-note">previous workspace generation</span></div>
+                <div class="dg-box">Azure OpenAI<br><span class="dg-note">OpenAI-only resource</span></div>
+                <div class="dg-box">AI Search<br><span class="dg-note">retrieval engine</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="margin-top:.5rem;">
+              <span class="dg-label">More services · task-specific AI, independently consumable</span>
+              <div class="dg-row">
+                <div class="dg-box">Bot services</div>
+                <div class="dg-box">Computer vision</div>
+                <div class="dg-box">Custom vision</div>
+                <div class="dg-box">Content safety</div>
+              </div>
+              <div class="dg-row" style="margin-top:.5rem;">
+                <div class="dg-box">Document intelligence</div>
+                <div class="dg-box">Face API</div>
+                <div class="dg-box">Health Insights</div>
+                <div class="dg-box">Machine Learning</div>
+              </div>
+              <div class="dg-row" style="margin-top:.5rem;">
+                <div class="dg-box">Immersive reader</div>
+                <div class="dg-box">Language service</div>
+                <div class="dg-box">Speech service</div>
+                <div class="dg-box">Translator</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="margin-top:.5rem;">
+              <span class="dg-label">Classic AI services · the legacy shelf</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--muted">Anomaly detector (classic)</div>
+                <div class="dg-box dg-box--muted">Multi-service account (classic)</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The portal menu as a taxonomy: platform on top, specialists in the middle, legacy at the bottom. Highlight = where this course lives.</p>
+        </div>
+
+        <h3>"Use with Foundry" — the four building blocks, in detail</h3>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Service</th><th>What it does</th></tr>
+              <tr><th>Menu entry</th><th>What it is</th><th>Relationship to Foundry</th><th>In this course</th></tr>
             </thead>
             <tbody>
-              <tr><td><strong>Bot services</strong></td><td>Framework and hosting for conversational bots across channels (Teams, web chat, telephony).</td></tr>
-              <tr><td><strong>Computer vision</strong></td><td>Prebuilt image analysis: objects, scenes, OCR, spatial analysis.</td></tr>
-              <tr><td><strong>Custom vision</strong></td><td>Train your own image classifiers/detectors on labelled examples.</td></tr>
-              <tr><td><strong>Content safety</strong></td><td>Harm and policy-violation detection for text and images — the moderation layer.</td></tr>
-              <tr><td><strong>Document intelligence</strong></td><td>Structured extraction from documents: invoices, contracts, custom forms.</td></tr>
-              <tr><td><strong>Face API</strong></td><td>Face detection/recognition — access-restricted given its sensitivity.</td></tr>
-              <tr><td><strong>Health Insights</strong></td><td>Healthcare-specific models over clinical data.</td></tr>
-              <tr><td><strong>Machine Learning</strong></td><td>Azure ML: the train-your-own-models platform — pipelines, registries, MLOps.</td></tr>
-              <tr><td><strong>Immersive reader</strong></td><td>Embeddable reading assistance (read-aloud, translation, comprehension).</td></tr>
-              <tr><td><strong>Language service</strong></td><td>Text analytics: sentiment, entities, key phrases, summarization, CLU.</td></tr>
-              <tr><td><strong>Speech service</strong></td><td>Speech-to-text, neural text-to-speech, speech translation, speaker recognition.</td></tr>
-              <tr><td><strong>Translator</strong></td><td>Neural machine translation across 100+ languages.</td></tr>
+              <tr>
+                <td><strong>Foundry</strong></td>
+                <td>The platform resource: projects, the multi-vendor model catalog, model deployments, Agent Service, evaluations &amp; tracing</td>
+                <td><em>Is</em> Foundry — creating one is the tutorial below</td>
+                <td>Everything runs on it, Sessions 2–7</td>
+              </tr>
+              <tr>
+                <td><strong>AI Hubs</strong></td>
+                <td>The previous workspace generation: a <em>hub</em> centralizes storage, connections and compute; projects hang off it</td>
+                <td>Predecessor architecture — fully supported, no longer the default; you'll meet hubs in existing estates</td>
+                <td>Recognize-and-read only</td>
+              </tr>
+              <tr>
+                <td><strong>Azure OpenAI</strong></td>
+                <td>The dedicated resource type for OpenAI models only — GPT chat, o-series, embeddings, image &amp; audio</td>
+                <td>Sibling and ancestor: connectable to Foundry projects; the Create dialog recommends Foundry over it for new work</td>
+                <td>The comparison at the end of this page</td>
+              </tr>
+              <tr>
+                <td><strong>AI Search</strong></td>
+                <td>The retrieval engine: full-text, vector and hybrid search with semantic ranking over your documents</td>
+                <td>The knowledge side of the platform — connected to projects as the grounding store for RAG and agents</td>
+                <td>Main character of Session 5</td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <p class="prose"><strong>"Classic AI services"</strong> is the legacy shelf — multi-service
-          accounts and retired offerings (Anomaly Detector among them). In an organization that
-          adopted AI early you will find them running in production; the label is your cue to
-          check migration guidance before building anything new there.</p>
+
+        <h3>"More services" — the specialist catalog, in detail</h3>
+        <p class="prose">Each specialist service is independently consumable — its own resource,
+          endpoint and pricing — and in an agent-shaped world each increasingly appears as
+          <em>a tool an agent calls</em> (Session 6's pattern). The banking column is the one to
+          read twice: these services carry serious production workloads in banks today, LLM era
+          or not.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Service</th><th>What it does</th><th>Typical banking use</th><th>How you consume it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Bot services</strong></td><td>Framework + hosting for conversational bots across channels (Teams, web chat, telephony)</td><td>Legacy customer chatbots, IVR deflection, internal Teams helpdesk bots</td><td>Own resource · Bot Framework SDK + channel registrations</td></tr>
+              <tr><td><strong>Computer vision</strong></td><td>Prebuilt image analysis: objects, scenes, OCR (text in images), spatial analysis</td><td>OCR on scanned statements and IDs; document image quality checks</td><td>REST / Python SDK · also an agent tool</td></tr>
+              <tr><td><strong>Custom vision</strong></td><td>Train your own image classifiers/detectors on your own labelled examples</td><td>Classifying damaged cards, cheque images, branch-specific visual checks</td><td>Portal training UI + REST for inference</td></tr>
+              <tr><td><strong>Content safety</strong></td><td>Harm/policy-violation detection for text and images; severity scores per category</td><td>Moderating an assistant's inputs and outputs — the layer behind Foundry's content filters</td><td>Built into deployments · standalone REST for custom flows</td></tr>
+              <tr><td><strong>Document intelligence</strong></td><td>Structured extraction from documents: prebuilt models (invoices, receipts, IDs) + custom-trained ones</td><td>KYC document processing, loan contracts, invoice fields → straight into systems</td><td>REST / SDK · a natural agent tool (S6)</td></tr>
+              <tr><td><strong>Face API</strong></td><td>Face detection, verification and recognition</td><td>Branch/ATM biometric verification — under heavy governance</td><td>Gated: requires an approved access application</td></tr>
+              <tr><td><strong>Health Insights</strong></td><td>Healthcare-specific models over clinical data (radiology, patient timelines)</td><td>Essentially absent from banking estates — know it exists</td><td>REST, healthcare compliance requirements apply</td></tr>
+              <tr><td><strong>Machine Learning</strong></td><td>Azure ML: the full train-your-own-models platform — experiments, pipelines, registries, MLOps</td><td>Credit scoring, churn, fraud models — the classical ML estate of every bank</td><td>Own workspace · ML Studio + Python SDK</td></tr>
+              <tr><td><strong>Immersive reader</strong></td><td>Embeddable reading assistance: read-aloud, translation, comprehension aids</td><td>Accessibility layer for customer portals</td><td>Embedded via SDK in your web apps</td></tr>
+              <tr><td><strong>Language service</strong></td><td>Text analytics: sentiment, named entities, key phrases, summarization, conversational language understanding</td><td>Complaint sentiment triage, entity extraction from messages, call-note summarization</td><td>REST / SDK · agent tool</td></tr>
+              <tr><td><strong>Speech service</strong></td><td>Speech-to-text, neural text-to-speech, speech translation, speaker recognition</td><td>Call-center transcription, voice assistants, voice-based verification</td><td>REST / SDK · realtime + batch</td></tr>
+              <tr><td><strong>Translator</strong></td><td>Neural machine translation, 100+ languages, text and documents</td><td>Multilingual support content, live chat translation for customers</td><td>REST / SDK · agent tool</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>"Classic AI services" — the legacy shelf</h3>
+        <p class="prose">Multi-service accounts and retired offerings (Anomaly Detector among
+          them). In an organization that adopted AI early you will find them running in
+          production; the label is your cue to check migration guidance before building anything
+          new there.</p>
       </section>
 
       <!-- ============ TUTORIAL ============ -->
@@ -552,6 +636,6 @@ client = ChatCompletionsClient(
     Reference · Microsoft Foundry — AI Engineering on Azure · Libra Bank Academy
   </footer>
 
-  <script src="../resources/nav.js"></script>
+  <script src="../../resources/nav.js"></script>
 </body>
 </html>
