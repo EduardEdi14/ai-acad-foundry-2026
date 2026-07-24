@@ -1,1 +1,3 @@
 ## Logica branch-ului MAIN
+
+# NEW LINE
