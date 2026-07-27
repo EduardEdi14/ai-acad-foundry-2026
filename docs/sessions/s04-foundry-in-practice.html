@@ -1933,6 +1933,39 @@ docker compose up --build
 #   http://localhost:7799/docs   Swagger, still there for debugging
 #   http://localhost:7833/dashboard   the Qdrant dashboard</code></pre>
         </div>
+        <p class="prose">There is a second way to run it, and the difference between the two is
+          itself a lesson. Started locally, the backend runs on your machine and can borrow your
+          <code>az login</code>; started in Docker, it cannot, so it authenticates with a key.
+          <strong>That single difference decides whether the Azure surface is visible</strong> —
+          the Agent Service and the control plane both accept Entra tokens only.</p>
+        <div class="code-block">
+          <span class="code-block__label">the same stack, without Docker (two terminals)</span>
+          <pre><code># terminal 1 — the API, keyless, hot reload
+cd code/backend
+docker compose up qdrant -d      # only the vector database stays in a container
+uv sync                          # first time only
+az login                         # this is what AZURE_AI_AUTH=identity uses
+uv run uvicorn app.main:app --reload --port 7799
+
+# terminal 2 — the console
+cd code/frontend
+npm install                      # first time only
+npm run dev                      # http://localhost:7800 — proxies to :7799</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>Docker</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Authentication</strong></td><td>API key</td><td>Microsoft Entra (<code>az login</code>)</td></tr>
+              <tr><td><strong>Chat &amp; embeddings</strong></td><td>work</td><td>work</td></tr>
+              <tr><td><strong>Agent Service</strong></td><td>unavailable — keys are refused</td><td>available</td></tr>
+              <tr><td><strong>Deployment list (control plane)</strong></td><td>unavailable</td><td>available</td></tr>
+              <tr><td><strong>Best for</strong></td><td>handing students a working stack in one command</td><td>demonstrating the Azure surface</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -1942,11 +1975,40 @@ docker compose up --build
               <tr><td><strong>Chat</strong></td><td>The assistant, with a persona switch, a RAG toggle, local/Foundry mode, retrieved passages with scores, and the exact prompt that was sent</td><td><code>/ask</code></td></tr>
               <tr><td><strong>Knowledge</strong></td><td>Paste a document, compare the four chunking strategies, then embed and store — with the vector dimension and a peek at the numbers</td><td><code>/chunk</code>, <code>/ingest</code>, <code>/collection</code></td></tr>
               <tr><td><strong>Retrieval</strong></td><td>A query, its embedding, and the ranked hits with cosine scores</td><td><code>/search</code></td></tr>
-              <tr><td><strong>Agents</strong></td><td>Every persona, the exact system prompt its JSON produces, and a one-click publish to Foundry</td><td><code>/agents</code>, <code>/agents/{name}/deploy</code></td></tr>
+              <tr><td><strong>Agents</strong></td><td><strong>Where each agent can run</strong> (see below), the exact system prompt its JSON produces, publish to Foundry, and remove a hosted copy</td><td><code>/agents</code>, <code>/agents/{name}/deploy</code>, <code>/agents/hosted</code></td></tr>
               <tr><td><strong>Tools</strong></td><td>The plain web scraper with its warnings; text-to-speech with a player; speech-to-text round trip</td><td><code>/tools/*</code></td></tr>
-              <tr><td><strong>Status</strong></td><td>Providers, models, vector store, personas, configuration with secrets masked</td><td><code>/health</code>, <code>/config</code></td></tr>
+              <tr><td><strong>Status</strong></td><td>Health, plus the <strong>Azure panel</strong>: resource, region, subscription, both endpoints, authentication lane, live model deployments and deep links to the two portals</td><td><code>/health</code>, <code>/azure</code>, <code>/config</code></td></tr>
             </tbody>
           </table>
+        </div>
+        <h3>Which agents live where</h3>
+        <p class="prose">Once agents can exist in two places, "where does this one run?" becomes a
+          real question — and the console answers it with a badge on every row:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Badge</th><th>What it means</th><th>Which lanes work</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="badge badge--navy">local only</span></td><td>A JSON file in <code>app/agents/personas/</code> and nothing in Azure</td><td>local</td></tr>
+              <tr><td><span class="badge badge--cyan">local + Foundry</span></td><td>The file exists here <em>and</em> a hosted agent of the same name exists in the project</td><td>both — flip the switch and compare</td></tr>
+              <tr><td><span class="badge badge--gold">Foundry only</span></td><td>Hosted in Azure with no local file — created in the portal, or its file was removed</td><td>Foundry</td></tr>
+              <tr><td><span class="badge badge--navy">Foundry: unknown</span></td><td>The Agent Service could not be queried, so hosted state is genuinely unknown</td><td>local (Foundry cannot be confirmed)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The Chat view enforces the same truth: the <em>Foundry agent</em> option is
+          disabled for an agent that is not hosted, with the reason on hover, and choosing a
+          <em>Foundry only</em> agent switches the lane for you. Nothing offers a path that would
+          fail.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">Why "unknown" appears under Docker</p>
+          <p>The Agent Service accepts <strong>only</strong> Microsoft Entra authentication, and the
+            API container runs with a key — so it cannot ask, and the honest answer is
+            <em>unknown</em> rather than "not deployed". Run the backend locally after
+            <code>az login</code> and the badges resolve to <em>local only</em> and
+            <em>local + Foundry</em>. This is the key-versus-identity distinction from earlier in
+            the session, made visible in the product.</p>
         </div>
         <div class="callout callout--info">
           <p class="callout__title">Every screen can show its own JSON</p>

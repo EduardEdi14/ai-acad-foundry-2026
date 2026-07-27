@@ -42,3 +42,11 @@ resources/heartbeat-app/server.out
 secrets.*
 .azure/
 local.settings.json
+
+# --- frontend ---
+code/frontend/node_modules/
+code/frontend/dist/
+
+# --- local run logs ---
+code/backend/*.log
+code/frontend/*.log

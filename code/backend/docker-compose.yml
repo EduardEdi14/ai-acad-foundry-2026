@@ -41,6 +41,7 @@ services:
     volumes:
       - ../frontend/src:/srv/src              # live reload: edit locally, HMR in the browser
       - ../frontend/index.html:/srv/index.html
+      - ../frontend/vite.config.js:/srv/vite.config.js   # proxy routes, without a rebuild
     depends_on:
       - api
 

@@ -17,22 +17,44 @@ text ─► POST /chunk ─► POST /ingest ─► Qdrant ─► POST /search �
 - **Postman:** import `postman/rag-teaching-api.postman_collection.json`
 - **Deps:** managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`)
 
-## Run it — option A: everything local
+## Run it — option A: locally, without Docker (recommended for teaching)
+
+Only the vector database runs in a container; the API runs on your machine, where it can
+borrow your `az login`. **This is the mode where hosted Foundry agents and the model
+deployments are visible**, because the Agent Service and the control plane both require
+Microsoft Entra authentication.
 
 ```bash
 cd code/backend
 cp .env.example .env               # then edit — see Credentials below
-docker compose up qdrant -d        # just the DB
+docker compose up qdrant -d        # just the vector DB
 uv sync                            # create .venv from uv.lock
+az login                           # what makes AZURE_AI_AUTH=identity work
 uv run uvicorn app.main:app --reload --port 7799
 ```
+
+Add the console in a second terminal:
+
+```bash
+cd code/frontend
+npm install                        # first time only
+npm run dev                        # http://localhost:7800, proxies to :7799
+```
+
+Skipping Qdrant entirely is fine for a quick look — `/chunk`, `/agents`, `/tools` and
+ungrounded `/ask` all work without it; only `/ingest`, `/search` and grounded `/ask` need it.
 
 ## Run it — option B: everything in Docker
 
 ```bash
 cd code/backend
 docker compose up --build
+#   :7800 console · :7799/docs Swagger · :7833/dashboard Qdrant
 ```
+
+Self-contained and one command, but the API container authenticates with a **key** (a
+container cannot see your `az login`), so the Agent Service and the control plane are
+unavailable there. The console reports that honestly rather than showing an empty list.
 
 The app container overrides `QDRANT_URL` automatically and bind-mounts `./app`,
 so **live reload works inside the container too** — edit a file, watch it restart.
