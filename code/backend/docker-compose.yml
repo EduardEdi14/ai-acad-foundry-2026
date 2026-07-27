@@ -17,6 +17,10 @@ services:
     environment:
       # inside the compose network the DB is a hostname, not a mapped port
       QDRANT_URL: http://qdrant:6333
+      # a container cannot see your `az login`, so the Azure lane uses the key here.
+      # Locally (uv run uvicorn) the same .env keeps AZURE_AI_AUTH=identity — one
+      # codebase, both authentication lanes, decided by where it runs.
+      AZURE_AI_AUTH: key
       # uncomment to reach LM Studio running on the HOST from inside the container:
       # LMSTUDIO_BASE_URL: http://host.docker.internal:1234/v1
     volumes:
@@ -25,6 +29,20 @@ services:
       - qdrant
     extra_hosts:
       - "host.docker.internal:host-gateway"   # makes host LM Studio reachable on Linux too
+
+  console:
+    build: ../frontend
+    container_name: rag-console
+    ports:
+      - "7800:7800"
+    environment:
+      # inside the compose network the API is a hostname, not localhost
+      VITE_API_TARGET: http://api:7799
+    volumes:
+      - ../frontend/src:/srv/src              # live reload: edit locally, HMR in the browser
+      - ../frontend/index.html:/srv/index.html
+    depends_on:
+      - api
 
 volumes:
   qdrant-data:
