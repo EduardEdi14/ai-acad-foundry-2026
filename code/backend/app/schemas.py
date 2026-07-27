@@ -124,6 +124,15 @@ class AgentInfo(BaseModel):
     style_rules: list[str] = Field(default_factory=list)
 
 
+class HostedAgent(BaseModel):
+    agent_id: str
+    name: str
+    model: Optional[str] = None
+    description: Optional[str] = None
+    created_at: Optional[int] = None
+    instructions_preview: Optional[str] = None
+
+
 class PersonaSummary(BaseModel):
     name: str
     display_name: str
@@ -133,7 +142,21 @@ class PersonaSummary(BaseModel):
     style_rules: list[str] = Field(default_factory=list)
     require_citations: bool = True
     refuse_when_unsupported: bool = True
+    reasoning_effort: Optional[str] = None
     tools: list[str] = Field(default_factory=list)
+    runs_on: Literal["local", "both", "foundry", "unknown"] = Field(
+        "local",
+        description="local = JSON file only · both = also hosted in Foundry · "
+                    "foundry = hosted only, no local file · unknown = cannot ask Foundry",
+    )
+    hosted: Optional[HostedAgent] = None
+
+
+class FoundryAvailability(BaseModel):
+    available: bool
+    reason: Optional[str] = Field(
+        None, description="Why the Agent Service could not be queried, when it could not"
+    )
 
 
 class AgentListResponse(BaseModel):
@@ -142,6 +165,46 @@ class AgentListResponse(BaseModel):
     personas_dir: str
     count: int
     personas: list[PersonaSummary]
+    foundry: FoundryAvailability
+    hosted_only: list[PersonaSummary] = Field(
+        default_factory=list,
+        description="Agents that exist in Foundry with no local persona file — "
+                    "created in the portal, or from a file since deleted",
+    )
+
+
+class AzureDeployment(BaseModel):
+    name: str
+    model: Optional[str] = None
+    version: Optional[str] = None
+    sku: Optional[str] = None
+    capacity: Optional[int] = None
+    state: Optional[str] = None
+
+
+class AzureDeployments(BaseModel):
+    available: bool
+    reason: Optional[str] = None
+    items: list[AzureDeployment] = Field(default_factory=list)
+
+
+class AzureStatus(BaseModel):
+    configured: bool
+    auth: str = Field(description="identity (Entra) or key")
+    auth_note: Optional[str] = None
+    resource: Optional[str] = None
+    resource_group: Optional[str] = None
+    project: Optional[str] = None
+    location: Optional[str] = None
+    subscription_id: Optional[str] = None
+    inference_endpoint: Optional[str] = None
+    project_endpoint: Optional[str] = None
+    openai_endpoint: Optional[str] = None
+    chat_deployment: Optional[str] = None
+    embedding_deployment: Optional[str] = None
+    foundry_url: Optional[str] = None
+    portal_url: Optional[str] = None
+    deployments: AzureDeployments
 
 
 class Usage(BaseModel):

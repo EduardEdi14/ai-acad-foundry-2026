@@ -16,9 +16,10 @@ from .config import settings
 from .embeddings import get_embedder
 from .llm import get_llm
 from .schemas import (
-    AgentInfo, AgentListResponse, AskRequest, AskResponse, ChunkInfo, ChunkRequest,
-    ChunkResponse, CollectionInfo, Health, IngestRequest, IngestResponse, PersonaSummary,
-    ScrapeRequest, ScrapeResponse, SearchHit, SearchRequest, SearchResponse, SpeakRequest,
+    AgentInfo, AgentListResponse, AskRequest, AskResponse, AzureDeployment, AzureDeployments,
+    AzureStatus, ChunkInfo, ChunkRequest, ChunkResponse, CollectionInfo, FoundryAvailability,
+    Health, HostedAgent, IngestRequest, IngestResponse, PersonaSummary, ScrapeRequest,
+    ScrapeResponse, SearchHit, SearchRequest, SearchResponse, SpeakRequest,
     TranscribeResponse, Usage,
 )
 from .services import speech, web
@@ -159,6 +160,90 @@ def config() -> dict:
     }
 
 
+@app.get("/azure", response_model=AzureStatus, tags=["ops"])
+def azure_status() -> AzureStatus:
+    """The Azure environment this app is pointed at, plus its live deployments.
+
+    Deployment data comes from the control plane (Azure Resource Manager), which
+    needs an Entra token — so under key authentication the list is unavailable and
+    says so, rather than appearing empty.
+    """
+    resource = settings.azure_foundry_resource
+    project = settings.azure_foundry_project
+    identity = settings.azure_ai_auth.lower() == "identity"
+
+    foundry_url = portal_url = None
+    if resource:
+        foundry_url = "https://ai.azure.com/"
+        if settings.azure_resource_group and project:
+            portal_url = (
+                "https://portal.azure.com/#@/resource/subscriptions//resourceGroups/"
+                f"{settings.azure_resource_group}/providers/Microsoft.CognitiveServices/"
+                f"accounts/{resource}/overview"
+            )
+
+    deployments = AzureDeployments(
+        available=False,
+        reason=None if identity else (
+            "Listing deployments reads the Azure control plane, which requires Microsoft "
+            "Entra authentication. This app is running with AZURE_AI_AUTH=key (the Docker "
+            "default). Run it locally after `az login` to see them."
+        ),
+    )
+    subscription_id = None
+
+    if identity and resource and settings.azure_resource_group:
+        try:
+            import httpx
+            from azure.identity import DefaultAzureCredential
+
+            token = DefaultAzureCredential().get_token("https://management.azure.com/.default")
+            headers = {"Authorization": f"Bearer {token.token}"}
+            subs = httpx.get("https://management.azure.com/subscriptions",
+                             params={"api-version": "2022-12-01"},
+                             headers=headers, timeout=20).json().get("value", [])
+            if subs:
+                subscription_id = subs[0]["subscriptionId"]
+                url = (f"https://management.azure.com/subscriptions/{subscription_id}"
+                       f"/resourceGroups/{settings.azure_resource_group}"
+                       f"/providers/Microsoft.CognitiveServices/accounts/{resource}/deployments")
+                data = httpx.get(url, params={"api-version": "2023-05-01"},
+                                 headers=headers, timeout=20).json()
+                items = []
+                for d in data.get("value", []):
+                    props, sku = d.get("properties", {}), d.get("sku", {})
+                    items.append(AzureDeployment(
+                        name=d.get("name"), model=(props.get("model") or {}).get("name"),
+                        version=(props.get("model") or {}).get("version"),
+                        sku=sku.get("name"), capacity=sku.get("capacity"),
+                        state=props.get("provisioningState"),
+                    ))
+                deployments = AzureDeployments(available=True, items=items)
+        except Exception as e:                    # noqa: BLE001 - report, never crash the panel
+            deployments = AzureDeployments(available=False, reason=f"{type(e).__name__}: {e}")
+
+    return AzureStatus(
+        configured=bool(settings.azure_ai_endpoint),
+        auth=settings.azure_ai_auth,
+        auth_note=None if identity else
+        "Key authentication: the Agent Service and the control plane are unavailable. "
+        "This is expected inside Docker, where there is no `az login` to borrow.",
+        resource=resource or None,
+        resource_group=settings.azure_resource_group or None,
+        project=project or None,
+        location=settings.azure_location or None,
+        subscription_id=subscription_id,
+        inference_endpoint=settings.azure_ai_endpoint or None,
+        project_endpoint=settings.azure_ai_project_endpoint or None,
+        openai_endpoint=settings.azure_openai_endpoint or None,
+        chat_deployment=settings.azure_ai_chat_deployment,
+        embedding_deployment=settings.azure_ai_embedding_deployment,
+        foundry_url=foundry_url,
+        portal_url=portal_url,
+        deployments=deployments,
+    )
+
+
 # --- chunking (no storage) ----------------------------------------------------
 @app.post("/chunk", response_model=ChunkResponse, tags=["1 · chunking"])
 def chunk_only(req: ChunkRequest) -> ChunkResponse:
@@ -237,12 +322,24 @@ def ask(req: AskRequest) -> AskResponse:
     """
     retrieved: list[SearchHit] = []
 
-    # ---- which persona? -----------------------------------------------------
+    # ---- which persona, and does it need to be local? ------------------------
     persona_name = req.agent or settings.agent_persona
+    mode_requested = (req.agent_mode or settings.agent_mode).lower()
+    persona = None
+    hosted_only = None
     try:
         persona = load_persona(persona_name)
     except PersonaNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        # In foundry mode the instructions may live in Azure rather than on disk —
+        # an agent created in the portal has no local file, and should still work.
+        if mode_requested != "foundry":
+            raise HTTPException(status_code=404, detail=str(e))
+        try:
+            hosted_only = foundry_agent.find_hosted(persona_name)
+        except foundry_agent.FoundryUnavailable as fe:
+            raise HTTPException(status_code=503, detail=str(fe))
+        if not hosted_only:
+            raise HTTPException(status_code=404, detail=str(e))
 
     # ---- retrieval (unchanged behaviour, now feeding the agent) -------------
     if req.use_rag:
@@ -256,11 +353,13 @@ def ask(req: AskRequest) -> AskResponse:
         retrieved = [SearchHit(**h) for h in store.search(qvec, top_k)]
 
     chunks = [h.model_dump() for h in retrieved]
-    mode = (req.agent_mode or settings.agent_mode).lower()
+    mode = mode_requested
 
     # ---- run the agent ------------------------------------------------------
     try:
-        if mode == "foundry":
+        if hosted_only is not None:
+            reply = foundry_agent.run_hosted(hosted_only, req.question, chunks)
+        elif mode == "foundry":
             reply = foundry_agent.run(persona, req.question, chunks)
         else:
             reply = local_agent.run(persona, req.question, chunks, temperature=req.temperature)
@@ -270,16 +369,22 @@ def ask(req: AskRequest) -> AskResponse:
         raise HTTPException(status_code=502,
                             detail=f"Agent run failed (mode={mode}, provider={settings.llm_provider}): {e}")
 
+    info = AgentInfo(
+        name=persona.name, display_name=persona.display_name,
+        description=persona.description, mode=reply.mode,
+        temperature=persona.temperature, style_rules=persona.style_rules,
+    ) if persona is not None else AgentInfo(
+        name=hosted_only["name"], display_name=hosted_only["name"],
+        description=hosted_only.get("description") or "Hosted in Foundry — no local persona file.",
+        mode=reply.mode,
+    )
+
     return AskResponse(
         answer=reply.text,
         augmented=req.use_rag,
         provider=reply.provider,
         model=reply.model,
-        agent=AgentInfo(
-            name=persona.name, display_name=persona.display_name,
-            description=persona.description, mode=reply.mode,
-            temperature=persona.temperature, style_rules=persona.style_rules,
-        ),
+        agent=info,
         system_prompt=reply.system_prompt,
         prompt_sent=reply.prompt_sent,
         retrieved=retrieved,
@@ -290,16 +395,78 @@ def ask(req: AskRequest) -> AskResponse:
 # --- agents -------------------------------------------------------------------
 @app.get("/agents", response_model=AgentListResponse, tags=["5 · agents"])
 def agents_list() -> AgentListResponse:
-    """Every persona currently on disk. Add a JSON file and it appears here —
-    no restart. This is the list `/ask?agent=…` accepts."""
+    """Every agent, and **where each one can run**.
+
+    * `local`   — a JSON file exists here; runs in this process with any provider
+    * `both`    — the file exists *and* a hosted agent of the same name is in Foundry
+    * `foundry` — hosted only: it exists in Foundry with no local file (made in the portal)
+    * `unknown` — we could not ask Foundry (key auth cannot query the Agent Service)
+
+    The last state is deliberate: under `AZURE_AI_AUTH=key` the answer is genuinely
+    unknown, and reporting "not deployed" would be a guess.
+    """
     personas = list_personas()
+    availability = foundry_agent.availability()
+
+    hosted_by_name: dict[str, dict] = {}
+    if availability["available"]:
+        try:
+            hosted_by_name = {a["name"]: a for a in foundry_agent.list_hosted()}
+        except Exception as e:                    # noqa: BLE001 - degrade, never guess
+            availability = {"available": False, "reason": f"{type(e).__name__}: {e}"}
+
+    summaries: list[PersonaSummary] = []
+    for p in personas:
+        hosted = hosted_by_name.get(p.name)
+        runs_on = "unknown" if not availability["available"] else ("both" if hosted else "local")
+        summaries.append(PersonaSummary(**p.summary(), runs_on=runs_on,
+                                        hosted=HostedAgent(**hosted) if hosted else None))
+
+    local_names = {p.name for p in personas}
+    hosted_only = [
+        PersonaSummary(
+            name=a["name"], display_name=a["name"],
+            description=a.get("description") or "Created in Foundry — no local persona file.",
+            runs_on="foundry", hosted=HostedAgent(**a),
+        )
+        for name, a in hosted_by_name.items() if name not in local_names
+    ]
+
     return AgentListResponse(
         active_mode=settings.agent_mode,
         default_persona=settings.agent_persona,
         personas_dir=str(PERSONA_DIR),
-        count=len(personas),
-        personas=[PersonaSummary(**p.summary()) for p in personas],
+        count=len(summaries),
+        personas=summaries,
+        foundry=FoundryAvailability(**availability),
+        hosted_only=hosted_only,
     )
+
+
+@app.get("/agents/hosted", tags=["5 · agents"])
+def agents_hosted() -> dict:
+    """What actually exists in the Foundry Agent Service right now — whatever
+    created it: our scripts, the SDK, or somebody clicking in the portal."""
+    availability = foundry_agent.availability()
+    if not availability["available"]:
+        raise HTTPException(status_code=503, detail=availability["reason"])
+    try:
+        return {"count": len(items := foundry_agent.list_hosted()), "agents": items}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not list hosted agents: {e}")
+
+
+@app.delete("/agents/hosted/{agent_id}", tags=["5 · agents"])
+def agent_hosted_delete(agent_id: str) -> dict:
+    """Remove an agent from Foundry. The local JSON file is untouched — the
+    persona keeps working in local mode."""
+    try:
+        foundry_agent.delete_hosted(agent_id)
+    except foundry_agent.FoundryUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not delete agent: {e}")
+    return {"deleted": True, "agent_id": agent_id}
 
 
 @app.get("/agents/{name}", tags=["5 · agents"])
