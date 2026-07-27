@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session 4 — Azure Foundry in Practice · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session 4<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Today's topics</span>
+      <a class="side-nav__link" href="#recap">Where we are</a>
+      <a class="side-nav__link" href="#cli-sdk">CLI &amp; SDK — and why</a>
+      <a class="side-nav__link" href="#lab-a">Lab A — install &amp; sign in</a>
+      <a class="side-nav__link" href="#resources">Resources &amp; geography</a>
+      <a class="side-nav__link" href="#portals">The two portals</a>
+      <a class="side-nav__link" href="#foundry-menu">The Foundry menu</a>
+      <a class="side-nav__link" href="#wiring">Wiring it into code</a>
+      <span class="side-nav__group">Services &amp; agents</span>
+      <a class="side-nav__link" href="#services-vs-agents">Services vs agents</a>
+      <a class="side-nav__link" href="#ai-search">Retrieval &amp; AI Search</a>
+      <a class="side-nav__link" href="#speech">Speech — voice in &amp; out</a>
+      <a class="side-nav__link" href="#web">Web: scraping vs grounding</a>
+      <a class="side-nav__link" href="#agent-build">Building the agent</a>
+      <a class="side-nav__link" href="#agent-deploy">Deploying it to Foundry</a>
+      <a class="side-nav__link" href="#automation">Everything from the CLI</a>
+      <a class="side-nav__link" href="#console">The console GUI</a>
+      <a class="side-nav__link" href="#lab-b">Lab B — build your own</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session 4 · AI Engineering on Azure</span>
+          <h1>Azure Foundry in practice — the <span class="gradient-text">tools, the platform, your own environment</span></h1>
+          <p><strong>Today you stop borrowing an environment and build your own, from an empty account to a running application.</strong></p>
+          <p>Until now the cloud has been something we looked at together. Today it becomes
+            something you operate. We start with the two tools every Azure engineer lives in —
+            the <strong>command-line interface</strong> and the <strong>SDK</strong> — and answer
+            honestly why they exist when a perfectly good website is one click away. Then the
+            vocabulary that organizes everything you will ever create: <strong>resources</strong>,
+            <strong>resource groups</strong>, and why the <strong>geography</strong> you pick is an
+            engineering decision rather than a formality. We tour the two portals and every section
+            of the Foundry menu, and we finish with the question that quietly blocks most beginners —
+            <em>how do I reach all of this from my own code, and is it one API key for
+            everything?</em> Two hands-on labs; sixty minutes of the morning are your keyboard,
+            not mine.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Mon 27 Jul · 09:30–12:00 · online</span>
+            <span class="badge badge--gold">Laptop required · your own Azure account</span>
+            <span class="badge badge--navy">Two labs · 60 minutes hands-on</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Framing: what today fixes, and the map of the platform</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>09:40</td><td>What a CLI and an SDK actually are — and why not the website</td><td>20</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:00</td><td><strong>Lab A</strong> — install the CLI and SDK, sign in, prove your identity works</td><td>20</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>10:20</td><td>Resources, resource groups &amp; geography</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:35</td><td>Break</td><td>10</td><td>—</td></tr>
+              <tr><td>10:45</td><td>Two portals, the Foundry menu, and wiring it from code</td><td>15</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>11:00</td><td>Services vs agents — and the four capabilities: retrieval, speech, web, models</td><td>20</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>11:20</td><td>Live: the RAG pipeline, then building an agent that changes the answer</td><td>20</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>11:40</td><td><strong>Lab B</strong> — your own environment, your own agent</td><td>15</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>11:55</td><td>Questions &amp; what's next</td><td>5</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: labs 35, live coding 20, theory 65, walkthrough 15, questions 5, break 10.">
+            <path fill="var(--chart-lab)" stroke="var(--surface)" stroke-width="2" d="M 50.00 4.00 A 46 46 0 0 1 95.75 45.19 L 76.85 47.18 A 27 27 0 0 0 50.00 23.00 Z"><title>Labs — 35′ (23%)</title></path>
+            <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 95.75 45.19 A 46 46 0 0 1 84.18 80.78 L 70.06 68.07 A 27 27 0 0 0 76.85 47.18 Z"><title>Live coding — 20′ (13%)</title></path>
+            <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 84.18 80.78 A 46 46 0 0 1 6.25 35.79 L 24.32 41.66 A 27 27 0 0 0 70.06 68.07 Z"><title>Theory — 65′ (44%)</title></path>
+            <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 6.25 35.79 A 46 46 0 0 1 22.96 12.79 L 34.13 28.16 A 27 27 0 0 0 24.32 41.66 Z"><title>Walkthrough — 15′ (10%)</title></path>
+            <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 22.96 12.79 A 46 46 0 0 1 31.29 7.98 L 39.02 25.33 A 27 27 0 0 0 34.13 28.16 Z"><title>Q&amp;A — 5′ (3%)</title></path>
+            <path fill="var(--chart-break)" stroke="var(--surface)" stroke-width="2" d="M 31.29 7.98 A 46 46 0 0 1 50.00 4.00 L 50.00 23.00 A 27 27 0 0 0 39.02 25.33 Z"><title>Break — 10′ (7%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-lab)"></span>Labs — 35′ (23%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 20′ (13%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 65′ (44%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 15′ (10%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Q&amp;A — 5′ (3%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-break)"></span>Break — 10′ (7%)</li>
+          </ul>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Sixty minutes of today are yours</p>
+          <p>Two labs — <strong>Lab A</strong> installs and proves your toolchain, <strong>Lab B</strong>
+            builds an environment you own. Everything in between exists so that those sixty minutes
+            are understanding rather than copying.</p>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Learning outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card card--accent hover">
+            <h3>Explain the three interfaces</h3>
+            <p>Say precisely what the portal, the CLI and the SDK each are, what they share
+              underneath, and which one a given job belongs to.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Defend keyless authentication</h3>
+            <p>Explain why an engineer installs a CLI and signs in rather than pasting an API
+              key — in terms a security officer would accept.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Read any Azure resource ID</h3>
+            <p>Decode the path of any resource, and place it correctly in the
+              tenant → subscription → resource group → resource hierarchy.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Choose a region deliberately</h3>
+            <p>Justify a region on latency, data residency, model availability, quota and price —
+              and know which of those cannot be changed later.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Navigate both portals</h3>
+            <p>Know what only <code>portal.azure.com</code> can do, what only
+              <code>ai.azure.com</code> can do, and what every Foundry menu section is for.</p>
+          </article>
+          <article class="card card--accent hover">
+            <h3>Own an environment end to end</h3>
+            <p>Create your own resource group, Foundry resource, project and model deployments —
+              and run the course application against them.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ RECAP ============ -->
+      <section id="recap" class="doc-section">
+        <div>
+          <span class="eyebrow">09:30 · Theory · 10′</span>
+          <h2>Where we are, and what today fixes</h2>
+        </div>
+        <p class="prose">Three sessions in, you have made a model answer, you have watched an
+          application call it, and you have seen the platform from the outside. But everything so
+          far ran inside an environment that was handed to you: an endpoint someone else created,
+          a deployment someone else named, credentials someone else arranged. That is the normal
+          way to <em>start</em> and a dangerous way to <em>continue</em>, because the moment
+          something breaks — a wrong region, an exhausted quota, a missing role — you are dependent
+          on whoever built it.</p>
+        <p class="prose">Today closes that gap. By noon you will have installed the same tools a
+          Microsoft field engineer uses, signed in with your own identity, created your own
+          resource group and your own Foundry resource in a region you chose for stated reasons,
+          deployed your own models, and pointed the course application at your own endpoint. The
+          conceptual half of the morning exists to make those actions <em>legible</em> rather than
+          magical: you should be able to explain every command before you run it, and to explain
+          every error you meet afterwards.</p>
+        <p class="prose">One promise about difficulty. Command lines look intimidating when you
+          have not lived in one, and there is no shame in that — most of the discomfort is
+          vocabulary, not logic. We define every term the first time it appears, and both labs are
+          written so that each step states <em>what to type</em>, <em>what should happen</em>, and
+          <em>what to do when it does not</em>.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Note on today's title</p>
+          <p>The module outline lists prompt engineering and systematic evaluation for this slot.
+            We are taking the platform and tooling day first — because measuring an application is
+            far more valuable once every one of you owns the environment it runs in. Prompt
+            engineering and evaluation follow later in the module, and today's <em>Evaluations</em>
+            walkthrough is their preview.</p>
+        </div>
+      </section>
+
+      <!-- ============ CLI & SDK ============ -->
+      <section id="cli-sdk" class="doc-section">
+        <div>
+          <span class="eyebrow">09:40 · Theory · 20′</span>
+          <h2>What a CLI and an SDK actually are — and <span class="gradient-text">why we install them</span></h2>
+        </div>
+        <p class="prose">Beginners reasonably ask a sharp question: <em>if the Azure portal can
+          create everything, and an API key is a single line in a file, why does this course insist
+          on installing a command-line tool and a software development kit?</em> The answer is not
+          preference or professional habit. It follows from what these three things actually are,
+          and they are not three products — they are <strong>three clients of the same
+          system</strong>.</p>
+
+        <h3>One system, three ways in</h3>
+        <p class="prose">Underneath everything, Azure is a collection of <strong>REST APIs</strong>:
+          web services that accept HTTP requests carrying JSON and return JSON. Creating a resource
+          group is an HTTP <code>PUT</code>. Listing your deployments is an HTTP <code>GET</code>.
+          Asking a model a question is an HTTP <code>POST</code>. Nothing you can do in Azure exists
+          outside this surface — <em>the API is the product</em>, and everything else is a way of
+          producing those HTTP calls without composing them by hand.</p>
+        <p class="prose">The <strong>portal</strong> (<code>portal.azure.com</code>) is a website
+          that turns clicks into those calls. The <strong>CLI</strong> — the
+          <em>command-line interface</em>, invoked as <code>az</code> — is a program you install
+          locally that turns typed commands into the same calls. The <strong>SDK</strong> — the
+          <em>software development kit</em>, in our case the Python packages
+          <code>azure-ai-inference</code> and <code>azure-identity</code> — is a library your own
+          program imports so that <em>your code</em> can make those calls as ordinary function
+          calls, without you writing HTTP plumbing, retries or token handling.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">You, clicking<br><span class="dg-note">portal.azure.com · ai.azure.com</span></div>
+              <div class="dg-box">You, typing<br><span class="dg-note">az — the CLI</span></div>
+              <div class="dg-box dg-box--accent">Your program<br><span class="dg-note">the SDK, in Python</span></div>
+            </div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ all three produce the same thing ↓</span></div>
+            <div class="dg-box">HTTPS requests carrying a bearer token</div>
+            <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓</span></div>
+            <div class="dg-row">
+              <div class="dg-box">Azure Resource Manager<br><span class="dg-note">the control plane — create, configure, delete</span></div>
+              <div class="dg-box dg-box--accent">Service endpoints<br><span class="dg-note">the data plane — chat, embed, search</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">Three clients, one system. Whatever you can click you can script; whatever you can script your application can do by itself.</p>
+        </div>
+
+        <h3>Control plane and data plane — the distinction that explains everything else</h3>
+        <p class="prose">Notice that the diagram forks at the bottom, and the fork matters more
+          than any other idea today. <strong>Azure Resource Manager (ARM)</strong> is the
+          <em>control plane</em>: one uniform API for <em>managing</em> resources — creating a
+          Foundry account, listing resource groups, assigning a role, reading a bill. It is
+          identical in shape for every Azure service on earth, which is why one <code>az</code>
+          command set can drive all of them.</p>
+        <p class="prose">The <strong>data plane</strong> is something else entirely: the endpoint of
+          an individual service, doing that service's actual work. Your Foundry resource's
+          <code>…services.ai.azure.com</code> endpoint answers chat completions and produces
+          embeddings. An Azure AI Search service has its own endpoint that indexes and retrieves. A
+          storage account has its own that reads and writes blobs. These endpoints have nothing in
+          common with ARM and nothing in common with each other except the way they authenticate.
+          <em>Creating</em> a model deployment is control plane; <em>using</em> it is data plane —
+          and, as we will see in the wiring section, they do not share credentials.</p>
+
+        <h3>Why not just use the website?</h3>
+        <p class="prose">Because a click is an event and a command is an artifact. When you create
+          a resource in the portal, the knowledge of how it was made lives in your memory and
+          nowhere else — and memory does not survive a colleague, a second environment or six
+          months. The same work expressed as commands becomes a file: it can be read, reviewed,
+          corrected, committed to git, run again identically for a test environment, and executed
+          by an automated pipeline at three in the morning when nobody is awake to click. Four
+          specific properties follow, and every one of them is a professional requirement rather
+          than a nicety:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Property</th><th>What it means</th><th>Why it matters in a bank</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Reproducibility</strong></td><td>The same commands produce the same environment every time</td><td>Development, test and production stop drifting apart — the classic source of "it worked in test"</td></tr>
+              <tr><td><strong>Reviewability</strong></td><td>Infrastructure changes arrive as text a colleague can read before they happen</td><td>Four-eyes principle applies to infrastructure, not only to application code</td></tr>
+              <tr><td><strong>Automation</strong></td><td>A pipeline can run it without a human present</td><td>Deployments happen on a schedule, unattended, identically</td></tr>
+              <tr><td><strong>Auditability</strong></td><td>The record of what was intended sits in version control next to who approved it</td><td>Regulators ask "who changed what, when, and on whose authority" — and expect an answer</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">None of this makes the portal wrong. The portal is superb for
+          <em>exploring</em> an unfamiliar service, <em>inspecting</em> state, reading metrics and
+          diagnosing an incident visually. The professional pattern is to explore in the portal and
+          then express the result as commands — discover by clicking, deliver by scripting.</p>
+
+        <h3>Why not just use an API key?</h3>
+        <p class="prose">This is the deeper question, and the answer is where cloud security
+          actually lives. An <strong>API key</strong> is a long string that grants whoever holds it
+          the full data-plane rights of a resource. It is a <em>bearer</em> secret: the service does
+          not care who you are, only that you presented the string. That single property produces
+          every one of its weaknesses.</p>
+        <p class="prose">A key does not expire on its own, so a copy taken today still works next
+          year. It carries no identity, so the audit log records that "a key" called the model, not
+          that <em>you</em> did — and when a team of eight shares one key, an investigation has
+          nowhere to go. It has no granularity: there is no such thing as a read-only key or a
+          key limited to one deployment. It cannot be constrained by the organization's other
+          controls — no multi-factor authentication, no device compliance, no location policy
+          applies to a string. And keys travel: into a chat message, a screenshot, a
+          <code>.env</code> committed by accident. Git in particular does not forget — a key pushed
+          once lives in the history until the history itself is rewritten.</p>
+        <p class="prose">The alternative is <strong>identity-based authentication</strong>, and the
+          mechanism is worth understanding rather than memorizing. You sign in once with
+          <code>az login</code>; that sign-in obeys every organizational control, because it is the
+          same sign-in as everything else. Your machine then holds a refreshable proof of who you
+          are. When your program needs to call a service, the SDK exchanges that proof for a
+          <strong>short-lived access token</strong> — typically valid about an hour — scoped to
+          that specific service, and attaches it to the request. Nothing long-lived is ever stored
+          in your project, so there is nothing to leak; access is granted by
+          <strong>role assignments</strong> that an administrator can see and revoke centrally; and
+          the audit trail names a person.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">API key — a bearer secret</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--muted">One long string, full data-plane rights</div>
+                <div class="dg-box dg-box--muted">Never expires · no identity · no granularity</div>
+                <div class="dg-box dg-box--muted">Leaks into git, chat, screenshots — permanently</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Identity — a short-lived token</span>
+              <div class="dg-stack">
+                <div class="dg-box">Sign in once (<code>az login</code>) — MFA, device policy apply</div>
+                <div class="dg-box">SDK exchanges it for a ~1 h token, per service</div>
+                <div class="dg-box dg-box--accent">Nothing stored · revocable centrally · attributable to a person</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Why we install a CLI: it is the piece that makes keyless authentication possible on a developer's own machine.</p>
+        </div>
+        <p class="prose">And this is precisely why the CLI is not optional for us. On your laptop,
+          the SDK cannot invent an identity — it looks for one. <code>DefaultAzureCredential</code>,
+          the class our code uses, walks an ordered chain of sources and takes the first that
+          answers: environment variables, a managed identity (when running inside Azure), the
+          Visual Studio Code sign-in, <strong>the Azure CLI's sign-in</strong>, the Azure PowerShell
+          sign-in. Locally, <code>az login</code> is what puts a link in that chain. In Session 6,
+          when the same code runs in a container in Azure, the chain finds a managed identity
+          instead and the code does not change by a single character. That is the payoff:
+          <em>one authentication strategy from laptop to production</em>.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">So when is a key legitimate?</p>
+          <p>When there is no identity to use: a container running outside Azure, a partner system
+            that supports nothing else, a five-minute experiment. Then the rules are absolute — the
+            key lives in an environment variable or a secrets vault, never in source; the file
+            holding it is git-ignored; and it is rotated on a schedule. Our own course backend
+            supports both lanes deliberately, so you can see the difference in one codebase.</p>
+        </div>
+
+        <h3>What "installing" actually does</h3>
+        <p class="prose">Two installations happen in Lab A, and they are different in kind.
+          Installing the <strong>Azure CLI</strong> places a program on your computer and adds its
+          location to your <code>PATH</code> — the list of folders your terminal searches when you
+          type a command. That is the whole mystery behind the classic first error,
+          <em>"'az' is not recognized"</em>: the program exists, but the terminal you opened before
+          installing it does not yet know where to look. Closing and reopening the terminal solves
+          it, because a new terminal reads the updated <code>PATH</code>.</p>
+        <p class="prose">Installing the <strong>SDK</strong> is narrower: it downloads Python
+          packages into a <strong>virtual environment</strong> — a private folder holding this
+          project's dependencies, isolated from your system Python and from every other project.
+          That isolation is why two projects can require different versions of the same library
+          without a fight, and why deleting a project folder removes its dependencies with it.
+          Whether you use <code>pip</code> inside a <code>venv</code> or <code>uv</code> (the faster
+          tool our course backend uses), the concept is identical.</p>
+      </section>
+
+      <!-- ============ LAB A ============ -->
+      <section id="lab-a" class="doc-section">
+        <div>
+          <span class="eyebrow">10:00 · Lab · 25′</span>
+          <h2>Lab A — install the toolchain and <span class="gradient-text">prove your identity works</span></h2>
+        </div>
+        <p class="prose">Work at your own pace; I circulate. Each step tells you what to run and
+          what success looks like. If a step fails, check the troubleshooting table at the end of
+          the lab before flagging me — half the failures are in it, and diagnosing one yourself is
+          worth more than watching me fix it.</p>
+
+        <h3>Step 1 — install the Azure CLI (≈5′)</h3>
+        <p class="prose">Pick the line for your operating system, run it in a terminal, then
+          <strong>close the terminal and open a new one</strong> — this is the <code>PATH</code>
+          refresh discussed above, and skipping it causes the most common error in this room.</p>
+        <div class="code-block">
+          <span class="code-block__label">install · pick your platform</span>
+          <pre><code># Windows (PowerShell)
+winget install -e --id Microsoft.AzureCLI
+
+# macOS (Homebrew)
+brew update &amp;&amp; brew install azure-cli
+
+# Linux (Debian/Ubuntu)
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash</code></pre>
+        </div>
+        <p class="prose">Verify in the <em>new</em> terminal:</p>
+        <div class="code-block">
+          <span class="code-block__label">verify</span>
+          <pre><code>az version</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> a small JSON block naming
+          <code>azure-cli</code> and a version number. If you get "not recognized" or "command not
+          found", the terminal is older than the installation — open another one.</p>
+
+        <h3>Step 2 — sign in and choose your subscription (≈5′)</h3>
+        <div class="code-block">
+          <span class="code-block__label">sign in</span>
+          <pre><code>az login</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> a browser tab opens, you complete the normal
+          sign-in, and the terminal prints a table of the subscriptions your account can reach.
+          If no browser can open — a remote session, a locked-down machine — use
+          <code>az login --use-device-code</code> and follow the printed instructions on any
+          device.</p>
+        <p class="prose">Now confirm <em>which</em> subscription the CLI will act on. This matters
+          the moment you have more than one, and it is the reason many "I created it but I cannot
+          find it" mysteries end quickly:</p>
+        <div class="code-block">
+          <span class="code-block__label">orient yourself</span>
+          <pre><code>az account show --output table          # the active subscription
+az account list --output table          # everything you can reach
+
+# if the wrong one is active:
+az account set --subscription "&lt;name or id&gt;"</code></pre>
+        </div>
+        <p class="prose">Finally, ask Azure who it thinks you are. The identifier this prints is
+          <em>your object ID</em> — the thing role assignments are made to, and worth keeping in
+          your notes for Lab B:</p>
+        <div class="code-block">
+          <span class="code-block__label">who am I?</span>
+          <pre><code>az ad signed-in-user show --query "{name:displayName, upn:userPrincipalName, objectId:id}"</code></pre>
+        </div>
+
+        <h3>Step 3 — a project folder and the SDK (≈7′)</h3>
+        <p class="prose">A virtual environment, then two packages: the inference client and the
+          identity library that feeds it credentials.</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>mkdir s04-lab &amp;&amp; cd s04-lab
+python -m venv .venv
+
+.venv\Scripts\activate            # Windows
+# source .venv/bin/activate       # macOS / Linux
+
+pip install azure-ai-inference azure-identity</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> your prompt now shows <code>(.venv)</code>, and
+          pip reports the packages installed. That prefix is your reminder that the environment is
+          active; if it disappears (new terminal), activate it again before running anything.</p>
+
+        <h3>Step 4 — prove the whole chain works (≈8′)</h3>
+        <p class="prose">This script does something deliberately small and enormously informative:
+          it asks the identity library for a token, without calling any model. If it prints a
+          token length and an expiry, then your sign-in, your CLI, your Python environment and the
+          identity chain are all correct — and every later failure is about permissions or
+          endpoints, not about your machine.</p>
+        <div class="code-block">
+          <span class="code-block__label">whoami.py</span>
+          <pre><code>from azure.identity import DefaultAzureCredential
+from datetime import datetime, timezone
+
+credential = DefaultAzureCredential()
+
+# ask for a token scoped to Azure AI services (the data plane we will call later)
+token = credential.get_token("https://cognitiveservices.azure.com/.default")
+
+expires = datetime.fromtimestamp(token.expires_on, tz=timezone.utc)
+print("token acquired :", len(token.token), "characters")
+print("valid until    :", expires.isoformat(), "(UTC)")
+print("credential type:", type(credential).__name__)</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">run it</span>
+          <pre><code>python whoami.py</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> three lines, the middle one roughly an hour in
+          the future. Look at that expiry and connect it to the theory: this is the short-lived
+          credential that replaces a permanent key, minted on demand from your sign-in and
+          discarded when it ages out.</p>
+        <div class="callout callout--success">
+          <p class="callout__title">✅ Lab A is done when</p>
+          <p><code>az version</code> answers, <code>az account show</code> names the subscription
+            you intend to use, and <code>whoami.py</code> prints a token with an expiry about an
+            hour out.</p>
+        </div>
+
+        <h3>Troubleshooting</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>'az' is not recognized</code> / <code>command not found</code></td><td>Terminal opened before installation; <code>PATH</code> is stale</td><td>Close every terminal, open a new one. Still failing? Reboot, or reinstall.</td></tr>
+              <tr><td>Browser never opens on <code>az login</code></td><td>Headless, remote or restricted machine</td><td><code>az login --use-device-code</code></td></tr>
+              <tr><td>Signed in, but the subscription list is empty</td><td>Signed into the wrong tenant (personal vs work account)</td><td><code>az login --tenant &lt;tenant-id&gt;</code>, or sign out and use the intended account</td></tr>
+              <tr><td><code>CredentialUnavailableError</code> in Python</td><td>The identity chain found no source</td><td>Run <code>az login</code> in the <em>same</em> terminal, then re-run the script</td></tr>
+              <tr><td>SSL / proxy errors during install or login</td><td>Corporate VPN or inspection proxy</td><td>Disconnect the VPN if permitted, or ask IT for the proxy certificate settings</td></tr>
+              <tr><td><code>python</code> not found, or the wrong version</td><td>Python missing or not on <code>PATH</code></td><td>Install Python 3.11+ and tick "Add to PATH"; on macOS/Linux try <code>python3</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ RESOURCES & GEOGRAPHY ============ -->
+      <section id="resources" class="doc-section">
+        <div>
+          <span class="eyebrow">10:25 · Theory · 20′</span>
+          <h2>Resources, resource groups &amp; <span class="gradient-text">why geography is engineering</span></h2>
+        </div>
+        <p class="prose">Everything you create in Azure — a Foundry account, a database, a
+          container app, a storage account, even a role assignment — is a <strong>resource</strong>:
+          a manageable object with a type, a location, a set of properties, and a unique identifier.
+          That identifier is not a random string; it is a path that spells out exactly where the
+          object lives in the platform's hierarchy, and learning to read it is one of the highest-value
+          five minutes in this course.</p>
+        <div class="code-block">
+          <span class="code-block__label">an Azure resource ID, decoded</span>
+          <pre><code>/subscriptions/8f3c…-…-…/resourceGroups/rg-ai-course/providers/Microsoft.CognitiveServices/accounts/my-foundry-lb
+ └───────────┬──────────┘└──────────┬─────────┘└──────────────┬───────────────┘└──────┬──────┘
+    which subscription        which resource group      which service (provider)   the resource's
+    (billing &amp; quota                (lifecycle          and which type within it       own name
+     boundary)                    &amp; permissions)</code></pre>
+        </div>
+        <p class="prose">You will meet this string constantly — in role assignments, in scripts, in
+          error messages, in the portal's own URLs. Whenever something is "not found", read the ID
+          in the error from left to right: wrong subscription, wrong resource group and wrong name
+          are three different problems with three different fixes.</p>
+
+        <h3>What a resource group really is</h3>
+        <p class="prose">A <strong>resource group</strong> is often introduced as "a folder for
+          resources", which is true enough to be misleading. It is a container with four concrete
+          semantics, and knowing them changes how you organize work:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Semantic</th><th>What it does</th><th>Practical consequence</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Lifecycle</strong></td><td>Deleting the group deletes every resource inside it</td><td>Group things that live and die together — a per-course group can be removed in one command when the course ends</td></tr>
+              <tr><td><strong>Permissions</strong></td><td>Role assignments made on the group are inherited by every resource in it</td><td>Grant a team access once instead of resource by resource</td></tr>
+              <tr><td><strong>Policy</strong></td><td>Governance rules applied to the group apply to everything within</td><td>"Only these regions", "every resource must be tagged" — enforced automatically</td></tr>
+              <tr><td><strong>Organization &amp; cost</strong></td><td>A natural unit for tagging and for filtering the bill</td><td>Cost analysis per group answers "what does this project cost?" without arithmetic</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Equally important is what a resource group is <em>not</em>. It is not a
+          network boundary — two resources in the same group are not automatically able to reach
+          each other privately, and two in different groups are not isolated. It is not a security
+          boundary in itself; permissions flow from role assignments, wherever they are made. And it
+          is not a billing account: costs are attributed to the subscription, with the group serving
+          only as a convenient filter.</p>
+        <p class="prose">One subtlety that confuses newcomers: a resource group <em>itself</em> has
+          a location, but that location only stores the group's own metadata. Resources inside it
+          can live in entirely different regions. A group in West Europe holding a model deployment
+          in Sweden Central is perfectly legal — and, more importantly, the deployment's region is
+          the one that determines latency, residency, availability and price.</p>
+        <div class="diagram">
+          <div class="dg-box dg-box--frame">
+            <span class="dg-label">Tenant — your organization's directory (Microsoft Entra ID)</span>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Subscription — billing, quota &amp; policy boundary</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--frame" style="flex:1;">
+                  <span class="dg-label">rg-ai-course · lifecycle unit</span>
+                  <div class="dg-row">
+                    <div class="dg-box dg-box--accent">Foundry account<br><span class="dg-note">Sweden Central</span></div>
+                    <div class="dg-box">Storage<br><span class="dg-note">Sweden Central</span></div>
+                  </div>
+                </div>
+                <div class="dg-box dg-box--frame dg-box--muted" style="flex:1;">
+                  <span class="dg-label">rg-shared-prod · another lifecycle</span>
+                  <div class="dg-box dg-box--muted">AI Search<br><span class="dg-note">West Europe</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Permissions and policy flow downward; resources in one group may sit in different regions. The group you will create in Lab B is the left one.</p>
+        </div>
+
+        <h3>Geography is not a formality</h3>
+        <p class="prose">When the portal asks for a region, it is asking which physical buildings
+          will hold your data and run your computation. Five consequences follow, and you should be
+          able to state all five when someone asks why you chose Sweden Central over East US.</p>
+        <p class="prose"><strong>Latency</strong> is physics, not configuration. Light in fibre
+          covers roughly 200 km per millisecond, and a request must travel there and back —
+          so every 1000 km of distance costs about 10 ms of round trip before any processing
+          happens, and real networks with their routers and hops do worse. Bucharest to a European
+          datacenter is a few tens of milliseconds; Bucharest to the American west coast is closer
+          to 180. For a chat application streaming tokens, that difference is the gap between
+          "instant" and "sluggish".</p>
+        <p class="prose"><strong>Data residency and sovereignty</strong> is where banking becomes
+          categorical. Regions are grouped into <em>geographies</em> — Europe, United States, and so
+          on — and a geography is a legal boundary, defining which jurisdiction's law applies to
+          data at rest. GDPR obligations, national banking regulations and internal policy routinely
+          require that customer data never leave a specific geography. This is why "the model is
+          slightly better in that other region" is an argument that loses, every time, to
+          "our data may not go there".</p>
+        <p class="prose"><strong>Model availability differs per region</strong>, and this surprises
+          almost everyone at least once. Not every model in the catalog exists everywhere: new
+          models appear in a handful of regions first and spread later. If a model you want is
+          absent from the region you picked, you either pick another region or use a deployment type
+          that routes globally. Check before you commit — a resource cannot be moved between regions
+          after creation; recreating it is the only remedy.</p>
+        <p class="prose"><strong>Quota is per subscription, per region, per model.</strong> Your
+          tokens-per-minute allowance in Sweden Central is unrelated to your allowance in West
+          Europe. That is occasionally useful — a second region can be a capacity strategy — and
+          occasionally the explanation for a mysterious refusal to deploy.</p>
+        <p class="prose">Finally, <strong>price varies by region</strong> for the same service, as
+          energy, land and local demand differ. The variation is usually modest, but at production
+          volumes it is real money, and it belongs in the decision alongside the other four.</p>
+        <div class="callout callout--tip">
+          <p class="callout__title">For today's lab</p>
+          <p>Choose a European region — <strong>Sweden Central</strong> or <strong>West Europe</strong>
+            are good defaults for this course: close enough for good latency, inside the EU
+            geography, and well supplied with models. Note your choice; you will need to use the
+            same one consistently in Lab B.</p>
+        </div>
+
+        <h3>Naming, so that future-you can navigate</h3>
+        <p class="prose">Resource names appear in URLs, IDs, logs and bills forever, and many
+          cannot be changed after creation. Conventions cost nothing now and save hours later; a
+          widely used pattern is <code>&lt;type-abbreviation&gt;-&lt;workload&gt;-&lt;environment&gt;</code>
+          — <code>rg-ai-course</code>, <code>rg-libra-assist-prod</code>. Two constraints to
+          remember: some resource names must be <em>globally unique</em> across all of Azure
+          (anything that becomes a public hostname, including your Foundry account, whose name ends
+          up inside <code>&lt;name&gt;.services.ai.azure.com</code>), and most disallow spaces and
+          exotic characters. If a name is rejected as taken, someone else in the world holds it —
+          add a suffix.</p>
+      </section>
+
+      <!-- ============ PORTALS ============ -->
+      <section id="portals" class="doc-section">
+        <div>
+          <span class="eyebrow">10:55 · Walkthrough · part one</span>
+          <h2>Two portals: <span class="gradient-text">portal.azure.com vs ai.azure.com</span></h2>
+        </div>
+        <p class="prose">Both are websites, both show your Foundry resource, and beginners
+          reasonably wonder whether one is simply a newer version of the other. It is not. They are
+          two lenses on the same objects, built for two different jobs, and the fastest way to
+          internalize the difference is: <strong>portal.azure.com manages the resource;
+          ai.azure.com uses it.</strong></p>
+        <p class="prose">The <strong>Azure portal</strong> is the universal interface to the control
+          plane. Every Azure service appears there under the same conventions: an Overview blade,
+          Access control (IAM) for role assignments, Networking, Monitoring, Cost, Tags, Diagnostic
+          settings, Keys. It is the surface where an <em>administrator</em> works — where you create
+          the resource in the first place, decide who may touch it, connect it to a virtual network,
+          set a budget alert, or read the audit log. Its vocabulary is subscriptions, resource
+          groups, roles and policies.</p>
+        <p class="prose">The <strong>Foundry portal</strong> at <code>ai.azure.com</code> is a
+          purpose-built workbench for the people <em>building AI applications</em> on top of that
+          resource. Its vocabulary is projects, models, deployments, agents, knowledge, evaluations
+          and guardrails. You cannot assign an Azure role there or configure a firewall; you can
+          browse a model catalog, deploy a model in three clicks, chat with it in a playground,
+          attach a knowledge source, define an agent and run an evaluation — none of which the Azure
+          portal exposes in a usable way.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">portal.azure.com — the administrator's lens</span>
+              <div class="dg-stack">
+                <div class="dg-box">Create / delete the resource</div>
+                <div class="dg-box">Access control (IAM) · role assignments</div>
+                <div class="dg-box">Keys &amp; endpoint · networking · private links</div>
+                <div class="dg-box">Cost analysis · budgets · quotas · policy</div>
+                <div class="dg-box">Metrics · diagnostic settings · activity log</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">ai.azure.com — the builder's lens</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--accent">Model catalog &amp; deployments</div>
+                <div class="dg-box">Playground · prompt experimentation</div>
+                <div class="dg-box">Agents · tools · knowledge · memory</div>
+                <div class="dg-box">Evaluations · traces</div>
+                <div class="dg-box">Guardrails &amp; content filters</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Same resource, two lenses. Both are legitimate daily tools; the trick is knowing which one owns the task in front of you.</p>
+        </div>
+
+        <h3>Reading the URLs — they tell you exactly where you are</h3>
+        <p class="prose">Both portals encode your position in the URL, and reading it is a genuinely
+          useful diagnostic skill — particularly when a colleague sends you a link and you need to
+          know whether it points at <em>your</em> environment.</p>
+        <div class="code-block">
+          <span class="code-block__label">the Azure portal</span>
+          <pre><code>https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/AIFoundryPhaseTwo_overview
+                          │      │                            │                      │
+                          │      │                            │                      └─ the blade (screen) shown
+                          │      │                            └─ the hub: all Cognitive Services / AI resources
+                          │      └─ the portal extension that owns this UI (Project Oxford is the historic
+                          │         internal name of what became Cognitive Services)
+                          └─ everything after # is client-side routing: the page never reloads as you navigate</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">the Foundry portal</span>
+          <pre><code>https://ai.azure.com/nextgen/r/&lt;workspace-id&gt;,rg-ai-course,,my-foundry-lb,proj-default/build/tools?tid=&lt;tenant-id&gt;
+                              │  │                     │              │                │           │
+                              │  │                     │              │                │           └─ tenant: which
+                              │  │                     │              │                │              directory you
+                              │  │                     │              │                │              are signed into
+                              │  │                     │              │                └─ the section you are on
+                              │  │                     │              └─ resource name, then project name
+                              │  │                     └─ the resource group holding it
+                              │  └─ "r" = resource-scoped route; the comma-separated list IS the resource path
+                              └─ the current generation of the Foundry UI</code></pre>
+        </div>
+        <p class="prose">Read that second URL again and notice what it means in practice: the path
+          segments are precisely the coordinates from the resource ID we decoded earlier —
+          resource group, account, project. A Foundry link is only meaningful to someone who has
+          access to <em>that</em> resource in <em>that</em> tenant, which is why sending a colleague
+          a link sometimes yields "resource not found" — they are signed into a different directory,
+          and the <code>tid</code> parameter is the clue.</p>
+
+        <h3>Which portal for which task</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Task</th><th>Where</th><th>Why there</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Create the Foundry resource / resource group</td><td>Azure portal (or CLI)</td><td>Resource creation is control plane</td></tr>
+              <tr><td>Grant a colleague access to call your models</td><td>Azure portal → Access control (IAM)</td><td>Role assignments exist only in the control plane</td></tr>
+              <tr><td>Read or rotate the API keys</td><td>Azure portal → Keys and Endpoint</td><td>Keys are a property of the resource</td></tr>
+              <tr><td>Browse the model catalog, deploy a model</td><td>Foundry portal</td><td>Catalog and deployment UX live there</td></tr>
+              <tr><td>Try a prompt before writing code</td><td>Foundry portal → playground</td><td>Zero-code experimentation surface</td></tr>
+              <tr><td>Build an agent, attach tools and knowledge</td><td>Foundry portal</td><td>These objects are project-scoped concepts</td></tr>
+              <tr><td>Run evaluations, inspect traces</td><td>Foundry portal</td><td>Evaluation tooling is part of the workbench</td></tr>
+              <tr><td>Check what the month has cost</td><td>Azure portal → Cost Management</td><td>Billing is subscription-wide, not project-specific</td></tr>
+              <tr><td>See why calls are being throttled</td><td>Both: quota in Foundry, metrics in Azure portal</td><td>Quota is a Foundry concept; the 429 count is a resource metric</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ FOUNDRY MENU ============ -->
+      <section id="foundry-menu" class="doc-section">
+        <div>
+          <span class="eyebrow">10:55 · Walkthrough · part two</span>
+          <h2>The Foundry menu, <span class="gradient-text">section by section</span></h2>
+        </div>
+        <p class="prose">Open a project at <code>ai.azure.com</code> and the left menu presents ten
+          sections. They are not an arbitrary list: read as three groups, they describe the whole
+          lifecycle of an AI application — what you <strong>build</strong> with, what you
+          <strong>ground</strong> it in, and how you <strong>assure</strong> it behaves.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Build — the things that produce answers</span>
+              <div class="dg-row">
+                <div class="dg-box dg-box--accent">Models</div>
+                <div class="dg-box">Agents</div>
+                <div class="dg-box">Tools</div>
+                <div class="dg-box">Fine-tune</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Ground — the things that supply facts and context</span>
+              <div class="dg-row">
+                <div class="dg-box">Knowledge</div>
+                <div class="dg-box">Memory</div>
+                <div class="dg-box">Data</div>
+                <div class="dg-box">Services</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame">
+              <span class="dg-label">Assure — the things that prove and constrain behaviour</span>
+              <div class="dg-row">
+                <div class="dg-box">Evaluations</div>
+                <div class="dg-box">Guardrails</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Ten menu sections, three jobs. Our course walks this diagram left to right and top to bottom across its seven sessions.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Section</th><th>What it is</th><th>What you do there</th><th>How code reaches it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Models</strong></td><td>The catalog of available models and <em>your</em> deployments of them</td><td>Browse and compare models; deploy one; set its type and quota; open the playground</td><td><code>azure-ai-inference</code> against your project endpoint, naming the <em>deployment</em></td></tr>
+              <tr><td><strong>Agents</strong></td><td>Hosted agents: a model plus instructions, tools and conversation threads, run by the platform</td><td>Create an agent, give it instructions and tools, test it in a thread</td><td><code>azure-ai-projects</code> — create agent, create thread, run, poll</td></tr>
+              <tr><td><strong>Fine-tune</strong></td><td>Training a base model further on your own examples to change its default behaviour</td><td>Upload a training file, start a job, watch metrics, deploy the result</td><td>A fine-tuning job via SDK/REST; the output is a new deployment you call normally</td></tr>
+              <tr><td><strong>Services</strong></td><td>The specialist Azure AI services connected to this project (Speech, Language, Translator, Document Intelligence, Content Understanding)</td><td>Connect or open a service; each has its own capabilities</td><td>Each has its <em>own</em> SDK and endpoint (see the wiring section)</td></tr>
+              <tr><td><strong>Tools</strong></td><td>Capabilities an agent is permitted to invoke: code interpreter, your own functions, OpenAPI-described APIs, connected systems</td><td>Register and configure tools; decide what an agent may do</td><td>Tool definitions passed when creating the agent; your functions run in your process</td></tr>
+              <tr><td><strong>Knowledge</strong></td><td>Grounding sources — indexed files and connected search indexes the model may consult</td><td>Upload documents, build or attach an index, test retrieval</td><td>Attached to an agent, or queried directly via Azure AI Search's SDK</td></tr>
+              <tr><td><strong>Memory</strong></td><td>Information deliberately carried <em>across</em> conversations — durable per-user or per-thread state</td><td>Configure what is remembered and for how long</td><td>Managed by the Agent Service on threads; or your own store, as in our backend</td></tr>
+              <tr><td><strong>Data</strong></td><td>Datasets and files registered with the project — evaluation sets, fine-tuning corpora, documents to index</td><td>Upload and version datasets; connect a storage account</td><td>Referenced by name in evaluation and fine-tuning jobs; storage has its own SDK</td></tr>
+              <tr><td><strong>Evaluations</strong></td><td>Systematic measurement of output quality against a dataset, by metric or by judge model</td><td>Pick evaluators (groundedness, relevance, safety…), run on a dataset, compare versions</td><td>The evaluation SDK, locally or as a cloud job; results appear here</td></tr>
+              <tr><td><strong>Guardrails</strong></td><td>The safety layer applied around deployments: content filters, blocklists, prompt-injection shields</td><td>Configure filter severity per category, add blocklists, attach a policy to a deployment</td><td>Enforced server-side on every call; violations surface as filtered responses</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Four that deserve more than a table row</h3>
+        <p class="prose"><strong>Agents</strong> are the largest conceptual step. Everything you
+          have built so far is <em>you</em> orchestrating: your code calls the model, reads the
+          answer, decides what to do next. An agent inverts that — you give the model instructions
+          and a set of tools, and the platform runs the loop: the model decides which tool to call,
+          the runtime executes it, feeds the result back, and repeats until the task is done. The
+          Agent Service hosts that loop, keeps the conversation in a <em>thread</em>, and records
+          each execution as a <em>run</em> you can inspect. The engineering shifts from writing
+          logic to defining capabilities and boundaries — which is exactly why Guardrails and
+          approval gates matter more as autonomy grows.</p>
+        <p class="prose"><strong>Fine-tune</strong> is the most frequently misused section, so
+          learn its decision rule now: reach for it <em>last</em>. If the model does not know your
+          facts, the answer is grounding (Knowledge), not fine-tuning — facts change, weights do
+          not. If it does not follow your format or tone, the answer is usually a better prompt
+          with examples. Fine-tuning earns its cost when you need a consistent behaviour or style
+          that prompting cannot reliably produce, or when you want a smaller, cheaper model to
+          imitate a larger one on a narrow task. It requires curated training data, produces a
+          model you must maintain, and starts the whole evaluation question again from scratch.</p>
+        <p class="prose"><strong>Knowledge and Memory</strong> are easy to confuse and completely
+          different. Knowledge is <em>shared, factual, and retrieved</em> — a corpus of documents
+          the model consults when a question touches them. Memory is <em>personal, conversational,
+          and carried</em> — the fact that this particular user prefers English, or that we
+          discussed their mortgage last week. Knowledge changes when the bank publishes a new
+          policy; memory changes when a person tells the assistant something. In banking they also
+          differ in governance: knowledge is content management, memory is personal data with
+          retention obligations attached.</p>
+        <p class="prose"><strong>Guardrails</strong> is where the platform stops being neutral.
+          Every call through your deployment passes classifiers that score prompts and completions
+          for categories of harm; you configure the severity threshold at which each is blocked,
+          add blocklists for terms your institution will not tolerate, and enable shields against
+          prompt-injection attempts where retrieved content might carry instructions. Two things to
+          internalize: filtering happens <em>server-side</em>, so your application must handle a
+          filtered response as a normal outcome rather than an exception; and defaults are a
+          starting point — a bank tunes them, documents the tuning, and treats that document as
+          part of its control framework.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Where this course visits each section</p>
+          <p>Models — Sessions 2 to 4 · Knowledge and Data — Session 5 (retrieval) · Agents, Tools
+            and Memory — Session 6 · Evaluations and Guardrails — introduced when we measure and
+            constrain the assistant. Fine-tune and most Services stay on the map as informed
+            choices you now know how to evaluate.</p>
+        </div>
+      </section>
+
+      <!-- ============ WIRING ============ -->
+      <section id="wiring" class="doc-section">
+        <div>
+          <span class="eyebrow">11:20 · Live coding · 15′</span>
+          <h2>One key for everything? <span class="gradient-text">Wiring each surface from code</span></h2>
+        </div>
+        <p class="prose">Now the question that this whole morning has been building toward, and the
+          one most beginners get wrong: <em>can I use the same API key for all of it?</em> The short
+          answer is <strong>no — and once you see why, you will stop wanting to.</strong></p>
+        <p class="prose">Recall the fork in the first diagram. Azure is not one endpoint with one
+          credential; it is a control plane plus many independent data planes. Creating a resource
+          is ARM. Calling a model is your Foundry resource's endpoint. Querying a search index is
+          Azure AI Search's endpoint. Reading a blob is the storage account's endpoint. Each of
+          those has its own hostname, its own SDK package, its own notion of permission — and each
+          issues its own keys, which are valid nowhere else. So a "key for everything" cannot exist:
+          with key-based authentication you inevitably accumulate one secret per service, each
+          needing storage, rotation and an owner.</p>
+        <p class="prose">Identity solves precisely this. You have <strong>one</strong> identity;
+          each service is granted to it by a <strong>role assignment</strong>. Your code constructs
+          <em>one</em> credential object and hands the same object to every client. Each client asks
+          for a token <em>scoped to its own service</em> — that is the <code>credential_scopes</code>
+          argument you have already seen in our backend — and receives one, provided a role says it
+          may. Nothing is stored, everything is attributable, and access is revoked centrally by
+          removing a role rather than by hunting down copies of a string.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Key-based — N services, N secrets</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--muted">Foundry key → .env</div>
+                <div class="dg-box dg-box--muted">Search key → .env</div>
+                <div class="dg-box dg-box--muted">Storage key → .env</div>
+                <div class="dg-box dg-box--muted">…each rotated separately, each a leak risk</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">Identity-based — one identity, N role assignments</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--accent">DefaultAzureCredential (one object)</div>
+                <div class="dg-row">
+                  <div class="dg-box">→ Foundry<br><span class="dg-note">Cognitive Services User</span></div>
+                  <div class="dg-box">→ Search<br><span class="dg-note">Search Index Data Reader</span></div>
+                  <div class="dg-box">→ Storage<br><span class="dg-note">Blob Data Contributor</span></div>
+                </div>
+                <div class="dg-box">Revoke one role → access gone, everywhere</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The same architecture drawn twice. The right-hand version is the one a bank's security review approves without argument.</p>
+        </div>
+
+        <h3>The map: surface → package → scope → role</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>What you're reaching</th><th>Endpoint shape</th><th>Python package</th><th>Token scope</th><th>Typical role</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Manage resources (control plane)</td><td><code>management.azure.com</code></td><td><code>azure-mgmt-*</code> / the <code>az</code> CLI</td><td><code>management.azure.com/.default</code></td><td>Contributor, Owner, Reader</td></tr>
+              <tr><td>Chat &amp; embeddings (Foundry)</td><td><code>&lt;res&gt;.services.ai.azure.com</code></td><td><code>azure-ai-inference</code></td><td><code>cognitiveservices.azure.com/.default</code></td><td>Cognitive Services User</td></tr>
+              <tr><td>Projects, agents, evaluations</td><td>project endpoint</td><td><code>azure-ai-projects</code></td><td><code>cognitiveservices.azure.com/.default</code></td><td>Azure AI Developer / User</td></tr>
+              <tr><td>Vector &amp; hybrid search</td><td><code>&lt;svc&gt;.search.windows.net</code></td><td><code>azure-search-documents</code></td><td><code>search.azure.com/.default</code></td><td>Search Index Data Reader / Contributor</td></tr>
+              <tr><td>Files &amp; documents</td><td><code>&lt;acct&gt;.blob.core.windows.net</code></td><td><code>azure-storage-blob</code></td><td><code>storage.azure.com/.default</code></td><td>Storage Blob Data Contributor</td></tr>
+              <tr><td>Document extraction</td><td><code>&lt;res&gt;.cognitiveservices.azure.com</code></td><td><code>azure-ai-documentintelligence</code></td><td><code>cognitiveservices.azure.com/.default</code></td><td>Cognitive Services User</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Two patterns fall out of that table. First, services in the Azure AI family
+          share the <code>cognitiveservices</code> scope, so one role on your Foundry resource
+          covers chat, embeddings and its connected AI capabilities — which is why our backend needs
+          exactly one role assignment today. Second, genuinely separate services (Search, Storage)
+          need their own roles; adding retrieval in Session 5 will mean adding a role assignment,
+          not adding a key.</p>
+
+        <h3>The code: one credential, many clients</h3>
+        <div class="code-block">
+          <span class="code-block__label">wiring.py — the shape of every Azure application you will write</span>
+          <pre><code>from azure.identity import DefaultAzureCredential
+from azure.ai.inference import ChatCompletionsClient, EmbeddingsClient
+
+credential = DefaultAzureCredential()          # ONE identity, reused everywhere
+
+FOUNDRY = "https://&lt;your-resource&gt;.services.ai.azure.com/models"
+
+chat = ChatCompletionsClient(
+    endpoint=FOUNDRY,
+    credential=credential,
+    credential_scopes=["https://cognitiveservices.azure.com/.default"],
+)
+embeddings = EmbeddingsClient(
+    endpoint=FOUNDRY,
+    credential=credential,
+    credential_scopes=["https://cognitiveservices.azure.com/.default"],
+)
+
+# Later, when retrieval arrives (Session 5) — same credential, different service & scope:
+# from azure.search.documents import SearchClient
+# search = SearchClient(endpoint="https://&lt;svc&gt;.search.windows.net",
+#                       index_name="libra-docs", credential=credential)
+
+reply = chat.complete(model="gpt-5.1", messages=[
+    {"role": "user", "content": "In one sentence: what is a role assignment?"}
+])
+print(reply.choices[0].message.content)
+print(reply.usage)</code></pre>
+        </div>
+        <p class="prose">Compare that with the key-based variant, which differs in one line and in
+          every operational consequence:</p>
+        <div class="code-block">
+          <span class="code-block__label">the key lane — know it, avoid it where identity is possible</span>
+          <pre><code>import os
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.inference import ChatCompletionsClient
+
+chat = ChatCompletionsClient(
+    endpoint=FOUNDRY,
+    credential=AzureKeyCredential(os.environ["AZURE_AI_API_KEY"]),   # env var, never source
+)
+# valid ONLY for this resource: the same key opens no other service</code></pre>
+        </div>
+        <p class="prose">Our course backend implements both lanes behind one setting, which is the
+          cleanest way to see the difference in a real codebase: look at
+          <code>code/backend/app/llm.py</code> and <code>embeddings.py</code>, where a single
+          helper returns either <code>DefaultAzureCredential()</code> or
+          <code>AzureKeyCredential(...)</code> depending on <code>AZURE_AI_AUTH</code> in
+          <code>.env</code>. Everything downstream — clients, calls, responses — is identical. That
+          is the mark of a good abstraction, and it is why the backend can run keylessly on your
+          laptop and with a key inside a container without a code change.</p>
+        <div class="callout callout--tip">
+          <p class="callout__title">Connections — the third way</p>
+          <p>Foundry projects can hold <strong>connections</strong> to other services (an AI Search
+            index, a storage account). When an agent uses a connected service, the platform handles
+            that service's credentials on your behalf — your code never sees them at all. It is the
+            managed version of the same principle: fewer secrets in fewer places.</p>
+        </div>
+      </section>
+
+      <!-- ============ SERVICES VS AGENTS ============ -->
+      <section id="services-vs-agents" class="doc-section">
+        <div>
+          <span class="eyebrow">11:00 · Theory · part one</span>
+          <h2>Services vs agents — <span class="gradient-text">two different words for two different things</span></h2>
+        </div>
+        <p class="prose">In the Foundry menu you met both <em>Services</em> and <em>Agents</em>, and
+          the portal offers to attach a service to an agent — which makes them sound like variants
+          of one idea. They are not, and confusing them produces bad architectures.</p>
+        <p class="prose">A <strong>service</strong> is a <em>capability</em>: a specialized,
+          deterministic-ish function exposed as an API. Speech converts audio to text. Translator
+          converts one language to another. Document Intelligence extracts fields from a PDF.
+          Content Understanding pulls structure out of mixed media. Each does one thing, does it
+          without reasoning about your business, and returns the same kind of output every time.
+          You call it directly, from any code, whether or not any language model is involved. It is
+          a component.</p>
+        <p class="prose">An <strong>agent</strong> is a <em>decision-maker</em>: a language model
+          plus instructions, plus a set of capabilities it is permitted to invoke, running in a loop
+          until a task is complete. Its defining property is that <em>it chooses</em> — which tool
+          to call, with what arguments, when it has enough to answer. You do not tell it "transcribe
+          this then translate it"; you tell it what it is for, hand it Speech and Translator, and it
+          works out the sequence.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">A service — you orchestrate</span>
+              <div class="dg-stack">
+                <div class="dg-box">Your code</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ you decide, explicitly</span></div>
+                <div class="dg-box">Speech → text</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ you decide, explicitly</span></div>
+                <div class="dg-box">Translator → Romanian</div>
+                <div class="dg-box dg-box--muted">Deterministic order, written by you</div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">An agent — the model orchestrates</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--accent">Agent = model + instructions + tools</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↕ loop: think → call → observe</span></div>
+                <div class="dg-row">
+                  <div class="dg-box">Speech</div>
+                  <div class="dg-box">Search</div>
+                  <div class="dg-box">Your function</div>
+                </div>
+                <div class="dg-box">Order decided at runtime, per request</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The distinction in one line: a service answers "do this"; an agent answers "handle this". Services become the agent's tools — that is how the two relate.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>Service</th><th>Agent</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>What it is</strong></td><td>A capability behind an API</td><td>A model that decides and acts</td></tr>
+              <tr><td><strong>Who chooses the steps</strong></td><td>You, in code</td><td>The model, at runtime</td></tr>
+              <tr><td><strong>Output</strong></td><td>Predictable, same shape every time</td><td>Variable — it depends on reasoning</td></tr>
+              <tr><td><strong>Testing</strong></td><td>Ordinary unit testing</td><td>Evaluation over a dataset; behaviour is statistical</td></tr>
+              <tr><td><strong>Cost model</strong></td><td>Per call / per unit processed</td><td>Per token, times however many loop iterations it takes</td></tr>
+              <tr><td><strong>Reach for it when</strong></td><td>The steps are known and fixed</td><td>The steps depend on the request</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The engineering guidance that follows is unglamorous and correct:
+          <strong>use a service when you know the sequence, and an agent only when you genuinely do
+          not.</strong> A pipeline that always transcribes, then translates, then summarizes should
+          be three service calls in twenty lines of Python — deterministic, cheap, testable,
+          debuggable. Wrapping it in an agent adds latency, token cost and non-determinism to buy
+          flexibility you were not using. In a bank, that trade needs a reason.</p>
+        <p class="prose">The rest of this section takes the four capabilities you will actually meet
+          — <strong>retrieval</strong>, <strong>speech</strong>, <strong>the open web</strong> and
+          <strong>the models themselves</strong> — and shows, for each, how to call it from your own
+          code and what the managed alternative buys you.</p>
+      </section>
+
+      <!-- ============ AI SEARCH ============ -->
+      <section id="ai-search" class="doc-section">
+        <div>
+          <span class="eyebrow">Capability 1 · Retrieval</span>
+          <h2>Retrieval: from <span class="gradient-text">your own vector search to Azure AI Search</span></h2>
+        </div>
+        <p class="prose">You have already built retrieval by hand. The course backend chunks a
+          document, embeds every chunk with <code>text-embedding-3-small</code>, stores the vectors
+          in Qdrant, embeds the incoming question, and returns the nearest chunks by cosine
+          similarity. That pipeline is genuinely correct, and it is the right way to learn — nothing
+          about it is a toy. What it is not, yet, is <em>production retrieval for a bank</em>. This
+          part explains precisely what is missing and what Azure AI Search adds.</p>
+
+        <h3>What we built, in one diagram</h3>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">Document</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Chunker<br><span class="dg-note">4 strategies</span></div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Embedding model<br><span class="dg-note">1536 dims</span></div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">Qdrant<br><span class="dg-note">vectors + payload</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box">Question</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Same embedding model</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Cosine similarity</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">Top-k chunks + scores</div>
+            </div>
+          </div>
+          <p class="diagram__caption">The pipeline in <code>code/backend</code> — <code>POST /ingest</code> is the top row, <code>POST /search</code> the bottom one.</p>
+        </div>
+        <p class="prose">Run it yourself and watch the numbers: a query phrased completely
+          differently from the source text still retrieves the right passage, because the comparison
+          happens in meaning-space rather than word-space. That is the whole magic of embeddings,
+          and it is worth pausing on — it is why "my card got frozen" finds a paragraph about
+          <em>blocked</em> cards.</p>
+
+        <h3>Where pure vector search starts to hurt</h3>
+        <p class="prose">Now the honest part. Vector similarity is excellent at paraphrase and
+          terrible at precision. Ask for an exact account number, a product code, an IBAN or a
+          specific date and semantic search will happily return something that <em>looks</em>
+          similar — because "IBAN RO49 AAAA 1B31" and "IBAN RO12 BBBB 9C22" are extremely close in
+          embedding space, and completely different in fact. Keyword search has the opposite
+          profile: exact where vectors are vague, useless where wording differs.</p>
+        <p class="prose">The other gaps appear as soon as the corpus is real:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>What you hit</th><th>Why our pipeline struggles</th><th>What production needs</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Exact identifiers, codes, numbers</td><td>Vectors encode meaning, not exact strings</td><td>Keyword (BM25) search alongside vectors</td></tr>
+              <tr><td>"Only documents this user may see"</td><td>Nothing in the vector carries permissions</td><td><strong>Security trimming</strong> — filter by identity at query time</td></tr>
+              <tr><td>"Only policies still in force"</td><td>No structured filtering on metadata</td><td>Filters over typed fields (dates, status, department)</td></tr>
+              <tr><td>Good ordering of near-equal hits</td><td>Cosine score is a blunt ranker</td><td>A <strong>semantic reranker</strong> — a model that re-scores the top hits</td></tr>
+              <tr><td>New documents appearing hourly</td><td>Our ingestion is a manual API call</td><td><strong>Indexers</strong> that crawl a source on a schedule</td></tr>
+              <tr><td>Millions of chunks, many users</td><td>One container, one process, no replicas</td><td>A managed service with replicas, partitions and an SLA</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>What Azure AI Search is</h3>
+        <p class="prose"><strong>Azure AI Search</strong> is a managed search engine — a separate
+          Azure resource, with its own endpoint, its own keys, its own roles — designed for exactly
+          this problem. Three of its capabilities matter most for our purposes.</p>
+        <p class="prose"><strong>Hybrid search</strong> runs a keyword query and a vector query
+          against the same index simultaneously and fuses the two result lists into one ranking
+          (the standard technique is <em>reciprocal rank fusion</em>: a document that appears high
+          in either list rises, a document high in both wins). This single feature removes the
+          precision weakness described above without giving up paraphrase matching. In published
+          comparisons hybrid retrieval consistently beats either method alone, and it is the default
+          you should reach for.</p>
+        <p class="prose"><strong>Semantic ranking</strong> takes the top results of that fused list
+          and re-scores them with a language model trained for relevance, then optionally returns
+          extractive <em>captions</em> and a direct <em>answer</em> span. It is a second, smarter
+          pass over a small candidate set — expensive per document, cheap because there are few.</p>
+        <p class="prose"><strong>Security trimming</strong> is the one a bank cannot do without. Each
+          indexed document carries the identities or groups permitted to see it; every query is
+          issued with the caller's identity, and the engine filters before ranking. The alternative —
+          retrieving freely and hoping the model does not quote what the user may not read — is not
+          an access-control model, it is a hope. Retrieval is where confidentiality is enforced in a
+          RAG system, and the enforcement must happen in the search layer.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">Question + caller identity</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--frame" style="flex:2;">
+                <span class="dg-label">Azure AI Search — one query, several passes</span>
+                <div class="dg-row">
+                  <div class="dg-box">Keyword (BM25)</div>
+                  <div class="dg-box">Vector (kNN)</div>
+                </div>
+                <div class="dg-row" style="margin-top:.4rem;">
+                  <div class="dg-box">Fusion + filters + security trim</div>
+                </div>
+                <div class="dg-row" style="margin-top:.4rem;">
+                  <div class="dg-box dg-box--accent">Semantic reranker → captions</div>
+                </div>
+              </div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Grounded answer</div>
+            </div>
+          </div>
+          <p class="diagram__caption">Hybrid retrieval with reranking — the shape of production RAG. Everything left of the answer is what a managed search service gives you.</p>
+        </div>
+
+        <h3>Step by step: creating an index and querying it</h3>
+        <p class="prose">Nothing here is needed for tomorrow's demo — our Qdrant pipeline stands on
+          its own — but this is the migration path, and it is short. First, the resource:</p>
+        <div class="code-block">
+          <span class="code-block__label">1 · create the service and grant yourself access</span>
+          <pre><code># a Search service in the same resource group and region
+az search service create \
+  --name srch-libra-&lt;yourname&gt; \
+  --resource-group rg-ai-course \
+  --location swedencentral \
+  --sku basic
+
+# its endpoint
+az search service show --name srch-libra-&lt;yourname&gt; \
+  --resource-group rg-ai-course --query "hostName" -o tsv
+
+# your identity needs data-plane roles — note these are Search's own roles
+SEARCH_ID=$(az search service show --name srch-libra-&lt;yourname&gt; \
+  --resource-group rg-ai-course --query id -o tsv)
+ME=$(az ad signed-in-user show --query id -o tsv)
+
+az role assignment create --assignee $ME --scope $SEARCH_ID \
+  --role "Search Index Data Contributor"
+az role assignment create --assignee $ME --scope $SEARCH_ID \
+  --role "Search Service Contributor"</code></pre>
+        </div>
+        <p class="prose">Note what just happened, because it is the lesson from the wiring section
+          made concrete: <em>you added a capability by adding role assignments, not by collecting
+          another key.</em> The same <code>DefaultAzureCredential</code> now opens Search too.</p>
+        <div class="code-block">
+          <span class="code-block__label">2 · define an index with both a keyword field and a vector field</span>
+          <pre><code>from azure.identity import DefaultAzureCredential
+from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import (
+    SearchIndex, SearchField, SearchFieldDataType, SimpleField, SearchableField,
+    VectorSearch, VectorSearchProfile, HnswAlgorithmConfiguration,
+)
+
+ENDPOINT = "https://srch-libra-&lt;yourname&gt;.search.windows.net"
+credential = DefaultAzureCredential()          # the SAME object as everywhere else
+
+index = SearchIndex(
+    name="libra-docs",
+    fields=[
+        SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+        SearchableField(name="text", type=SearchFieldDataType.String),      # BM25 searches this
+        SimpleField(name="source", type=SearchFieldDataType.String, filterable=True, facetable=True),
+        SimpleField(name="allowed_groups", type=SearchFieldDataType.Collection(SearchFieldDataType.String),
+                    filterable=True),                                        # ← security trimming
+        SearchField(name="vector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                    searchable=True, vector_search_dimensions=1536,          # must match the model
+                    vector_search_profile_name="hnsw-profile"),
+    ],
+    vector_search=VectorSearch(
+        algorithms=[HnswAlgorithmConfiguration(name="hnsw")],
+        profiles=[VectorSearchProfile(name="hnsw-profile", algorithm_configuration_name="hnsw")],
+    ),
+)
+
+SearchIndexClient(ENDPOINT, credential).create_or_update_index(index)</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">3 · upload the same chunks you already produce</span>
+          <pre><code>from azure.search.documents import SearchClient
+
+client = SearchClient(ENDPOINT, index_name="libra-docs", credential=credential)
+
+# chunks + vectors come from exactly the code you already have in app/chunking.py
+# and app/embeddings.py — only the destination changes.
+client.upload_documents(documents=[
+    {"id": str(i), "text": chunk, "source": "retail-faq",
+     "allowed_groups": ["all-staff"], "vector": vector}
+    for i, (chunk, vector) in enumerate(zip(chunks, vectors))
+])</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">4 · hybrid query with a filter — keyword + vector in one call</span>
+          <pre><code>from azure.search.documents.models import VectorizedQuery
+
+question = "my card got frozen, what do I do?"
+qvec = embed([question])[0]
+
+results = client.search(
+    search_text=question,                                   # the BM25 half
+    vector_queries=[VectorizedQuery(vector=qvec, k_nearest_neighbors=5, fields="vector")],
+    filter="allowed_groups/any(g: g eq 'all-staff')",       # security trimming
+    query_type="semantic",                                  # add the reranker
+    semantic_configuration_name="default",
+    top=3,
+)
+
+for r in results:
+    print(round(r["@search.score"], 4), r.get("@search.reranker_score"), r["text"][:90])</code></pre>
+        </div>
+        <p class="prose">Two scores come back per result, and the difference is instructive:
+          <code>@search.score</code> is the fused keyword+vector score, while
+          <code>@search.reranker_score</code> is the semantic model's opinion. Watching them
+          disagree is the clearest demonstration of what reranking does.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">Integrated vectorization — skipping the embedding step</p>
+          <p>Azure AI Search can also call the embedding model <em>for</em> you: attach your Foundry
+            deployment to the index as a vectorizer, push plain text, and the service chunks and
+            embeds on ingestion and embeds queries at search time. Less code, less control — the
+            usual trade. Start explicit (as above), move to integrated once the pipeline is boring.</p>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">What to keep from this section</p>
+          <p>Vector search alone is a prototype's retrieval. Production wants hybrid + filters +
+            security trimming + reranking, and Azure AI Search is the managed way to have all four.
+            The migration is mechanical: your chunking and embedding code does not change — only
+            where the vectors are stored and how they are queried.</p>
+        </div>
+      </section>
+
+      <!-- ============ SPEECH ============ -->
+      <section id="speech" class="doc-section">
+        <div>
+          <span class="eyebrow">Capability 2 · Speech</span>
+          <h2>Speech: giving the assistant <span class="gradient-text">a voice and an ear</span></h2>
+        </div>
+        <p class="prose"><strong>Azure AI Speech</strong> is a separate resource providing four
+          related capabilities: <em>speech-to-text</em> (transcription), <em>text-to-speech</em>
+          (neural voice synthesis), <em>speech translation</em>, and <em>speaker recognition</em>.
+          For a banking assistant the first two matter immediately — a call-centre recording becomes
+          searchable text, and an answer becomes audio for an accessibility or telephony channel.</p>
+        <p class="prose">We are backend-only today, and that is a fair question to raise: what use
+          is speech without a user interface? The honest answer is that both directions are already
+          useful server-side. Transcription is a <em>batch</em> capability — recordings arrive as
+          files and become text you can index, search and analyse, with no user waiting.
+          Synthesis produces an audio file like any other artifact: our
+          <code>POST /tools/speak</code> endpoint returns a playable WAV directly in Swagger, which
+          is enough to demonstrate the whole round trip today, and the same endpoint will feed a
+          browser's <code>&lt;audio&gt;</code> element unchanged when the frontend arrives.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box">Microphone / recording</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">Speech-to-text<br><span class="dg-note">POST /tools/transcribe</span></div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">Text</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">The agent<br><span class="dg-note">POST /ask</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box">Answer text</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent">Text-to-speech<br><span class="dg-note">POST /tools/speak</span></div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box">WAV audio</div>
+              <span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--muted">Browser / phone line</div>
+            </div>
+          </div>
+          <p class="diagram__caption">The voice loop. Both halves exist in the backend today; only the last box needs a frontend.</p>
+        </div>
+
+        <h3>Step 1 — create a Speech resource</h3>
+        <p class="prose">It is its own resource type, with its own key and region — the wiring
+          section's point about "one key does not open everything", made tangible:</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>az cognitiveservices account create \
+  --name speech-libra-&lt;yourname&gt; \
+  --resource-group rg-ai-course \
+  --location swedencentral \
+  --kind SpeechServices \
+  --sku F0 \
+  --yes
+
+# the key and the region are what the API needs
+az cognitiveservices account keys list --name speech-libra-&lt;yourname&gt; \
+  --resource-group rg-ai-course --query key1 -o tsv</code></pre>
+        </div>
+        <p class="prose">The <strong>F0</strong> tier is free and generous enough for a course:
+          roughly five hours of transcription and half a million characters of synthesis per month.
+          Put the key and region in <code>.env</code>:</p>
+        <div class="code-block">
+          <span class="code-block__label">code/backend/.env</span>
+          <pre><code>AZURE_SPEECH_KEY=&lt;key1&gt;
+AZURE_SPEECH_REGION=swedencentral
+AZURE_SPEECH_VOICE=en-US-AvaMultilingualNeural
+AZURE_SPEECH_LANGUAGE=en-US</code></pre>
+        </div>
+
+        <h3>Step 2 — text to speech, from Swagger</h3>
+        <p class="prose">Open <code>/docs</code> → <strong>POST /tools/speak</strong> → Try it out →
+          type a sentence → Execute. The response is audio: Swagger offers it as a download, and
+          your browser or media player will read it. Change <code>voice</code> to hear a different
+          neural voice — the multilingual voices will even speak Romanian text convincingly.</p>
+        <p class="prose">Underneath, our implementation deliberately calls the REST API rather than
+          installing the Speech SDK, so you can see what the service actually is: a POST with an
+          SSML body, a key header, and audio bytes coming back.</p>
+        <div class="code-block">
+          <span class="code-block__label">app/services/speech.py — the essential lines</span>
+          <pre><code>ssml = (f'&lt;speak version="1.0" xml:lang="en-US"&gt;'
+        f'&lt;voice name="{voice}"&gt;{text}&lt;/voice&gt;&lt;/speak&gt;')
+
+response = httpx.post(
+    f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",
+    headers={
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": "application/ssml+xml",
+        "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
+    },
+    content=ssml.encode("utf-8"),
+)
+audio_bytes = response.content        # a complete WAV file</code></pre>
+        </div>
+        <p class="prose"><strong>SSML</strong> — Speech Synthesis Markup Language — is where the
+          control lives: you can set rate, pitch, emphasis, pauses, and switch voice mid-sentence.
+          For a banking assistant reading out an IBAN, <code>&lt;say-as
+          interpret-as="characters"&gt;</code> is the difference between a readable code and
+          gibberish.</p>
+
+        <h3>Step 3 — speech to text</h3>
+        <p class="prose">Take the WAV you just generated, upload it to
+          <strong>POST /tools/transcribe</strong>, and read your own sentence coming back as text
+          with a confidence score. The round trip in two calls is a memorable demonstration: the
+          machine spoke, then listened to itself.</p>
+        <div class="code-block">
+          <span class="code-block__label">the request, in curl</span>
+          <pre><code>curl -X POST "http://localhost:7799/tools/transcribe" \
+  -H "accept: application/json" \
+  -F "file=@libra-assist.wav;type=audio/wav"</code></pre>
+        </div>
+        <p class="prose">The short-audio REST endpoint we use handles clips up to about a minute,
+          which suits demos and voice commands. Longer material — a thirty-minute call recording —
+          belongs to the <em>batch transcription</em> API, which takes a storage URL and works
+          asynchronously, and to <em>Fast transcription</em> for quicker turnaround. The pattern
+          generalizes: interactive endpoints for short audio, batch APIs for archives.</p>
+        <div class="callout callout--tip">
+          <p class="callout__title">Where this goes next</p>
+          <p>Wire <code>/tools/transcribe</code> → <code>/ask</code> → <code>/tools/speak</code> and
+            you have a voice assistant in three calls, entirely in the backend. Add a frontend later
+            and nothing behind it changes — which is exactly why we built the capability first.</p>
+        </div>
+      </section>
+
+      <!-- ============ WEB ============ -->
+      <section id="web" class="doc-section">
+        <div>
+          <span class="eyebrow">Capability 3 · The open web</span>
+          <h2>The web: <span class="gradient-text">your own scraper vs managed grounding</span></h2>
+        </div>
+        <p class="prose">Sooner or later someone asks for an assistant that "just reads our public
+          website" or "checks the current exchange rate online". It sounds like the easiest feature
+          on the list. It is the one most likely to consume a month. To make that concrete rather
+          than assert it, the course backend ships a deliberately plain scraper —
+          <code>POST /tools/web-fetch</code> — and it reports its own failures.</p>
+
+        <h3>The naive version, honestly implemented</h3>
+        <p class="prose">Fetch the URL, parse the HTML, drop scripts and styles, keep the visible
+          text. About sixty lines with the standard library, no dependencies. Try it on a simple
+          page and it works perfectly:</p>
+        <div class="code-block">
+          <span class="code-block__label">the happy path</span>
+          <pre><code>curl -X POST http://localhost:7799/tools/web-fetch \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+
+# → 200, title "Example Domain", 142 characters of text, zero warnings</code></pre>
+        </div>
+        <p class="prose">Now point it at a real corporate site, a news portal, or anything built
+          this decade, and read the <code>warnings</code> array — that field exists precisely to
+          make the lesson visible rather than theoretical:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>What you meet</th><th>Why the naive fetch fails</th><th>What fixing it actually costs</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>JavaScript-rendered pages</strong></td><td>The HTML you receive is an empty shell; content arrives later via scripts</td><td>Run a headless browser (Playwright) — heavier images, more memory, far slower, needs its own hosting</td></tr>
+              <tr><td><strong>Bot protection</strong> (403)</td><td>Cloudflare/Akamai fingerprint non-browser clients</td><td>There is no clean fix. Rotating identities is fragile and often violates terms of service</td></tr>
+              <tr><td><strong>Cookie / consent walls</strong></td><td>The real content sits behind an interaction</td><td>Per-site scripted clicking, which breaks whenever the banner changes</td></tr>
+              <tr><td><strong>Boilerplate</strong></td><td>Menus, footers and cookie text dominate the extracted text</td><td>Readability heuristics per site — endless tuning; note our <code>signal_ratio</code> stat</td></tr>
+              <tr><td><strong>Rate limits</strong> (429)</td><td>Any useful crawl rate looks like an attack</td><td>Queues, backoff, politeness delays — an infrastructure project</td></tr>
+              <tr><td><strong>Non-HTML formats</strong></td><td>PDFs, DOCX and XML need entirely different parsers</td><td>A parser per format, each with its own failure modes</td></tr>
+              <tr><td><strong>Freshness &amp; layout churn</strong></td><td>Sites change without notice; your extraction silently degrades</td><td>Monitoring and maintenance <em>forever</em> — the real cost</td></tr>
+              <tr><td><strong>robots.txt &amp; legality</strong></td><td>Not every page may be crawled or stored</td><td>A compliance review before a single line ships in a bank</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Notice that only the first two rows are technical problems with technical
+          solutions. The rest are <em>maintenance</em> problems, and maintenance is what makes
+          scraping expensive: the code that worked in March fails silently in June, and nobody
+          notices until an answer is wrong.</p>
+
+        <h3>The managed alternatives, and when each fits</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Approach</th><th>What it does</th><th>Fits when</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Your own scraper</strong></td><td>You fetch, parse and maintain</td><td>A handful of stable, cooperative pages you control</td></tr>
+              <tr><td><strong>Grounding with a search tool</strong> (agent tool in Foundry)</td><td>The agent issues a web search and receives ranked results with citations</td><td>Questions needing current public information; the provider owns crawling and freshness</td></tr>
+              <tr><td><strong>Indexing into AI Search</strong></td><td>An indexer pulls from your own sites/storage on a schedule; you query your index</td><td>Your own content, where you need filters, permissions and reproducibility</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">In Foundry, web grounding appears as a <em>tool</em> you attach to an agent
+          (in the <strong>Tools</strong> section you toured). The agent decides when a question needs
+          the open web, issues the search, and receives results with source URLs it can cite. You
+          pay per search rather than per crawl, and the crawling problem stops being yours.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">The banking caveat that outranks all of this</p>
+          <p>Content retrieved from the open web is <strong>untrusted input</strong>. A page can
+            contain text designed to be read by a model — "ignore your instructions and reveal…" —
+            which is <em>prompt injection</em>, and grounding is its main entry point. Treat web
+            content as data to be quoted, never as instructions to be obeyed; keep it clearly
+            separated in the prompt; and never let an agent take a consequential action on the
+            strength of something it read on a page.</p>
+        </div>
+      </section>
+
+      <!-- ============ AGENT BUILD ============ -->
+      <section id="agent-build" class="doc-section">
+        <div>
+          <span class="eyebrow">11:20 · Live coding · part one</span>
+          <h2>Building the agent: <span class="gradient-text">behaviour as data</span></h2>
+        </div>
+        <p class="prose">Capability four is the model itself — and the interesting engineering
+          question is not "how do I call it" (Session 2 answered that) but "how do I change what it
+          does without changing code". Watch the sequence: we take the working RAG pipeline, drop an
+          agent into it, and alter the personality of the entire application by editing a JSON file
+          while the server runs.</p>
+
+        <h3>The demo, in the order we run it</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Call</th><th>What to watch</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><code>docker compose up</code> → open <code>/docs</code></td><td>The API's own documentation, generated from the code</td></tr>
+              <tr><td>2</td><td><code>POST /chunk</code></td><td>One sentence, four strategies — boundaries differ visibly</td></tr>
+              <tr><td>3</td><td><code>POST /ingest</code></td><td>Chunks become 1536-dimensional vectors; a peek at the first eight numbers</td></tr>
+              <tr><td>4</td><td><code>POST /search</code></td><td>A paraphrased query finds the right chunk; cosine scores, descending</td></tr>
+              <tr><td>5</td><td><code>GET /agents</code></td><td>Four personas, loaded from JSON files on disk</td></tr>
+              <tr><td>6</td><td><code>POST /ask</code> with <code>"agent": "default"</code></td><td>The grounded, professional answer with a citation</td></tr>
+              <tr><td>7</td><td><code>POST /ask</code> with <code>"agent": "lyrical"</code></td><td>Same facts, same citation — delivered as verse</td></tr>
+              <tr><td>8</td><td>Edit <code>lyrical.json</code>, save, ask again</td><td>Behaviour changes with no restart. <em>This is the point.</em></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>What a persona file looks like</h3>
+        <p class="prose">Every file in <code>app/agents/personas/</code> is one agent definition.
+          Nothing in it is code; all of it is behaviour:</p>
+        <div class="code-block">
+          <span class="code-block__label">app/agents/personas/lyrical.json</span>
+          <pre><code>{
+  "display_name": "Libra Lyrical",
+  "description": "The same facts, delivered as verse.",
+  "instructions": "You are Libra Lyrical, a banking assistant who answers exclusively in poetry. Every fact you state must remain strictly accurate — you may bend the language, never the numbers.",
+  "style_rules": [
+    "Answer as a short poem: four to eight lines, rhyming where it does not distort a fact.",
+    "Keep every figure, fee, rate and condition exactly as found in the source material.",
+    "If you must decline or say something is unknown, do that in verse too."
+  ],
+  "temperature": 0.9,
+  "max_tokens": 500,
+  "require_citations": true,
+  "refuse_when_unsupported": true
+}</code></pre>
+        </div>
+        <p class="prose">The application composes that JSON into the system prompt at call time —
+          instructions, then the style rules as a list, then the grounding clauses if retrieval
+          supplied context. You can see the result without guessing: <code>GET /agents/lyrical</code>
+          returns the exact system prompt the file produces, both grounded and ungrounded.</p>
+        <div class="code-block">
+          <span class="code-block__label">app/agents/persona.py — JSON becomes a prompt</span>
+          <pre><code>def system_prompt(self, *, grounded: bool) -> str:
+    parts = [self.instructions.strip()]
+
+    if self.style_rules:
+        rules = "\n".join(f"- {r}" for r in self.style_rules)
+        parts.append(f"Style rules you must follow:\n{rules}")
+
+    if grounded:
+        grounding = ["You are given CONTEXT passages retrieved from the bank's own documents.",
+                     "Base your answer on those passages."]
+        if self.require_citations:
+            grounding.append("Cite the passages you use as [1], [2], … .")
+        if self.refuse_when_unsupported:
+            grounding.append("If the passages do not contain what is needed, say so explicitly "
+                             "instead of inventing an answer.")
+        parts.append(" ".join(grounding))
+
+    return "\n\n".join(parts)</code></pre>
+        </div>
+
+        <h3>How the agent plugs into <code>/ask</code></h3>
+        <p class="prose">The endpoint's shape barely changed, and that is deliberate — retrieval
+          still happens exactly as before; the agent replaces only the "assemble a prompt and call
+          the model" step:</p>
+        <div class="code-block">
+          <span class="code-block__label">app/main.py — the heart of /ask</span>
+          <pre><code>persona = load_persona(req.agent or settings.agent_persona)   # JSON, re-read if changed
+
+if req.use_rag:                                               # retrieval — unchanged
+    qvec = _embed([req.question])[0]
+    retrieved = [SearchHit(**h) for h in store.search(qvec, top_k)]
+
+mode = (req.agent_mode or settings.agent_mode).lower()
+if mode == "foundry":
+    reply = foundry_agent.run(persona, req.question, chunks)  # hosted by Azure
+else:
+    reply = local_agent.run(persona, req.question, chunks)    # runs right here</code></pre>
+        </div>
+        <p class="prose">And the local agent itself is twenty lines — worth reading precisely
+          because it is unimpressive. An agent, at this level, is a persona plus context plus a
+          model call. The mystique belongs to the tool-calling loop, which arrives in Session 6:</p>
+        <div class="code-block">
+          <span class="code-block__label">app/agents/local_agent.py</span>
+          <pre><code>def run(persona, question, chunks=None, temperature=None) -> AgentReply:
+    chunks = chunks or []
+    system = persona.system_prompt(grounded=bool(chunks))
+    user = build_user_prompt(question, chunks)
+
+    temp = temperature if temperature is not None else (
+        persona.temperature if persona.temperature is not None else settings.llm_temperature)
+
+    result = get_llm().chat(system=system, user=user,
+                            temperature=temp, max_tokens=persona.max_tokens or settings.llm_max_tokens)
+    return AgentReply(text=result.text, mode="local", persona=persona.name,
+                      system_prompt=system, prompt_sent=user, ...)</code></pre>
+        </div>
+        <p class="prose">Notice the precedence rule in that temperature line — request value, then
+          persona file, then environment default. Small, but it is the pattern every configurable
+          system uses, and students should see it stated once.</p>
+        <div class="callout callout--success">
+          <p class="callout__title">The takeaway to say out loud</p>
+          <p>The persona file changed the product's personality; the Python did not change at all.
+            That separation is why prompts live in version-controlled data files in serious
+            projects — a domain expert can propose a change, a reviewer can read the diff, and
+            nobody redeploys code to adjust tone.</p>
+        </div>
+      </section>
+
+      <!-- ============ AGENT DEPLOY ============ -->
+      <section id="agent-deploy" class="doc-section">
+        <div>
+          <span class="eyebrow">11:20 · Live coding · part two</span>
+          <h2>Deploying the agent to <span class="gradient-text">Foundry Agent Service</span></h2>
+        </div>
+        <p class="prose">So far the agent lives inside our process: kill the server and it is gone.
+          The <strong>Agent Service</strong> moves the definition into Azure, where it becomes a
+          resource in its own right — callable by other systems, with conversation state and tool
+          execution handled by the platform, and every run visible in the portal.</p>
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">AGENT_MODE=local</span>
+              <div class="dg-stack">
+                <div class="dg-box">Your FastAPI process</div>
+                <div class="dg-box dg-box--accent">persona JSON → prompt → model call</div>
+                <div class="dg-box dg-box--muted">Loop, state and prompts: yours<br><span class="dg-note">works with any provider</span></div>
+              </div>
+            </div>
+            <div class="dg-box dg-box--frame" style="flex:1;">
+              <span class="dg-label">AGENT_MODE=foundry</span>
+              <div class="dg-stack">
+                <div class="dg-box">Your FastAPI process</div>
+                <div class="dg-row"><span class="dg-arrow" style="margin-inline:auto;">↓ thread → message → run</span></div>
+                <div class="dg-box dg-box--accent">Agent Service (Azure)<br><span class="dg-note">definition, threads, tools, traces</span></div>
+                <div class="dg-box dg-box--muted">Loop and state: Microsoft's<br><span class="dg-note">Azure only, Entra auth required</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The same persona, two homes. One environment variable switches between them — which is the cleanest possible way to teach the difference.</p>
+        </div>
+
+        <h3>Can I do this on a trial subscription?</h3>
+        <p class="prose"><strong>Yes.</strong> The Agent Service is part of Foundry and carries no
+          separate licence — you pay for the tokens the agent consumes, exactly as with a direct
+          model call, and a free-trial credit covers a workshop comfortably. Three practical
+          conditions apply, and all three are things you already have or can arrange in a minute:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Requirement</th><th>Why</th><th>How to satisfy it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A Foundry <em>project</em> (not just a resource)</td><td>Agents are project-scoped objects</td><td>Created for you when you create the Foundry resource; visible in ai.azure.com</td></tr>
+              <tr><td>A model deployment in that project</td><td>The agent needs a model to run on</td><td>Lab B, step 3 — you already deployed one</td></tr>
+              <tr><td><strong>Entra authentication</strong> — keys are refused</td><td>The Agent Service is Entra-only by design</td><td><code>az login</code>, plus the <em>Azure AI User</em> role on the project</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">That last row is the one that trips people up: an API key that works
+          perfectly for <code>/ask</code> in local mode will be rejected by the Agent Service. Our
+          code says so explicitly rather than failing obscurely — if <code>AZURE_AI_AUTH=key</code>
+          and you try foundry mode, you get a message telling you to switch to identity.</p>
+
+        <h3>Step 1 — find the project endpoint</h3>
+        <p class="prose">The Agent Service uses the <em>project</em> endpoint, which is not the same
+          as the models endpoint you have been using. In <code>ai.azure.com</code>, open your
+          project → <strong>Overview</strong> → copy the project endpoint. Add both to
+          <code>.env</code>:</p>
+        <div class="code-block">
+          <span class="code-block__label">code/backend/.env</span>
+          <pre><code>AZURE_AI_PROJECT_ENDPOINT=https://&lt;resource&gt;.services.ai.azure.com/api/projects/&lt;project&gt;
+AZURE_AI_AUTH=identity
+AZURE_AI_CHAT_DEPLOYMENT=&lt;your chat deployment name&gt;</code></pre>
+        </div>
+
+        <h3>Step 2 — grant yourself the project role</h3>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>ME=$(az ad signed-in-user show --query id -o tsv)
+RES=$(az cognitiveservices account show --name my-foundry-&lt;yourname&gt; \
+      --resource-group rg-ai-course --query id -o tsv)
+
+az role assignment create --assignee $ME --scope $RES --role "Azure AI User"</code></pre>
+        </div>
+
+        <h3>Step 3 — publish the persona</h3>
+        <p class="prose">One command turns the JSON file into a hosted agent. It creates the agent
+          if it does not exist and updates it if it does, so re-running after editing the persona is
+          the normal workflow:</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>cd code/backend
+uv run python scripts/deploy_agent.py lyrical</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">expected output</span>
+          <pre><code>→ deploying persona 'lyrical' (Libra Lyrical)
+  project : https://my-foundry-lb.services.ai.azure.com/api/projects/proj-default
+  model   : gpt-5.1
+
+✓ agent created
+  id   : asst_9xK2…
+  name : lyrical
+
+Next:
+  1. put this in .env →  FOUNDRY_AGENT_ID=asst_9xK2…
+  2. set               →  AGENT_MODE=foundry
+  3. call /ask with    →  {"question": "...", "agent_mode": "foundry"}</code></pre>
+        </div>
+        <p class="prose">The same operation is available from Swagger as
+          <strong>POST /agents/{name}/deploy</strong>, which is often the better demo — the class
+          sees a deployment happen through the API they have been using all morning.</p>
+
+        <h3>Step 4 — invoke the hosted agent</h3>
+        <p class="prose">Two ways. Directly, proving the agent is independent of our backend:</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>uv run python scripts/invoke_agent.py "What fee applies to early repayment?" --persona lyrical</code></pre>
+        </div>
+        <p class="prose">Or through the application, by flipping one field — the same question, the
+          same persona, now executed in Azure:</p>
+        <div class="code-block">
+          <span class="code-block__label">POST /ask</span>
+          <pre><code>{
+  "question": "What fee does Libra Bank charge for early mortgage repayment?",
+  "use_rag": true,
+  "agent": "lyrical",
+  "agent_mode": "foundry"
+}</code></pre>
+        </div>
+        <p class="prose">Look at the response's <code>agent.mode</code> field: it now reads
+          <code>foundry</code>, and <code>system_prompt</code> reports that the instructions live in
+          Azure rather than in the request. Then open <code>ai.azure.com</code> →
+          <strong>Agents</strong> and find your agent listed, with its runs — the same conversation
+          you just had, recorded on the platform.</p>
+
+        <h3>What the hosted lane is actually for</h3>
+        <p class="prose">Be honest with the class about the trade, because for today's simple
+          persona the local lane is objectively better: fewer moving parts, provider-agnostic,
+          debuggable with a breakpoint. Hosting earns its keep when you need what the platform adds
+          — <strong>shared identity</strong> (other applications call the same agent),
+          <strong>managed conversation state</strong> (threads persist without a database),
+          <strong>orchestrated tool execution</strong> (the platform runs the loop, including
+          File Search, Azure AI Search, Code Interpreter, OpenAPI tools and Logic Apps), and
+          <strong>governance</strong> (runs, traces and evaluations in one place a compliance
+          officer can look at). Those are Session 6 topics; today's goal is that you have deployed
+          one, seen it in the portal, and know the switch exists.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">Preview surface</p>
+          <p>The Agent Service SDK is evolving quickly. If a method name in
+            <code>app/agents/foundry_agent.py</code> no longer matches your installed
+            <code>azure-ai-projects</code> version, the error will say so — check the package's
+            current documentation and adjust. The local lane never depends on this, which is
+            precisely why the demo path is local first.</p>
+        </div>
+      </section>
+
+      <!-- ============ AUTOMATION ============ -->
+      <section id="automation" class="doc-section">
+        <div>
+          <span class="eyebrow">The point of the whole morning</span>
+          <h2>Everything from the CLI — <span class="gradient-text">nothing needs the portal</span></h2>
+        </div>
+        <p class="prose">Here is the claim this session has been building toward, stated plainly:
+          <strong>a cloud platform is not a website with an API bolted on — it is an API with a
+          website bolted on.</strong> Every button you have clicked this morning issues an HTTP
+          request that you can issue yourself, which means an entire environment is expressible as
+          code: reviewable, repeatable, and rebuildable from nothing after you delete it.</p>
+        <p class="prose">The repository ships that code, in
+          <code>code/backend/scripts/azure/</code>. Both shells are provided — <code>.ps1</code>
+          for PowerShell, <code>.sh</code> for bash — and every script is idempotent, so running it
+          twice is safe. Follow this page top to bottom, then open
+          <code>ai.azure.com</code> and watch everything you just typed appear in the portal.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Script</th><th>What it does</th><th>Portal equivalent</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>01-provision</code></td><td>Resource group → Foundry resource → chat + embedding deployments → your data-plane role</td><td>~20 clicks across four blades</td></tr>
+              <tr><td><code>02-deploy-model</code></td><td>Deploy another model later; list what your quota allows; delete a deployment</td><td>Foundry portal → Models + endpoints → Deploy</td></tr>
+              <tr><td><code>03-create-agent</code></td><td>Publish a persona as a hosted agent via the Agent Service REST API</td><td>Foundry portal → Agents → New agent</td></tr>
+              <tr><td><code>04-invoke-agent</code></td><td>The whole agent loop: thread → message → run → answer</td><td>Foundry portal → Agents → playground</td></tr>
+              <tr><td><code>05-inspect</code></td><td>Deployments, quota, hosted agents, role assignments, endpoints</td><td>Several blades in two portals</td></tr>
+              <tr><td><code>06-teardown</code></td><td>Deletes the resource group — everything, in one command</td><td>Portal → resource group → Delete → type the name</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Deploying a model, from the command line</h3>
+        <p class="prose">Run the script with no arguments first. It answers the only two questions
+          that matter before you deploy anything: <em>what does the catalog offer in my region</em>,
+          and <em>how much quota do I actually have left</em>. A model can be in the catalog and
+          still be undeployable because your quota for it is zero — that surprise is worth meeting
+          here rather than during a demo.</p>
+        <div class="code-block">
+          <span class="code-block__label">discovery — what can I deploy?</span>
+          <pre><code>cd code/backend/scripts/azure
+./02-deploy-model.ps1                 # PowerShell
+./02-deploy-model.sh                  # bash</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">typical output</span>
+          <pre><code>CURRENT DEPLOYMENTS in libra-ai-acad-resource
+Deployment              Model                   Sku             Tpm    State
+----------------------  ----------------------  --------------  -----  ---------
+text-embedding-3-small  text-embedding-3-small  GlobalStandard  50     Succeeded
+gpt-5-mini              gpt-5-mini              GlobalStandard  50     Succeeded
+
+AVAILABLE IN swedencentral (with YOUR remaining quota)
+Model                   Version      FreeQuota
+gpt-5-mini              2025-08-07         400
+text-embedding-3-small  1                  950</code></pre>
+        </div>
+        <p class="prose">Then deploy. The three decisions the portal dialog asks for are the three
+          parameters here: which <strong>model</strong>, what to <strong>call the deployment</strong>
+          (your code references this string, not the model name), and how much
+          <strong>quota</strong> to allocate in thousands of tokens per minute:</p>
+        <div class="code-block">
+          <span class="code-block__label">deploy, rename, remove</span>
+          <pre><code># deploy a model under its own name
+./02-deploy-model.ps1 -Model gpt-4.1-mini
+
+# deploy the same model under an alias your code can keep stable
+./02-deploy-model.ps1 -Model gpt-4.1-mini -DeploymentName fast -Capacity 20
+
+# free the quota again
+./02-deploy-model.ps1 -Model fast -Delete</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Why the alias matters</p>
+          <p>Deploy a model as <code>fast</code> and your application says
+            <code>model="fast"</code> forever. Six months later you point <code>fast</code> at a
+            newer, cheaper model — one CLI command, no code change, no redeploy. That indirection
+            is the practical reason deployments exist at all.</p>
+        </div>
+
+        <h3>Creating an agent, from the command line</h3>
+        <p class="prose">The Agent Service has no dedicated <code>az</code> command, so the script
+          calls its REST API through <code>az rest</code> — which signs the request with your
+          <code>az login</code> token. This is worth showing precisely because it demystifies the
+          SDK: what <code>scripts/deploy_agent.py</code> does in Python, four lines of shell do over
+          HTTP.</p>
+        <div class="code-block">
+          <span class="code-block__label">publish a persona as a hosted agent</span>
+          <pre><code>./03-create-agent.ps1 -Persona lyrical
+# bash:  ./03-create-agent.sh lyrical</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">what it prints</span>
+          <pre><code>Agent to create
+  persona : lyrical (Libra Lyrical)
+  model   : gpt-5-mini
+  project : https://&lt;resource&gt;.services.ai.azure.com/api/projects/proj-default
+
+Creating agent …
+
+✓ agent id : asst_rJGxr4UCJkuldzerbmoJdI89
+  name     : lyrical
+  model    : gpt-5-mini</code></pre>
+        </div>
+        <p class="prose">The script reads the same JSON file the application reads, composes the
+          instructions exactly as <code>app/agents/persona.py</code> does, and creates the agent —
+          or updates it if one with that name already exists, so re-running after editing the
+          persona is the normal workflow. <strong>Now open <code>ai.azure.com</code> → Agents.</strong>
+          Your agent is there, with the instructions you wrote in the JSON file, ready to be tried
+          in the portal's own playground. That round trip — file to CLI to portal — is the moment
+          worth pausing on in class.</p>
+
+        <h3>Invoking it, and seeing the protocol</h3>
+        <p class="prose">The last script runs the complete loop and narrates each HTTP call, so the
+          class can see that "the platform runs the agent" is a concrete claim about four requests:</p>
+        <div class="code-block">
+          <span class="code-block__label">the agent loop, narrated</span>
+          <pre><code>./04-invoke-agent.ps1 -Persona lyrical -Question "Why was my card blocked?"
+
+[1] POST /threads               - open a conversation
+    thread id: thread_erYO5DczCuzI7p6NfH8RMapk
+[2] POST /threads/{id}/messages - add the question
+[3] POST /threads/{id}/runs     - ask the platform to execute
+    status: in_progress
+    status: completed
+[4] GET  /threads/{id}/messages - read what the agent wrote</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Same operation</th><th>Shell (REST)</th><th>Python (SDK)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Publish an agent</td><td><code>./03-create-agent.ps1 -Persona lyrical</code></td><td><code>uv run python scripts/deploy_agent.py lyrical</code></td></tr>
+              <tr><td>Invoke an agent</td><td><code>./04-invoke-agent.ps1 -Question "…"</code></td><td><code>uv run python scripts/invoke_agent.py "…"</code></td></tr>
+              <tr><td>List deployments</td><td><code>./05-inspect.ps1</code></td><td><code>uv run python examples/09_list_deployments.py</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Run both columns for the same operation and the lesson lands by itself:
+          the SDK is a convenience over the REST API, the CLI is a different convenience over the
+          same REST API, and the portal is a third. None of them is privileged. That is what makes
+          the platform automatable — and automation is the actual product.</p>
+
+        <h3>The proof: destroy it and build it back</h3>
+        <div class="code-block">
+          <span class="code-block__label">the only honest test of infrastructure-as-code</span>
+          <pre><code>./06-teardown.ps1                 # deletes the resource group and everything in it
+./01-provision.ps1                # rebuild from nothing
+./02-deploy-model.ps1 -Model gpt-4.1-mini
+./03-create-agent.ps1 -Persona lyrical</code></pre>
+        </div>
+        <p class="prose">If your environment comes back without you touching the portal once, you
+          have understood the platform rather than merely used it.</p>
+      </section>
+
+      <!-- ============ CONSOLE ============ -->
+      <section id="console" class="doc-section">
+        <div>
+          <span class="eyebrow">For the demo</span>
+          <h2>The console — <span class="gradient-text">a GUI over the same API</span></h2>
+        </div>
+        <p class="prose">Swagger at <code>/docs</code> is the right tool for debugging: it is
+          exhaustive, it shows every parameter, and it never lies. It is the wrong tool for a
+          demonstration, because its verbosity buries the idea being shown. So the repository also
+          ships a small React console — <code>code/frontend/</code> — that puts a purpose-built
+          screen on each part of the pipeline.</p>
+        <div class="code-block">
+          <span class="code-block__label">one command starts everything</span>
+          <pre><code>cd code/backend
+docker compose up --build
+
+#   http://localhost:7800   the console
+#   http://localhost:7799/docs   Swagger, still there for debugging
+#   http://localhost:7833/dashboard   the Qdrant dashboard</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Screen</th><th>What it shows</th><th>Endpoints behind it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Chat</strong></td><td>The assistant, with a persona switch, a RAG toggle, local/Foundry mode, retrieved passages with scores, and the exact prompt that was sent</td><td><code>/ask</code></td></tr>
+              <tr><td><strong>Knowledge</strong></td><td>Paste a document, compare the four chunking strategies, then embed and store — with the vector dimension and a peek at the numbers</td><td><code>/chunk</code>, <code>/ingest</code>, <code>/collection</code></td></tr>
+              <tr><td><strong>Retrieval</strong></td><td>A query, its embedding, and the ranked hits with cosine scores</td><td><code>/search</code></td></tr>
+              <tr><td><strong>Agents</strong></td><td>Every persona, the exact system prompt its JSON produces, and a one-click publish to Foundry</td><td><code>/agents</code>, <code>/agents/{name}/deploy</code></td></tr>
+              <tr><td><strong>Tools</strong></td><td>The plain web scraper with its warnings; text-to-speech with a player; speech-to-text round trip</td><td><code>/tools/*</code></td></tr>
+              <tr><td><strong>Status</strong></td><td>Providers, models, vector store, personas, configuration with secrets masked</td><td><code>/health</code>, <code>/config</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Every screen can show its own JSON</p>
+          <p>Each view has a <em>show raw response</em> toggle. Demonstrate the idea in the GUI,
+            then open the JSON to prove the GUI is only a renderer — the API is still the product.
+            It also means you never have to leave the console to debug.</p>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">A detail worth pointing out on screen</p>
+          <p>In <code>docker-compose.yml</code> the API service sets <code>AZURE_AI_AUTH=key</code>
+            while your <code>.env</code> keeps <code>identity</code>. Same image, same code: run it
+            locally and it authenticates as you through the Azure CLI; run it in a container, where
+            no <code>az login</code> exists, and it uses the key. One codebase, both lanes, decided
+            by where it runs.</p>
+        </div>
+      </section>
+
+      <!-- ============ LAB B ============ -->
+      <section id="lab-b" class="doc-section">
+        <div>
+          <span class="eyebrow">11:35 · Lab · 20′</span>
+          <h2>Lab B — build the environment <span class="gradient-text">you own</span></h2>
+        </div>
+        <p class="prose">Everything so far has been preparation for this: your own resource group,
+          your own Foundry resource, your own deployments, feeding the course application. Steps 1
+          to 4 are the session; steps 5 to 7 continue in the assignment if the clock beats us —
+          nobody should feel rushed into clicking without reading.</p>
+        <div class="callout callout--warn">
+          <p class="callout__title">Before you start — costs</p>
+          <p>Creating a resource group, a Foundry resource and a deployment costs nothing by
+            itself: you pay per token consumed. A morning of experiments is measured in cents. Still,
+            delete the resource group when the course ends — the one-command cleanup is in the
+            assignment.</p>
+        </div>
+
+        <h3>Step 1 — create the resource group (≈2′)</h3>
+        <p class="prose">Use the region you chose in the geography section. Everything else in this
+          lab goes into this group, which means one command removes it all later.</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code>az group create --name rg-ai-course --location swedencentral
+
+# see it exist:
+az group show --name rg-ai-course --output table</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> JSON describing the group, with
+          <code>"provisioningState": "Succeeded"</code>. Notice the <code>id</code> field — that is
+          the resource ID whose anatomy we decoded.</p>
+
+        <h3>Step 2 — create the Foundry resource (≈4′)</h3>
+        <p class="prose">Two paths, same outcome. The portal path is easier to follow the first
+          time and shows you the options; the CLI path is what you would put in a script. Do the
+          portal path today if you are new — and read the CLI command anyway, because it names
+          exactly the same choices.</p>
+        <p class="prose"><strong>Portal:</strong> <code>portal.azure.com</code> → search
+          <em>Microsoft Foundry</em> → <strong>+ Create</strong> → choose
+          <strong>Foundry (Recommended)</strong> → select your subscription and
+          <code>rg-ai-course</code>, your region, and a <strong>globally unique name</strong> (it
+          becomes part of your endpoint hostname) → <em>Review + create</em> → <em>Create</em>.</p>
+        <div class="code-block">
+          <span class="code-block__label">the same thing, as a command</span>
+          <pre><code>az cognitiveservices account create \
+  --name my-foundry-&lt;yourname&gt; \
+  --resource-group rg-ai-course \
+  --location swedencentral \
+  --kind AIServices \
+  --sku S0 \
+  --yes</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> a resource appears in your group. If the name is
+          rejected, someone in the world already owns that hostname — add a suffix.</p>
+
+        <h3>Step 3 — deploy two models (≈6′)</h3>
+        <p class="prose">In the <strong>Foundry portal</strong> (<code>ai.azure.com</code>), open
+          your new resource's project → <strong>Models</strong> → <strong>Deploy model</strong>.
+          Deploy one chat model and one embedding model. Record the <em>deployment names</em> you
+          choose — your code will use those strings, not the model names.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Purpose</th><th>Model to look for</th><th>Suggested deployment name</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Chat / generation</td><td>A current GPT chat model available in your region</td><td><code>chat</code> (or the model's own name)</td></tr>
+              <tr><td>Embeddings</td><td><code>text-embedding-3-small</code></td><td><code>text-embedding-3-small</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Accept the default deployment type (a global standard, pay-per-token
+          option) and the default quota. Then use the <strong>playground</strong> to ask one
+          question — if it answers there, the platform side is finished and any later error is on
+          the client side.</p>
+
+        <h3>Step 4 — give yourself the data-plane role (≈3′)</h3>
+        <p class="prose">Creating a resource makes you its administrator, but calling models is a
+          <em>data-plane</em> action that needs a data-plane role. This is the single most common
+          cause of "I created it and my code still gets 403".</p>
+        <div class="code-block">
+          <span class="code-block__label">terminal</span>
+          <pre><code># your own object id (from Lab A)
+$me = az ad signed-in-user show --query id -o tsv          # PowerShell
+# me=$(az ad signed-in-user show --query id -o tsv)        # bash
+
+# the resource's full id
+$res = az cognitiveservices account show --name my-foundry-&lt;yourname&gt; `
+        --resource-group rg-ai-course --query id -o tsv
+
+az role assignment create --assignee $me --role "Cognitive Services User" --scope $res</code></pre>
+        </div>
+        <p class="prose"><strong>Expected:</strong> JSON describing the new assignment. Role
+          assignments can take a minute or two to take effect — if the next step fails with 403,
+          wait sixty seconds and retry before changing anything.</p>
+
+        <h3>Step 5 — point the course backend at your environment (≈5′)</h3>
+        <p class="prose">Fetch your endpoint, then edit the backend's <code>.env</code> so the
+          application you have been using all week now runs against <em>your</em> cloud:</p>
+        <div class="code-block">
+          <span class="code-block__label">get the endpoint</span>
+          <pre><code>az cognitiveservices account show --name my-foundry-&lt;yourname&gt; \
+  --resource-group rg-ai-course --query properties.endpoint -o tsv</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">code/backend/.env</span>
+          <pre><code>LLM_PROVIDER=azure
+EMBEDDING_PROVIDER=azure
+
+AZURE_AI_ENDPOINT=https://&lt;your-resource&gt;.services.ai.azure.com/models
+AZURE_AI_AUTH=identity
+AZURE_AI_CHAT_DEPLOYMENT=&lt;your chat deployment name&gt;
+AZURE_AI_EMBEDDING_DEPLOYMENT=text-embedding-3-small</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">run and verify</span>
+          <pre><code>cd code/backend
+docker compose up qdrant -d
+uv run uvicorn app.main:app --reload --port 7799
+
+# then, in Swagger at http://localhost:7799/docs — or with curl:
+#   GET  /health        → azure provider, your models
+#   POST /ingest        → chunks stored, 1536-dimensional vectors
+#   POST /ask           → an answer, with token usage, from YOUR deployment</code></pre>
+        </div>
+        <h3>Step 6 — make it yours: your own agent (≈5′)</h3>
+        <p class="prose">The last step is the one to enjoy. Create a new persona file — copy an
+          existing one and change everything about it — and watch your own agent answer:</p>
+        <div class="code-block">
+          <span class="code-block__label">app/agents/personas/&lt;yourname&gt;.json</span>
+          <pre><code>{
+  "display_name": "Your agent's name",
+  "description": "One line on what it is for.",
+  "instructions": "You are …  (who it is, what it does, for whom)",
+  "style_rules": [
+    "One concrete rule about form or tone.",
+    "Another rule — the more specific, the more visible the effect."
+  ],
+  "temperature": 0.5,
+  "max_tokens": 600,
+  "require_citations": true,
+  "refuse_when_unsupported": true
+}</code></pre>
+        </div>
+        <p class="prose">Save the file — no restart needed — then check it appears in
+          <code>GET /agents</code>, read the system prompt it produces at
+          <code>GET /agents/&lt;yourname&gt;</code>, and ask it the same question you asked the
+          default persona. Compare the two answers side by side.</p>
+        <div class="callout callout--success">
+          <p class="callout__title">✅ Lab B is done when</p>
+          <p><code>/ask</code> returns an answer and the token counts appear — generated by a model
+            you deployed, in a region you chose, in a resource group you created, authenticated by
+            your own identity with no key anywhere — and your own persona visibly changes how that
+            answer sounds.</p>
+        </div>
+
+        <h3>Troubleshooting</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Symptom</th><th>Meaning</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Resource name rejected as unavailable</td><td>The hostname is globally taken</td><td>Add a suffix — <code>my-foundry-ana-01</code></td></tr>
+              <tr><td>Your model is missing from the catalog</td><td>Not offered in that region</td><td>Deploy a different model, or create the resource in another region</td></tr>
+              <tr><td>Deploy button disabled / quota error</td><td>No quota for that model in that region</td><td>Lower the requested capacity, choose another model, or request quota</td></tr>
+              <tr><td><code>401 Unauthorized</code></td><td>No valid token — an authentication problem</td><td><code>az login</code> in the terminal running the app, then restart it</td></tr>
+              <tr><td><code>403 Forbidden</code></td><td>Authenticated but not authorized — a role problem</td><td>Step 4's role assignment; wait a minute for it to propagate</td></tr>
+              <tr><td><code>404</code> on a call</td><td>Deployment name mismatch</td><td>Use the exact deployment name from the Models page</td></tr>
+              <tr><td>Works locally, fails in Docker</td><td>Containers cannot see your <code>az login</code></td><td>Use <code>AZURE_AI_AUTH=key</code> inside containers</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What today changed</h2>
+        </div>
+        <p class="prose">You began the morning as a user of someone else's environment and end it
+          as the owner of your own. Along the way the platform stopped being a website and became a
+          system you can address three ways — by clicking, by typing, and from your own program —
+          all three producing the same authenticated HTTP calls against a control plane that manages
+          resources and data planes that do the work. That distinction is not academic: it is why
+          there is no single key for everything, why one identity with several role assignments is
+          the professional pattern, and why we installed a CLI at all.</p>
+        <p class="prose">You can now read any Azure resource ID and say exactly where the object
+          lives; you can justify a region on latency, residency, availability, quota and price; you
+          know which portal owns which task and what every section of the Foundry menu is for. And
+          you have proof rather than belief: a resource group you created, models you deployed, a
+          role you assigned, and the course application answering questions through your own
+          endpoint with no secret in sight. Next session builds directly on this — when we ground
+          the assistant in real documents, you will be adding a service to <em>your</em>
+          environment, with a role assignment rather than another key.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>If you remember six things</h2>
+        </div>
+        <div class="grid grid-2">
+          <article class="card"><p><strong>1.</strong> Portal, CLI and SDK are three clients of one REST platform — explore by clicking, deliver by scripting, run from code.</p></article>
+          <article class="card"><p><strong>2.</strong> Control plane manages resources; data planes do the work. They authenticate differently — that is the whole "one key?" answer.</p></article>
+          <article class="card"><p><strong>3.</strong> A key is a permanent bearer secret with no identity, no scope and no expiry. A token is short-lived, attributable and revocable.</p></article>
+          <article class="card"><p><strong>4.</strong> Resource groups are lifecycle, permission, policy and cost containers — not network or trust boundaries.</p></article>
+          <article class="card"><p><strong>5.</strong> Region decides latency, residency, model availability, quota and price — and cannot be changed after creation.</p></article>
+          <article class="card"><p><strong>6.</strong> One <code>DefaultAzureCredential</code>, many clients, one role assignment per service. Adding a capability means adding a role, not a secret.</p></article>
+        </div>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Read &amp; explore further</h2>
+        </div>
+        <div class="card">
+          <p class="card__meta">Course reference pages</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="../topics/ref-foundry.html">Microsoft Foundry — the platform, step by step</a> — the click-by-click tutorial, monitoring, and Foundry vs OpenAI direct.</li>
+            <li><a href="../topics/ref-cloud-computing.html">Cloud computing — a general overview</a> — service models, shared responsibility, and the economics behind today's decisions.</li>
+            <li><a href="../topics/ref-git.html">How git works</a> — why a leaked key in history is permanent, and what to do about it.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__meta">Official documentation</p>
+          <ul style="margin:0; padding-left:1.2rem;">
+            <li><a href="https://learn.microsoft.com/cli/azure/install-azure-cli" target="_blank" rel="noopener">Install the Azure CLI</a> — every platform, including offline installers.</li>
+            <li><a href="https://learn.microsoft.com/cli/azure/reference-index" target="_blank" rel="noopener">Azure CLI command reference</a> — every command used today, with all its options.</li>
+            <li><a href="https://learn.microsoft.com/python/api/overview/azure/identity-readme" target="_blank" rel="noopener">Azure Identity for Python</a> — <code>DefaultAzureCredential</code> and its full probe chain.</li>
+            <li><a href="https://learn.microsoft.com/azure/azure-resource-manager/management/overview" target="_blank" rel="noopener">Azure Resource Manager overview</a> — the control plane, resource IDs and deployment models.</li>
+            <li><a href="https://learn.microsoft.com/azure/reliability/regions-overview" target="_blank" rel="noopener">Azure regions and availability zones</a> — geographies, zones and region pairs.</li>
+            <li><a href="https://learn.microsoft.com/azure/role-based-access-control/built-in-roles" target="_blank" rel="noopener">Azure built-in roles</a> — what each role in today's table actually permits.</li>
+            <li><a href="https://learn.microsoft.com/azure/ai-foundry/" target="_blank" rel="noopener">Microsoft Foundry documentation</a> — projects, deployments, agents, evaluations.</li>
+            <li><a href="https://azure.microsoft.com/pricing/calculator/" target="_blank" rel="noopener">Azure pricing calculator</a> — model a workload's cost before you build it.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>After this session</h2>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">≈ 2–3 hours · bring your notes to the next session</p>
+          <p>Four parts. The first two are essential — everything after this session assumes you own
+            a working environment. The last is optional and genuinely fun if you enjoy automation.</p>
+        </div>
+
+        <h3>Part 1 — finish your environment (essential)</h3>
+        <p class="prose">Complete any step of Lab B that the clock cut short, so that all of the
+          following are true: your resource group exists; a Foundry resource lives in it in a region
+          you can justify; a chat model and an embedding model are deployed; you hold the
+          <em>Cognitive Services User</em> role on the resource; and the course backend answers
+          <code>/ask</code> through your endpoint. Write down your endpoint, your two deployment
+          names, and your region — you will need them all week.</p>
+
+        <h3>Part 1b — your own agent (essential)</h3>
+        <p class="prose">Finish Lab B step 6 if you did not get there: a persona file of your own in
+          <code>app/agents/personas/</code>, appearing in <code>GET /agents</code>, and visibly
+          shaping the answers. Then push it further — write a persona that would be genuinely
+          useful at a bank (a card-disputes specialist, a mortgage explainer, an onboarding guide),
+          and record one question answered by both your persona and <code>default</code>. Bring both
+          answers.</p>
+
+        <h3>Part 2 — tour the ten menu sections (essential)</h3>
+        <p class="prose">Open your project in <code>ai.azure.com</code> and visit every section:
+          Agents, Models, Fine-tune, Services, Tools, Knowledge, Memory, Data, Evaluations,
+          Guardrails. For each, write <strong>two sentences</strong>: what it appears to do, and one
+          concrete way a retail bank could use it. Aim for specificity — "Document Intelligence
+          could extract fields from scanned loan applications" beats "could process documents".
+          Bring the list; we compare answers, and the disagreements are the interesting part.</p>
+
+        <h3>Part 3 — measure your own usage (essential)</h3>
+        <p class="prose">With the backend running against your environment, ingest a short document
+          of your choosing and ask it three questions with <code>use_rag=true</code>. Record the
+          <code>prompt_tokens</code> and <code>completion_tokens</code> for each, then estimate what
+          ten thousand such questions would cost at your model's published price. One paragraph on
+          what surprised you.</p>
+
+        <h3>Part 4 — script the whole environment (stretch)</h3>
+        <p class="prose">Everything you did by clicking can be typed. Write a single script —
+          <code>setup.ps1</code> or <code>setup.sh</code> — that creates the resource group, creates
+          the Foundry resource, and assigns your role, with the names and region as variables at the
+          top. Then prove it works the only honest way:</p>
+        <div class="code-block">
+          <span class="code-block__label">the test that matters</span>
+          <pre><code># delete everything (asks for confirmation)
+az group delete --name rg-ai-course
+
+# then run your script and rebuild it from nothing
+./setup.ps1</code></pre>
+        </div>
+        <p class="prose">If your environment comes back without you touching the portal, you have
+          just written your first piece of infrastructure-as-code — and understood, from the inside,
+          why the industry stopped clicking.</p>
+        <div class="callout callout--info">
+          <p class="callout__title">If something blocks you</p>
+          <p>Note the exact command and the exact error text, and bring both. A precise error
+            message is diagnosable in seconds; "it didn't work" is not. The first minutes of the
+            next session are reserved for exactly this.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">↑</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">↓</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </nav>
+  <footer class="site-footer">
+    Session 4 · Azure Foundry in Practice — AI Engineering on Azure · Libra Bank Academy
+  </footer>
+
+  <script src="../../resources/nav.js"></script>
+</body>
+</html>

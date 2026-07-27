@@ -220,11 +220,7 @@ git branch                    # list branches; * marks HEAD</code></pre>
           between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>
           markers, and you resolve it by editing the file to the correct final state, staging it,
           and completing the merge. Conflicts are not failures — they are the system refusing to
-          guess about genuinely ambiguous intent. One related concept deserves a sentence:
-          <strong>rebase</strong> replays your branch's commits on top of the target's tip,
-          producing a straight-line history instead of a merge commit. It is tidy but rewrites
-          commits; the working rule for this course is simple — merge, and never rebase anything
-          already pushed.</p>
+          guess about genuinely ambiguous intent.</p>
         <div class="code-block">
           <span class="code-block__label">merging</span>
           <pre><code>git switch main
@@ -232,6 +228,209 @@ git merge feature/rag         # fast-forward, or three-way merge with a merge co
 # if conflicts: edit the marked files, then
 git add app/chat.py
 git commit                    # completes the merge</code></pre>
+        </div>
+
+        <h3>Merge vs rebase — the same result, two different histories</h3>
+        <p class="prose">Git offers a second way to bring branches together, and the choice between
+          them is the most-argued question in everyday git use. Both end with your work combined
+          with <code>main</code>; they differ entirely in <em>what the history looks like
+          afterwards</em>, and therefore in what a future reader can reconstruct.</p>
+        <p class="prose">Start from the situation that makes the two visible. You branched at
+          <strong>C3</strong> and wrote <strong>D1</strong> and <strong>D2</strong>. Meanwhile
+          <code>main</code> moved on with <strong>C4</strong> and <strong>C5</strong>. The lines
+          have diverged — this is the normal state of any team:</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box"><strong>a1b2c3d</strong><br><span class="dg-note">Mon 09:00 · Ana<br>"initial commit"</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box"><strong>e4f5a6b</strong><br><span class="dg-note">Mon 11:30 · Ana<br>"add chat endpoint"</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--frame" style="flex:0 0 auto; padding:.45rem;">
+                <span class="dg-label">branch point</span>
+                <div class="dg-box"><strong>c7d8e9f</strong><br><span class="dg-note">Tue 14:00 · Ana<br>"fix token count"</span></div>
+              </div><span class="dg-arrow">→</span>
+              <div class="dg-box"><strong>1a2b3c4</strong><br><span class="dg-note">Wed 10:15 · Bob<br>"add logging"</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent"><strong>5d6e7f8</strong><br><span class="dg-note">Wed 16:40 · Bob<br>"bump deps"<br>← main</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted" style="visibility:hidden; flex:2;"></div>
+              <span class="dg-arrow">↘</span>
+              <div class="dg-box"><strong>9f8e7d6</strong><br><span class="dg-note">Tue 15:20 · <em>you</em><br>"add retry logic"</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent"><strong>3c2b1a0</strong><br><span class="dg-note">Tue 17:05 · <em>you</em><br>"add backoff test"<br>← feature/retry</span></div>
+            </div>
+          </div>
+          <p class="diagram__caption">The starting point. You branched from <code>c7d8e9f</code> on Tuesday afternoon and wrote two commits; meanwhile Bob pushed two more to <code>main</code> on Wednesday. Note the real chronology: your <code>9f8e7d6</code> (Tue 15:20) is <em>older</em> than Bob's <code>1a2b3c4</code> (Wed 10:15).</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">what git log shows right now</span>
+          <pre><code>$ git log --oneline --graph --all
+* 5d6e7f8 (main) bump deps                 Wed 16:40  Bob
+* 1a2b3c4 add logging                      Wed 10:15  Bob
+| * 3c2b1a0 (feature/retry) add backoff test  Tue 17:05  you
+| * 9f8e7d6 add retry logic                   Tue 15:20  you
+|/
+* c7d8e9f fix token count                  Tue 14:00  Ana   ← common ancestor
+* e4f5a6b add chat endpoint                Mon 11:30  Ana
+* a1b2c3d initial commit                   Mon 09:00  Ana</code></pre>
+        </div>
+
+        <h4 style="margin-top:1.6rem;">Merge — record that the lines met</h4>
+        <p class="prose"><code>git merge</code> creates one new commit, <strong>M</strong>, whose
+          two parents are C5 and D2. Nothing that already existed is touched: D1 and D2 keep their
+          identity, their hashes and their original timestamps. The graph forks and re-joins, and
+          that fork is permanently visible — which is exactly the point. The history now records a
+          fact about how the work happened: this branch existed, it ran in parallel with that one,
+          and here is where they were reconciled.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted">a1b2c3d<br><span class="dg-note">Mon 09:00</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--muted">e4f5a6b<br><span class="dg-note">Mon 11:30</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">c7d8e9f<br><span class="dg-note">Tue 14:00</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">1a2b3c4<br><span class="dg-note">Wed 10:15 · Bob</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">5d6e7f8<br><span class="dg-note">Wed 16:40 · Bob</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent"><strong>b0a9c8d</strong><br><span class="dg-note">Thu 09:05 · <em>you</em><br>"Merge branch feature/retry"<br>parents: 5d6e7f8 + 3c2b1a0<br>← main</span></div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted" style="visibility:hidden; flex:2;"></div>
+              <span class="dg-arrow">↘</span>
+              <div class="dg-box"><strong>9f8e7d6</strong><br><span class="dg-note">Tue 15:20 · <em>unchanged</em><br>same hash, same author date</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box"><strong>3c2b1a0</strong><br><span class="dg-note">Tue 17:05 · <em>unchanged</em><br>same hash, same author date</span></div>
+              <span class="dg-arrow">↗</span>
+            </div>
+          </div>
+          <p class="diagram__caption">After <code>git merge feature/retry</code>. <strong>Nothing existing moved:</strong> <code>9f8e7d6</code> and <code>3c2b1a0</code> keep their hashes and their Tuesday timestamps. One new commit <code>b0a9c8d</code> appears with <em>two parents</em>, and the fork stays visible in the graph forever.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">git log after the merge — the fork is part of the record</span>
+          <pre><code>$ git log --oneline --graph
+*   b0a9c8d (main) Merge branch 'feature/retry'   Thu 09:05  you
+|\
+| * 3c2b1a0 add backoff test                      Tue 17:05  you   ← unchanged
+| * 9f8e7d6 add retry logic                       Tue 15:20  you   ← unchanged
+* | 5d6e7f8 bump deps                             Wed 16:40  Bob
+* | 1a2b3c4 add logging                           Wed 10:15  Bob
+|/
+* c7d8e9f fix token count                         Tue 14:00  Ana
+
+# the merge commit is the only commit with two parents:
+$ git cat-file -p b0a9c8d | head -3
+tree   4f2a9c1…
+parent 5d6e7f8          ← where main was
+parent 3c2b1a0          ← where your branch was</code></pre>
+        </div>
+
+        <h4 style="margin-top:1.6rem;">Rebase — retell the story as if it happened later</h4>
+        <p class="prose"><code>git rebase main</code> does something fundamentally different: it
+          takes the <em>changes</em> introduced by D1 and D2, rewinds your branch to C5, and applies
+          those changes again on top. The results are <strong>new commits</strong> — conventionally
+          drawn D1′ and D2′ — with different hashes, different parents and a new committer
+          timestamp. The originals are not modified; they are <em>abandoned</em>, left unreferenced
+          until git's garbage collection removes them.</p>
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--muted">a1b2c3d<br><span class="dg-note">Mon 09:00</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--muted">e4f5a6b<br><span class="dg-note">Mon 11:30</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">c7d8e9f<br><span class="dg-note">Tue 14:00</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">1a2b3c4<br><span class="dg-note">Wed 10:15 · Bob</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box">5d6e7f8<br><span class="dg-note">Wed 16:40 · Bob</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent"><strong>7e6d5c4</strong><br><span class="dg-note">author Tue 15:20<br><em>commit Thu 09:05</em><br>"add retry logic"</span></div><span class="dg-arrow">→</span>
+              <div class="dg-box dg-box--accent"><strong>2f1e0d9</strong><br><span class="dg-note">author Tue 17:05<br><em>commit Thu 09:05</em><br>"add backoff test"<br>← feature/retry</span></div>
+            </div>
+            <div class="dg-row" style="margin-top:.6rem;">
+              <div class="dg-box dg-box--frame dg-box--muted" style="flex:1;">
+                <span class="dg-label">abandoned — unreachable, awaiting garbage collection</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--muted">9f8e7d6<br><span class="dg-note">the original "add retry logic"</span></div>
+                  <div class="dg-box dg-box--muted">3c2b1a0<br><span class="dg-note">the original "add backoff test"</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">After <code>git rebase main</code>. The same <em>changes</em> now exist as <strong>new commits with new hashes</strong> — <code>9f8e7d6 → 7e6d5c4</code>, <code>3c2b1a0 → 2f1e0d9</code> — sitting on top of Bob's work. Note the two dates: git keeps the original <em>author date</em> (Tue) but stamps a fresh <em>commit date</em> (Thu). The originals still exist on disk but nothing points at them.</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">git log after the rebase — one straight line, and the evidence of rewriting</span>
+          <pre><code>$ git log --oneline --graph
+* 2f1e0d9 (feature/retry) add backoff test        Tue 17:05  you   ← NEW hash
+* 7e6d5c4 add retry logic                         Tue 15:20  you   ← NEW hash
+* 5d6e7f8 (main) bump deps                        Wed 16:40  Bob
+* 1a2b3c4 add logging                             Wed 10:15  Bob
+* c7d8e9f fix token count                         Tue 14:00  Ana
+
+# the history now CLAIMS your work happened after Bob's. It did not:
+$ git log --format='%h  author:%ad  commit:%cd  %s' --date=format:'%a %H:%M' -2
+2f1e0d9  author:Tue 17:05  commit:Thu 09:05  add backoff test
+7e6d5c4  author:Tue 15:20  commit:Thu 09:05  add retry logic
+#                ↑ when you wrote it      ↑ when the rebase rewrote it
+
+# the originals are still there — until git garbage-collects them:
+$ git reflog
+3c2b1a0  HEAD@{1}: rebase (start): checkout main    ← the pre-rebase tip</code></pre>
+        </div>
+        <p class="prose">Read those two diagrams together and the trade is plain. Merge preserves
+          <em>what actually happened</em> at the cost of a graph that forks; rebase produces a
+          history that is <em>easier to read</em> at the cost of being partly fiction — the commits
+          claim to have been written on top of C5, and they were not. Neither is dishonest in any
+          meaningful sense; they optimize for different readers.</p>
+
+        <h4 style="margin-top:1.6rem;">Which to use</h4>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th><code>git merge</code></th><th><code>git rebase</code></th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Existing commits</strong></td><td>Untouched — hashes preserved</td><td>Replaced by copies with new hashes</td></tr>
+              <tr><td><strong>Resulting graph</strong></td><td>Forks and joins; a merge commit marks the reconciliation</td><td>One straight line, as if work were sequential</td></tr>
+              <tr><td><strong>History fidelity</strong></td><td>Records how the work really happened</td><td>Records a tidied version of it</td></tr>
+              <tr><td><strong>Conflicts</strong></td><td>Resolved once, in a single merge</td><td>Possibly once <em>per replayed commit</em></td></tr>
+              <tr><td><strong>Safe on shared branches?</strong></td><td>Yes — nothing others hold is changed</td><td><strong>No</strong> — it rewrites commits others may already have</td></tr>
+              <tr><td><strong>Undoing it</strong></td><td><code>git revert -m 1 &lt;merge&gt;</code></td><td><code>git reset --hard ORIG_HEAD</code> (or the reflog)</td></tr>
+              <tr><td><strong>Use when</strong></td><td>Bringing a finished branch into <code>main</code>; any branch others use</td><td>Tidying <em>your own</em> unpushed branch before review</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">Which leads to the one rule worth memorizing, known widely as the
+          <strong>golden rule of rebasing</strong>: <em>never rebase commits that exist outside your
+          own machine.</em> The reason follows directly from the diagram — after a rebase your
+          branch has different commits than the copy your colleague fetched. Their git sees two
+          unrelated lines of development, and an innocent <code>git pull</code> merges both,
+          duplicating every commit. If you have already pushed and truly must rebase, you are
+          forcing a rewrite on everyone (<code>git push --force-with-lease</code>) and you owe the
+          team a warning first.</p>
+        <p class="prose">The workflow most teams settle on uses both, each where it is safe: rebase
+          <em>privately</em> to clean up your own branch before opening a pull request — squashing
+          "fix typo" commits, reordering, rewriting messages — and then <em>merge</em> that branch
+          into <code>main</code>, so the integration point is recorded. A common variant on hosting
+          platforms is the <em>squash merge</em>, which collapses the whole branch into one commit
+          on <code>main</code>: maximally readable history, at the cost of losing the individual
+          steps entirely.</p>
+        <div class="code-block">
+          <span class="code-block__label">the two commands, and the safe rebase workflow</span>
+          <pre><code># MERGE — bring a finished branch into main (safe, always)
+git switch main
+git pull
+git merge feature/rag
+
+# REBASE — tidy YOUR OWN branch onto the latest main before review
+git switch feature/rag
+git fetch origin
+git rebase origin/main          # replay my commits on top of current main
+# conflicts? resolve, then:
+git add &lt;file&gt;
+git rebase --continue           # ...or `git rebase --abort` to undo everything
+
+# only if the branch was already pushed AND is yours alone:
+git push --force-with-lease     # safer than --force: refuses if someone else pushed</code></pre>
+        </div>
+        <div class="callout callout--warn">
+          <p class="callout__title">If a rebase goes wrong</p>
+          <p>Nothing is lost. <code>git rebase --abort</code> restores the pre-rebase state
+            mid-operation, and afterwards <code>git reflog</code> lists every position
+            <code>HEAD</code> has held — <code>git reset --hard HEAD@{3}</code> returns you there.
+            The reflog is git's undo history, and it is the reason experienced users experiment
+            fearlessly.</p>
         </div>
       </section>
 

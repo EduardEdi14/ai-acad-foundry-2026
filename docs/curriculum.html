@@ -21,7 +21,7 @@
       <a class="side-nav__link" href="#s1">1 · Foundations</a>
       <a class="side-nav__link" href="#s2">2 · Microsoft Foundry</a>
       <a class="side-nav__link" href="#s3">3 · Model Integration</a>
-      <a class="side-nav__link" href="#s4">4 · Prompts &amp; Evaluation</a>
+      <a class="side-nav__link" href="#s4">4 · Foundry in Practice</a>
       <a class="side-nav__link" href="#s5">5 · Data &amp; RAG</a>
       <a class="side-nav__link" href="#s6">6 · Orchestration</a>
       <a class="side-nav__link" href="#s7">7 · Project</a>
@@ -71,7 +71,7 @@
               <tr><td>1</td><td>Wed 22 Jul</td><td>Foundations — Python, GenAI &amp; your Azure environment</td></tr>
               <tr><td>2</td><td>Thu 23 Jul</td><td>Microsoft Foundry — models, gateways &amp; your first deployment</td></tr>
               <tr><td>3</td><td>Fri 24 Jul</td><td>Model Integration &amp; Inference — LLMs in applications, model selection &amp; trade-offs</td></tr>
-              <tr><td>4</td><td>Mon 27 Jul</td><td>Prompt Engineering &amp; Systematic Evaluation — metrics, benchmarking &amp; Foundry evaluations</td></tr>
+              <tr><td>4</td><td>Mon 27 Jul</td><td>Azure Foundry in Practice — the tools, the platform, your own environment</td></tr>
               <tr><td>5</td><td>Tue 28 Jul</td><td>Data Integration &amp; RAG — vector stores, embeddings &amp; grounding with Azure AI Search</td></tr>
               <tr><td>6</td><td>Wed 29 Jul</td><td>Orchestration &amp; Agentic Workflows — multi-step pipelines &amp; automation</td></tr>
               <tr><td>7</td><td>Thu 30 Jul</td><td>Project — an end-to-end AI solution on Azure</td></tr>
@@ -223,18 +223,23 @@
       <section id="s4" class="doc-section">
         <article class="card card--accent">
           <p class="card__meta">Session 4 · Mon 27 Jul · 09:30–12:00</p>
-          <h2>Prompt Engineering &amp; Systematic Evaluation — metrics, benchmarking &amp; Foundry evaluations</h2>
-          <p class="prose">Prompting as an engineering discipline: prompts are specifications, and
-            specifications get tested. You'll leave able to prove — with measurements, not
-            impressions — which of two prompts is better.</p>
+          <h2>Azure Foundry in Practice — the tools, the platform, your own environment</h2>
+          <p class="prose">The hands-on day: you stop borrowing an environment and build your own.
+            The command line and the SDK, why engineers use them instead of a website and a pasted
+            key, and how every part of the platform is reached from your own code.</p>
           <ul>
-            <li>Prompting as specification: system prompts, examples, decomposition</li>
-            <li>Why "it looks good to me" doesn't scale — measuring quality</li>
-            <li>Golden datasets, evaluators, and LLM-as-judge</li>
-            <li>Walkthrough: evaluations in Azure AI Foundry</li>
-            <li>Lab: compare two prompt variants on a golden set — ship the winner on evidence</li>
+            <li>What a CLI and an SDK actually are — and why not the portal or an API key alone</li>
+            <li>Lab: install the toolchain, sign in, prove your identity works</li>
+            <li>Resources, resource groups &amp; why the region you choose is an engineering decision</li>
+            <li>The two portals: <code>portal.azure.com</code> vs <code>ai.azure.com</code></li>
+            <li>Every section of the Foundry menu — Agents, Models, Fine-tune, Services, Tools,
+              Knowledge, Memory, Data, Evaluations, Guardrails</li>
+            <li>One key for everything? Wiring each surface from code, keylessly</li>
+            <li>Lab: create your own resource group, resource and deployments — and run the course
+              application against them</li>
           </ul>
-          <p style="color:var(--accent);"><strong>You leave with:</strong> numbers that prove which prompt is better — and the habit of asking for them.</p>
+          <p style="color:var(--accent);"><strong>You leave with:</strong> an Azure environment you built, own and can rebuild from a script.</p>
+          <a class="btn btn-accent" href="sessions/s04-foundry-in-practice.html">Open the Session 4 agenda →</a>
         </article>
       </section>
 
@@ -252,6 +257,7 @@
             <li>Data integration: provisioning an Azure SQL database and connecting from Python</li>
             <li>Lab: ground the assistant in a banking document set — and persist chat history
               and token spend to your own database</li>
+            <li>Prompt design and measuring answer quality — evaluating what retrieval changed</li>
           </ul>
           <p style="color:var(--accent);"><strong>You leave with:</strong> an assistant that answers from documents and remembers its conversations.</p>
         </article>
