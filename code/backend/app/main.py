@@ -5,17 +5,23 @@ Swagger UI:  /docs        ReDoc: /redoc
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
-from . import chunking, rag
+from . import chunking
+from .agents import foundry_agent, local_agent
+from .agents.persona import PersonaNotFound, available_names, load_persona, list_personas, PERSONA_DIR
 from .config import settings
 from .embeddings import get_embedder
 from .llm import get_llm
 from .schemas import (
-    AskRequest, AskResponse, ChunkInfo, ChunkRequest, ChunkResponse, CollectionInfo,
-    Health, IngestRequest, IngestResponse, SearchHit, SearchRequest, SearchResponse, Usage,
+    AgentInfo, AgentListResponse, AskRequest, AskResponse, ChunkInfo, ChunkRequest,
+    ChunkResponse, CollectionInfo, Health, IngestRequest, IngestResponse, PersonaSummary,
+    ScrapeRequest, ScrapeResponse, SearchHit, SearchRequest, SearchResponse, SpeakRequest,
+    TranscribeResponse, Usage,
 )
+from .services import speech, web
 from .vectorstore import DimensionMismatch, VectorStore
 
 app = FastAPI(
@@ -112,6 +118,13 @@ def health() -> Health:
                               "openai": settings.openai_embedding_model,
                               "azure": settings.azure_ai_embedding_deployment}.get(
                                   settings.embedding_provider, "?")},
+        agents={"mode": settings.agent_mode,
+                "default_persona": settings.agent_persona,
+                "available": available_names(),
+                "foundry_agent_id": settings.foundry_agent_id or None},
+        speech={"configured": bool(settings.azure_speech_key and settings.azure_speech_region),
+                "region": settings.azure_speech_region or None,
+                "voice": settings.azure_speech_voice},
     )
 
 
@@ -213,11 +226,25 @@ def search(req: SearchRequest) -> SearchResponse:
 # --- generation ---------------------------------------------------------------
 @app.post("/ask", response_model=AskResponse, tags=["4 · generation"])
 def ask(req: AskRequest) -> AskResponse:
-    """The finale: answer a question with or without augmentation. Flip `use_rag`
-    and compare `prompt_sent` and the answers — that difference IS RAG."""
-    temperature = req.temperature if req.temperature is not None else settings.llm_temperature
+    """The finale: an **agent** answers, with or without retrieval.
+
+    Three dials to demonstrate, one at a time:
+      * `use_rag`      — false = the model alone; true = retrieve, then augment.
+      * `agent`        — which persona shapes the answer (edit its JSON and re-ask!).
+      * `agent_mode`   — `local` runs the loop here; `foundry` calls the hosted agent.
+
+    `system_prompt` and `prompt_sent` always show exactly what went to the model.
+    """
     retrieved: list[SearchHit] = []
 
+    # ---- which persona? -----------------------------------------------------
+    persona_name = req.agent or settings.agent_persona
+    try:
+        persona = load_persona(persona_name)
+    except PersonaNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    # ---- retrieval (unchanged behaviour, now feeding the agent) -------------
     if req.use_rag:
         _require_qdrant()
         if not store.info()["exists"]:
@@ -227,21 +254,136 @@ def ask(req: AskRequest) -> AskResponse:
         top_k = req.top_k or settings.top_k
         qvec = _embed([req.question])[0]
         retrieved = [SearchHit(**h) for h in store.search(qvec, top_k)]
-        system = rag.SYSTEM_PROMPT_RAG
-        prompt = rag.build_augmented_prompt(req.question, [h.model_dump() for h in retrieved])
-    else:
-        system = rag.SYSTEM_PROMPT
-        prompt = req.question
 
+    chunks = [h.model_dump() for h in retrieved]
+    mode = (req.agent_mode or settings.agent_mode).lower()
+
+    # ---- run the agent ------------------------------------------------------
     try:
-        result = get_llm().chat(system=system, user=prompt,
-                                temperature=temperature, max_tokens=settings.llm_max_tokens)
+        if mode == "foundry":
+            reply = foundry_agent.run(persona, req.question, chunks)
+        else:
+            reply = local_agent.run(persona, req.question, chunks, temperature=req.temperature)
+    except foundry_agent.FoundryUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=502,
-                            detail=f"LLM call failed ({settings.llm_provider}): {e}")
+                            detail=f"Agent run failed (mode={mode}, provider={settings.llm_provider}): {e}")
 
     return AskResponse(
-        answer=result.text, augmented=req.use_rag, provider=result.provider,
-        model=result.model, system_prompt=system, prompt_sent=prompt, retrieved=retrieved,
-        usage=Usage(prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens),
+        answer=reply.text,
+        augmented=req.use_rag,
+        provider=reply.provider,
+        model=reply.model,
+        agent=AgentInfo(
+            name=persona.name, display_name=persona.display_name,
+            description=persona.description, mode=reply.mode,
+            temperature=persona.temperature, style_rules=persona.style_rules,
+        ),
+        system_prompt=reply.system_prompt,
+        prompt_sent=reply.prompt_sent,
+        retrieved=retrieved,
+        usage=Usage(prompt_tokens=reply.prompt_tokens, completion_tokens=reply.completion_tokens),
     )
+
+
+# --- agents -------------------------------------------------------------------
+@app.get("/agents", response_model=AgentListResponse, tags=["5 · agents"])
+def agents_list() -> AgentListResponse:
+    """Every persona currently on disk. Add a JSON file and it appears here —
+    no restart. This is the list `/ask?agent=…` accepts."""
+    personas = list_personas()
+    return AgentListResponse(
+        active_mode=settings.agent_mode,
+        default_persona=settings.agent_persona,
+        personas_dir=str(PERSONA_DIR),
+        count=len(personas),
+        personas=[PersonaSummary(**p.summary()) for p in personas],
+    )
+
+
+@app.get("/agents/{name}", tags=["5 · agents"])
+def agent_detail(name: str) -> dict:
+    """One persona, including **the exact system prompt** its JSON produces —
+    grounded and ungrounded. The clearest way to see JSON become behaviour."""
+    try:
+        persona = load_persona(name)
+    except PersonaNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return {
+        **persona.summary(),
+        "system_prompt_plain": persona.system_prompt(grounded=False),
+        "system_prompt_grounded": persona.system_prompt(grounded=True),
+        "file": str(PERSONA_DIR / f"{name}.json"),
+    }
+
+
+@app.post("/agents/{name}/deploy", tags=["5 · agents"])
+def agent_deploy(name: str) -> dict:
+    """Publish this persona to the Azure AI Foundry **Agent Service**.
+
+    The same thing `python scripts/deploy_agent.py <name>` does — exposed here so
+    it can be demonstrated from Swagger. Requires AZURE_AI_PROJECT_ENDPOINT and
+    an Entra identity with the Azure AI User role on the project.
+    """
+    try:
+        persona = load_persona(name)
+    except PersonaNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    try:
+        result = foundry_agent.deploy(persona)
+    except foundry_agent.FoundryUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Deployment to Foundry failed: {e}")
+    result["next_step"] = (
+        f"Put FOUNDRY_AGENT_ID={result['agent_id']} in .env, then call /ask with "
+        f'"agent_mode": "foundry".'
+    )
+    return result
+
+
+# --- tools / specialist services ----------------------------------------------
+@app.post("/tools/web-fetch", response_model=ScrapeResponse, tags=["6 · tools"])
+def web_fetch(req: ScrapeRequest) -> ScrapeResponse:
+    """Fetch a page and strip it to text — **the do-it-yourself lane**.
+
+    Read the `warnings` array: it lists everything this naive approach could not
+    handle (JavaScript rendering, bot walls, consent banners, non-HTML formats).
+    That list is the argument for a managed grounding tool.
+    """
+    try:
+        result = web.scrape(req.url, max_chars=req.max_chars or 20000)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Fetch failed: {e}")
+    return ScrapeResponse(**result.__dict__)
+
+
+@app.post("/tools/speak", tags=["6 · tools"],
+          responses={200: {"content": {"audio/wav": {}}, "description": "WAV audio"}})
+def speak(req: SpeakRequest):
+    """Text → speech (Azure AI Speech). Returns a WAV file you can play or download."""
+    try:
+        audio = speech.synthesize(req.text, req.voice)
+    except speech.SpeechUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Speech synthesis failed: {e}")
+    return Response(content=audio, media_type="audio/wav",
+                    headers={"Content-Disposition": 'inline; filename="libra-assist.wav"'})
+
+
+@app.post("/tools/transcribe", response_model=TranscribeResponse, tags=["6 · tools"])
+async def transcribe(file: UploadFile = File(..., description="WAV, 16 kHz mono, under ~60 s")):
+    """Speech → text (Azure AI Speech). Upload the WAV you just generated and
+    watch it come back as text — the round trip in two calls."""
+    audio = await file.read()
+    if not audio:
+        raise HTTPException(status_code=422, detail="The uploaded file is empty.")
+    try:
+        result = speech.transcribe(audio, content_type=file.content_type or "audio/wav")
+    except speech.SpeechUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Transcription failed: {e}")
+    return TranscribeResponse(**result)

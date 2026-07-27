@@ -26,7 +26,9 @@ class LLM:
         self.model = model
         self._client = client
 
-    def chat(self, system: str, user: str, temperature: float, max_tokens: int) -> ChatResult:
+    def chat(self, system: str, user: str, temperature: float, max_tokens: int,
+             extras: dict | None = None) -> ChatResult:
+        extras = extras or {}
         if self.provider in ("lmstudio", "openai"):
             kwargs: dict = {
                 "model": self.model,
@@ -41,6 +43,7 @@ class LLM:
                 kwargs["max_completion_tokens"] = max_tokens
             else:
                 kwargs["max_tokens"] = max_tokens
+            kwargs.update(extras)
             r = self._client.chat.completions.create(**kwargs)
             u = getattr(r, "usage", None)
             return ChatResult(
@@ -68,15 +71,25 @@ class LLM:
             )
 
         # azure — azure-ai-inference ChatCompletionsClient
-        r = self._client.complete(
-            model=self.model,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-        )
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        try:
+            r = self._client.complete(
+                model=self.model, temperature=temperature,
+                max_tokens=max_tokens, messages=messages,
+                **({"model_extras": extras} if extras else {}),
+            )
+        except Exception as e:
+            # The gpt-5 family renamed the output cap. Retry with the new name
+            # rather than making every caller know which generation they are on.
+            if "max_completion_tokens" not in str(e):
+                raise
+            r = self._client.complete(
+                model=self.model, messages=messages,
+                model_extras={"max_completion_tokens": max_tokens, **extras},
+            )
         u = getattr(r, "usage", None)
         return ChatResult(
             text=r.choices[0].message.content or "",

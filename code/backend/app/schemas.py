@@ -1,7 +1,7 @@
 """Request/response models — rich on purpose: the responses ARE the lesson."""
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Literal, Optional  # noqa: F401  (Literal used by AskRequest)
 
 from pydantic import BaseModel, Field
 
@@ -98,12 +98,50 @@ class AskRequest(BaseModel):
         "question": "What fee does Libra Bank charge for early mortgage repayment?",
         "use_rag": True,
         "top_k": 3,
+        "agent": "lyrical",
     }]}}
 
     question: str = Field(..., min_length=1)
     use_rag: bool = Field(True, description="false = plain LLM; true = retrieve then augment")
     top_k: Optional[int] = Field(None, ge=1, le=50)
     temperature: Optional[float] = Field(None, ge=0, le=2)
+    agent: Optional[str] = Field(
+        None,
+        description="Persona name from app/agents/personas/ — try 'default', 'lyrical', "
+                    "'compliance', 'teller'. Falls back to AGENT_PERSONA in .env.",
+    )
+    agent_mode: Optional[Literal["local", "foundry"]] = Field(
+        None, description="local = the loop runs here; foundry = the hosted Agent Service"
+    )
+
+
+class AgentInfo(BaseModel):
+    name: str
+    display_name: str
+    description: str
+    mode: str = Field(description="Where this run executed: local or foundry")
+    temperature: Optional[float] = None
+    style_rules: list[str] = Field(default_factory=list)
+
+
+class PersonaSummary(BaseModel):
+    name: str
+    display_name: str
+    description: str
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    style_rules: list[str] = Field(default_factory=list)
+    require_citations: bool = True
+    refuse_when_unsupported: bool = True
+    tools: list[str] = Field(default_factory=list)
+
+
+class AgentListResponse(BaseModel):
+    active_mode: str
+    default_persona: str
+    personas_dir: str
+    count: int
+    personas: list[PersonaSummary]
 
 
 class Usage(BaseModel):
@@ -116,10 +154,49 @@ class AskResponse(BaseModel):
     augmented: bool
     provider: str
     model: str
+    agent: Optional[AgentInfo] = Field(None, description="Which persona shaped this answer")
     system_prompt: str = Field(description="The system message actually sent")
     prompt_sent: str = Field(description="The exact user prompt sent to the model — compare with/without RAG")
     retrieved: list[SearchHit] = Field(default_factory=list)
     usage: Optional[Usage] = None
+
+
+# --- tools / services ---------------------------------------------------------
+class ScrapeRequest(BaseModel):
+    model_config = {"json_schema_extra": {"examples": [{
+        "url": "https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry",
+    }]}}
+
+    url: str = Field(..., description="Page to fetch and strip to text")
+    max_chars: Optional[int] = Field(None, ge=200, le=200000)
+
+
+class ScrapeResponse(BaseModel):
+    url: str
+    status_code: int
+    title: Optional[str] = None
+    text: str
+    chars: int
+    approx_tokens: int
+    warnings: list[str] = Field(description="Everything the naive approach could not handle")
+    stats: dict
+
+
+class SpeakRequest(BaseModel):
+    model_config = {"json_schema_extra": {"examples": [{
+        "text": "Your card was blocked after three failed PIN attempts.",
+    }]}}
+
+    text: str = Field(..., min_length=1, max_length=3000)
+    voice: Optional[str] = Field(None, description="Neural voice name; defaults to AZURE_SPEECH_VOICE")
+
+
+class TranscribeResponse(BaseModel):
+    status: Optional[str] = None
+    text: str
+    confidence: Optional[float] = None
+    duration_seconds: Optional[float] = None
+    language: Optional[str] = None
 
 
 # --- ops ----------------------------------------------------------------------
@@ -137,3 +214,5 @@ class Health(BaseModel):
     qdrant_url: str
     llm: dict
     embeddings: dict
+    agents: dict = Field(default_factory=dict)
+    speech: dict = Field(default_factory=dict)

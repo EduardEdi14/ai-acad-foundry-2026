@@ -22,11 +22,30 @@ class Settings(BaseSettings):
     # --- retrieval / generation defaults ------------------------------------
     top_k: int = 4
     llm_temperature: float = 0.2
-    llm_max_tokens: int = 1024
+    llm_max_tokens: int = 2500   # reasoning models spend part of this budget thinking
 
     # --- provider selection --------------------------------------------------
     llm_provider: str = "openai"            # lmstudio | openai | anthropic | azure
     embedding_provider: str = "openai"      # lmstudio | openai | azure  (Anthropic has no embeddings API)
+
+    # --- agents ---------------------------------------------------------------
+    agent_mode: str = "local"               # local (runs here) | foundry (hosted by Azure)
+    agent_persona: str = "default"          # which app/agents/personas/<name>.json to use
+    azure_ai_project_endpoint: str = ""     # Foundry portal → project → Overview
+    azure_openai_endpoint: str = ""          # the OpenAI-compatible surface of the same resource
+    foundry_agent_id: str = ""              # printed by scripts/deploy_agent.py
+
+    # --- Azure AI Speech (a SEPARATE resource from Foundry) -------------------
+    azure_speech_key: str = ""
+    azure_speech_region: str = ""           # e.g. swedencentral
+    azure_speech_voice: str = "en-US-AvaMultilingualNeural"
+    azure_speech_language: str = "en-US"
+
+    # --- environment coordinates (used by scripts/, not by the app itself) ----
+    azure_resource_group: str = ""
+    azure_foundry_resource: str = ""
+    azure_foundry_project: str = ""
+    azure_location: str = "swedencentral"
 
     # --- LM Studio (local, free — OpenAI-compatible server) ------------------
     lmstudio_base_url: str = "http://localhost:1234/v1"
