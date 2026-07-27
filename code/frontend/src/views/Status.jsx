@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Err, Head, RawJson, Spinner } from '../components'
 
-export default function Status({ health, reload }) {
+export default function Status({ health, reload, azure, reloadAzure }) {
   const [config, setConfig] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(true)
@@ -48,6 +48,83 @@ export default function Status({ health, reload }) {
             </tbody>
           </table>
         ) : <p className="faint">Backend unreachable — is it running on port 7799?</p>}
+      </div>
+
+      <div className="card">
+        <div className="row" style={{ marginBottom: '.6rem' }}>
+          <h3 style={{ margin: 0 }}>Azure environment</h3>
+          <button className="btn btn-outline btn-sm shrink" onClick={reloadAzure}>refresh</button>
+          {azure?.foundry_url && (
+            <a className="btn btn-outline btn-sm shrink" href={azure.foundry_url} target="_blank" rel="noreferrer">
+              Foundry portal ↗
+            </a>
+          )}
+          {azure?.portal_url && (
+            <a className="btn btn-outline btn-sm shrink" href={azure.portal_url} target="_blank" rel="noreferrer">
+              Azure portal ↗
+            </a>
+          )}
+        </div>
+
+        {!azure ? <p className="faint">Loading…</p> : !azure.configured ? (
+          <p className="faint">No Azure endpoint configured — set <code>AZURE_AI_ENDPOINT</code> in <code>.env</code>.</p>
+        ) : (
+          <>
+            <table>
+              <tbody>
+                {[
+                  ['Resource', azure.resource],
+                  ['Resource group', azure.resource_group],
+                  ['Project', azure.project],
+                  ['Region', azure.location],
+                  ['Subscription', azure.subscription_id],
+                  ['Authentication', azure.auth === 'identity' ? 'identity (Microsoft Entra)' : 'key'],
+                  ['Chat deployment', azure.chat_deployment],
+                  ['Embedding deployment', azure.embedding_deployment],
+                  ['Inference endpoint', azure.inference_endpoint],
+                  ['Project endpoint', azure.project_endpoint],
+                  ['Azure OpenAI endpoint', azure.openai_endpoint],
+                ].filter(([, v]) => v).map(([k, v]) => (
+                  <tr key={k}>
+                    <td style={{ width: '12rem' }} className="muted">{k}</td>
+                    <td className="mono" style={{ wordBreak: 'break-all' }}>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {azure.auth_note && (
+              <div className="err" style={{ marginTop: '.8rem', borderLeftColor: 'var(--c-gold)',
+                                            background: 'rgba(228,192,46,.10)' }}>
+                {azure.auth_note}
+              </div>
+            )}
+
+            <label style={{ marginTop: '1rem' }}>model deployments</label>
+            {azure.deployments.available ? (
+              <table>
+                <thead>
+                  <tr><th>deployment</th><th>model</th><th>version</th><th>sku</th><th>TPM</th><th>state</th></tr>
+                </thead>
+                <tbody>
+                  {azure.deployments.items.map((d) => (
+                    <tr key={d.name}>
+                      <td className="mono"><strong>{d.name}</strong></td>
+                      <td className="mono">{d.model}</td>
+                      <td className="faint mono">{d.version}</td>
+                      <td className="mono">{d.sku}</td>
+                      <td className="mono">{d.capacity}</td>
+                      <td><span className="badge">{d.state}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="faint" style={{ marginTop: '.3rem' }}>{azure.deployments.reason}</p>
+            )}
+            <RawJson data={azure} label="raw /azure" />
+          </>
+        )}
       </div>
 
       <div className="card">

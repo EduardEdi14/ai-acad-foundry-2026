@@ -19,17 +19,25 @@ const VIEWS = [
 export default function App() {
   const [view, setView] = useState('chat')
   const [agents, setAgents] = useState([])
+  const [hostedOnly, setHostedOnly] = useState([])
+  const [foundry, setFoundry] = useState(null)
   const [health, setHealth] = useState(null)
+  const [azure, setAzure] = useState(null)
   const [theme, setTheme] = useState('dark')
 
   const loadAgents = useCallback(() => {
-    api.agents().then((d) => setAgents(d.personas || [])).catch(() => setAgents([]))
+    api.agents()
+      .then((d) => { setAgents(d.personas || []); setHostedOnly(d.hosted_only || []); setFoundry(d.foundry) })
+      .catch(() => { setAgents([]); setHostedOnly([]); setFoundry(null) })
   }, [])
   const loadHealth = useCallback(() => {
     api.health().then(setHealth).catch(() => setHealth(null))
   }, [])
+  const loadAzure = useCallback(() => {
+    api.azure().then(setAzure).catch(() => setAzure(null))
+  }, [])
 
-  useEffect(() => { loadAgents(); loadHealth() }, [loadAgents, loadHealth])
+  useEffect(() => { loadAgents(); loadHealth(); loadAzure() }, [loadAgents, loadHealth, loadAzure])
   useEffect(() => { document.documentElement.dataset.theme = theme }, [theme])
 
   const groups = [...new Set(VIEWS.map((v) => v.group))]
@@ -50,11 +58,20 @@ export default function App() {
           </div>
         ))}
         <div className="side-foot">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
             <span className="dot" style={{ width: 7, height: 7, borderRadius: '50%',
               background: online ? 'var(--c-cyan)' : 'var(--c-crimson)', display: 'inline-block' }} />
             {online ? `${health.llm.provider} · ${health.llm.model}` : 'backend offline'}
           </div>
+          {azure?.configured && (
+            <div style={{ marginBottom: '.5rem' }} title={azure.auth === 'identity'
+              ? 'Signed in with Microsoft Entra — the Agent Service and control plane are available'
+              : 'Key authentication — the Agent Service and control plane cannot be queried'}>
+              <span className={`badge ${azure.auth === 'identity' ? '' : 'gold'}`}>
+                {azure.auth === 'identity' ? 'Entra identity' : 'key auth'}
+              </span>
+            </div>
+          )}
           <button className="btn btn-outline btn-sm" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
             ◐ {theme === 'dark' ? 'light' : 'dark'}
           </button>
@@ -62,12 +79,14 @@ export default function App() {
       </aside>
 
       <main className="main">
-        {view === 'chat' && <Chat agents={agents} />}
+        {view === 'chat' && <Chat agents={agents} hostedOnly={hostedOnly} foundry={foundry} />}
         {view === 'knowledge' && <Knowledge />}
         {view === 'search' && <Search />}
-        {view === 'agents' && <Agents agents={agents} reload={loadAgents} />}
+        {view === 'agents' && <Agents agents={agents} hostedOnly={hostedOnly} foundry={foundry}
+                                      reload={loadAgents} azure={azure} />}
         {view === 'tools' && <Tools />}
-        {view === 'status' && <Status health={health} reload={loadHealth} />}
+        {view === 'status' && <Status health={health} reload={loadHealth}
+                                      azure={azure} reloadAzure={loadAzure} />}
       </main>
     </div>
   )

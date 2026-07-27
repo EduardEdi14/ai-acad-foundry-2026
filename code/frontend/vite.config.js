@@ -15,6 +15,7 @@ export default defineConfig({
       // every backend route the console uses, proxied to avoid CORS entirely
       '/health': target,
       '/config': target,
+      '/azure': target,
       '/chunk': target,
       '/ingest': target,
       '/collection': target,

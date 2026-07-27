@@ -34,6 +34,10 @@ export const api = {
   agents: () => request('/agents'),
   agent: (name) => request(`/agents/${encodeURIComponent(name)}`),
   deployAgent: (name) => request(`/agents/${encodeURIComponent(name)}/deploy`, { method: 'POST' }),
+  hostedAgents: () => request('/agents/hosted'),
+  deleteHostedAgent: (id) => request(`/agents/hosted/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  azure: () => request('/azure'),
 
   webFetch: (payload) => request('/tools/web-fetch', { method: 'POST', body: payload }),
   speak: (payload) => request('/tools/speak', { method: 'POST', body: payload, raw: true }),

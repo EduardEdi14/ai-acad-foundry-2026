@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
-import { Err } from '../components'
+import { Err, RunsOnBadge } from '../components'
 
-export default function Chat({ agents }) {
+export default function Chat({ agents, hostedOnly = [], foundry }) {
   const [messages, setMessages] = useState([])
   const [question, setQuestion] = useState('')
   const [agent, setAgent] = useState('default')
@@ -29,21 +29,47 @@ export default function Chat({ agents }) {
     } finally { setBusy(false) }
   }
 
-  const current = agents.find((a) => a.name === agent)
+  const all = [...agents, ...hostedOnly]
+  const current = all.find((a) => a.name === agent)
+
+  // Where this agent CAN run decides which lanes are offered.
+  const hostedKnown = foundry?.available
+  const isHosted = current?.runs_on === 'both' || current?.runs_on === 'foundry'
+  const localImpossible = current?.runs_on === 'foundry'      // no JSON file to run here
+  const foundryBlocked = hostedKnown && !isHosted             // definitely not deployed
+
+  // Keep the mode legal whenever the selected agent changes.
+  useEffect(() => {
+    if (localImpossible && mode !== 'foundry') setMode('foundry')
+    else if (foundryBlocked && mode === 'foundry') setMode('local')
+  }, [agent, localImpossible, foundryBlocked])   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="chat-wrap">
       <div className="chat-bar">
         <select value={agent} onChange={(e) => setAgent(e.target.value)} title="Which persona answers">
           {agents.map((a) => <option key={a.name} value={a.name}>{a.display_name}</option>)}
+          {hostedOnly.length > 0 && (
+            <optgroup label="hosted in Foundry only">
+              {hostedOnly.map((a) => <option key={a.name} value={a.name}>{a.display_name}</option>)}
+            </optgroup>
+          )}
         </select>
+        {current && <RunsOnBadge runsOn={current.runs_on} reason={foundry?.reason} />}
         <label className="check" style={{ margin: 0 }}>
           <input type="checkbox" checked={useRag} onChange={(e) => setUseRag(e.target.checked)} />
           use RAG
         </label>
-        <select value={mode} onChange={(e) => setMode(e.target.value)} style={{ minWidth: '9rem' }} title="Where the agent runs">
-          <option value="local">local agent</option>
-          <option value="foundry">Foundry agent</option>
+        <select value={mode} onChange={(e) => setMode(e.target.value)} style={{ minWidth: '9rem' }}
+                title="Where the loop executes">
+          <option value="local" disabled={localImpossible}
+                  title={localImpossible ? 'This agent has no local JSON file' : ''}>
+            local agent
+          </option>
+          <option value="foundry" disabled={foundryBlocked}
+                  title={foundryBlocked ? 'Not deployed to Foundry — deploy it from the Agents view' : ''}>
+            Foundry agent{foundryBlocked ? ' — not deployed' : ''}
+          </option>
         </select>
         <input type="number" min="1" max="10" value={topK} onChange={(e) => setTopK(e.target.value)}
                style={{ width: '4.5rem', flex: '0 0 auto' }} title="Passages to retrieve" />

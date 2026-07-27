@@ -34,6 +34,19 @@ export function RawJson({ data, label = 'raw response' }) {
   )
 }
 
+/** Where an agent can run — the four states, with the reason on hover. */
+export const RUNS_ON = {
+  local:   { label: 'local only',     tone: 'muted',   hint: 'A JSON file on disk. Runs in the backend process, with any provider.' },
+  both:    { label: 'local + Foundry', tone: '',       hint: 'A JSON file here AND a hosted agent of the same name in Azure. Either lane works.' },
+  foundry: { label: 'Foundry only',   tone: 'gold',    hint: 'Hosted in Azure with no local file — created in the portal, or its file was removed.' },
+  unknown: { label: 'Foundry: unknown', tone: 'muted', hint: 'Could not ask the Agent Service, so hosted state is genuinely unknown.' },
+}
+
+export function RunsOnBadge({ runsOn, reason }) {
+  const s = RUNS_ON[runsOn] || RUNS_ON.unknown
+  return <span className={`badge ${s.tone}`} title={runsOn === 'unknown' && reason ? reason : s.hint}>{s.label}</span>
+}
+
 export function ChunkList({ chunks }) {
   if (!chunks?.length) return null
   return (
