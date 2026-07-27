@@ -1,0 +1,15 @@
+{
+  "name": "classroom-heartbeat",
+  "version": "1.0.0",
+  "description": "Lightweight heartbeat receiver + live timeline UI for monitoring classroom connectivity",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

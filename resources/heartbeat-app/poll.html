@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartbeat — keep this tab open</title>
+<style>
+  :root { --navy:#001240; --panel:#0a1c3c; --ink:#eeeeee; --muted:rgba(238,238,238,.6);
+          --cyan:#0de7e7; --teal:#1cb9c8; --crimson:#c73a52;
+          --mono:'JetBrains Mono',ui-monospace,Consolas,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background:var(--navy); color:var(--ink); font:15px/1.5 Inter,system-ui,sans-serif; }
+  .card { background:var(--panel); border:1px solid rgba(238,238,238,.12); border-radius:16px;
+          padding:2rem 2.2rem; text-align:center; max-width:420px; width:92%; }
+  .dot { width:74px; height:74px; border-radius:50%; margin:0 auto 1rem;
+         display:flex; align-items:center; justify-content:center; font-size:2rem;
+         background:rgba(28,185,200,.15); border:3px solid var(--teal); transition:all .3s; }
+  .dot.ok { border-color:var(--teal); box-shadow:0 0 26px rgba(13,231,231,.5); animation:beat 1.4s infinite; }
+  .dot.fail { border-color:var(--crimson); background:rgba(199,58,82,.18); box-shadow:0 0 26px rgba(199,58,82,.5); animation:none; }
+  @keyframes beat { 0%,100%{transform:scale(1)} 12%{transform:scale(1.08)} 24%{transform:scale(1)} }
+  h1 { font-size:1.05rem; margin:.2rem 0 .1rem; }
+  .sub { color:var(--muted); font-size:.82rem; margin-bottom:1rem; }
+  .nums { display:flex; gap:.6rem; justify-content:center; margin:1rem 0; font-family:var(--mono); }
+  .n { background:rgba(0,18,64,.5); border:1px solid rgba(238,238,238,.1); border-radius:10px;
+       padding:.5rem .8rem; min-width:86px; }
+  .n b { display:block; font-size:1.2rem; color:var(--cyan); }
+  .n span { font-size:.62rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+  .n.bad b { color:#ff8497; }
+  input { font:inherit; font-family:var(--mono); background:rgba(0,18,64,.6); color:var(--ink);
+          border:1px solid rgba(238,238,238,.2); border-radius:8px; padding:.45em .7em; width:11em; text-align:center; }
+  .last { font:.78rem var(--mono); color:var(--muted); min-height:1.4em; margin-top:.6rem; overflow-wrap:anywhere; }
+  .warn { margin-top:1rem; font-size:.78rem; color:var(--muted); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="dot" id="dot">♥</div>
+    <h1>Heartbeat sender</h1>
+    <div class="sub">pinging <span id="target" style="font-family:var(--mono)"></span><br>
+      every <b id="every">__EXPECTED_INTERVAL__</b> seconds as
+      <input id="idBox" maxlength="40" spellcheck="false"></div>
+    <div class="nums">
+      <div class="n"><b id="sent">0</b><span>sent</span></div>
+      <div class="n"><b id="okc">0</b><span>delivered</span></div>
+      <div class="n" id="failBox"><b id="fail">0</b><span>failed</span></div>
+    </div>
+    <div class="last" id="last">starting…</div>
+    <div class="warn">⚠ Keep this tab open for the whole session.<br>Your teacher sees these beats live.</div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var qs = new URLSearchParams(location.search);
+  var everyS = Math.max(1, Number(qs.get("every")) || Number("__EXPECTED_INTERVAL__") || 5);
+  var id = (qs.get("id") || localStorage.getItem("hb-id") || "").trim();
+  if (!id) id = "guest-" + Math.random().toString(16).slice(2, 6);
+  id = id.slice(0, 40).replace(/[^\w.\-]/g, "_");
+  localStorage.setItem("hb-id", id);
+
+  var idBox = document.getElementById("idBox");
+  idBox.value = id;
+  idBox.addEventListener("change", function () {
+    id = idBox.value.trim().slice(0, 40).replace(/[^\w.\-]/g, "_") || id;
+    idBox.value = id;
+    localStorage.setItem("hb-id", id);
+    var u = new URL(location.href); u.searchParams.set("id", id);
+    history.replaceState(null, "", u.toString());
+  });
+
+  document.getElementById("every").textContent = everyS;
+  document.getElementById("target").textContent = location.host + "/heartbeat";
+
+  var sent = 0, ok = 0, fail = 0;
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function stamp(){ var d = new Date(); return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()); }
+
+  function tick() {
+    sent++; document.getElementById("sent").textContent = sent;
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, Math.min(4000, everyS * 900));
+    fetch("/heartbeat?id=" + encodeURIComponent(id), { cache: "no-store", signal: ctrl.signal })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function () {
+        ok++; document.getElementById("okc").textContent = ok;
+        document.getElementById("dot").className = "dot ok";
+        document.getElementById("last").textContent = "delivered at " + stamp();
+        document.getElementById("failBox").classList.remove("bad");
+      })
+      .catch(function (e) {
+        fail++; document.getElementById("fail").textContent = fail;
+        document.getElementById("dot").className = "dot fail";
+        document.getElementById("failBox").classList.add("bad");
+        document.getElementById("last").textContent = "FAILED at " + stamp() + " — " + (e && e.message || "network error");
+      })
+      .finally(function () { clearTimeout(timer); });
+  }
+
+  tick();
+  setInterval(tick, everyS * 1000);
+})();
+</script>
+</body>
+</html>

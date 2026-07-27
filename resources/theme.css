@@ -1,0 +1,496 @@
+/* ============================================================================
+   AI Engineering on Azure — Libra Bank Academy
+   theme.css · the single stylesheet behind every "stunning" page
+
+   HOW TO USE
+     <link rel="stylesheet" href="../resources/theme.css">
+     Put data-theme="light" | "dark" on <html> to force a theme.
+     Omit it to follow the operating system. Long reading docs → light;
+     demos / keynote surfaces → dark. The .hero follows the theme (light
+     hero on light pages); .panel-dark is the one deliberate dark island.
+
+   PALETTE IS LOCKED. Never hardcode a hex in markup — reference a token.
+   Raw brand colours live in :root --c-*. Semantic tokens (--bg, --text,
+   --accent …) flip with the theme; always style against those.
+   ============================================================================ */
+
+/* ---- 1. Raw palette — brand truth, do not reference directly in markup ---- */
+:root {
+  --c-ink:     #2c2d2f;   /* charcoal  · primary ink on light            */
+  --c-cyan:    #0de7e7;   /* electric cyan · primary accent (dark hero)  */
+  --c-crimson: #c73a52;   /* crimson   · CTA / emphasis                  */
+  --c-paper:   #eeeeee;   /* paper     · light surface / dark ink        */
+  --c-teal:    #1cb9c8;   /* teal      · links / cyan's readable sibling */
+  --c-navy:    #001240;   /* deep navy · dark canvas                     */
+  --c-coral:   #ed6a5a;   /* coral     · warm accent / warning           */
+  --c-slate:   #292f36;   /* slate     · code panels                     */
+  --c-gold:    #e4c02e;   /* gold      · tips / attention                */
+  --c-white:   #ffffff;
+
+  /* readable variants for text-on-light (raw cyan is too pale for text) */
+  --c-teal-ink: #0e7f8a;
+  --c-crimson-ink: #a62c43;
+
+  /* signature gradients */
+  --grad-accent: linear-gradient(135deg, var(--c-cyan) 0%, var(--c-teal) 100%);
+  --grad-cta:    linear-gradient(135deg, var(--c-crimson) 0%, var(--c-coral) 100%);
+  --grad-hero:   linear-gradient(155deg, var(--c-navy) 0%, var(--c-slate) 100%);
+  --grad-line:   linear-gradient(90deg, var(--c-cyan), var(--c-teal), var(--c-crimson));
+
+  /* radii */
+  --r-xs: 6px;  --r-sm: 9px;  --r: 12px;  --r-lg: 16px;  --r-xl: 22px;  --r-pill: 999px;
+
+  /* type */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* spacing rhythm */
+  --space: 1rem;
+  --maxw: 1080px;
+
+  /* app shell */
+  --footer-h: 2.6rem;   /* height of the fixed .site-footer */
+}
+
+/* ---- 2. Semantic tokens · LIGHT (default) -------------------------------- */
+:root {
+  --bg:          #f4f5f7;
+  --surface:     var(--c-white);
+  --surface-2:   #eef0f3;
+  --surface-inset:#f7f8fa;
+  --text:        var(--c-ink);
+  --text-muted:  rgba(44, 45, 47, 0.64);
+  --text-faint:  rgba(44, 45, 47, 0.42);
+  --border:      rgba(44, 45, 47, 0.12);
+  --border-strong: rgba(44, 45, 47, 0.22);
+  --accent:      var(--c-teal-ink);   /* readable accent for links/icons */
+  --accent-soft: rgba(28, 185, 200, 0.12);
+  --accent-line: var(--c-teal);
+  --ring:        rgba(13, 231, 231, 0.55);
+  --code-bg:     #f5f2ee;
+  --code-text:   #33343a;
+  --shadow-soft: 0 2px 14px -6px rgba(0, 18, 64, 0.16);
+  --shadow-lift: 0 10px 30px -10px rgba(0, 18, 64, 0.24);
+  --glow:        0 0 0 rgba(0,0,0,0);
+
+  /* hero — theme-aware (light: airy paper, ink text) */
+  --hero-bg:       linear-gradient(155deg, var(--c-white) 0%, #e9edf3 60%, #e3f4f6 100%);
+  --hero-text:     var(--c-ink);
+  --hero-muted:    rgba(44, 45, 47, 0.72);
+  --hero-eyebrow:  var(--c-teal-ink);
+  --hero-aurora-1: rgba(13, 231, 231, 0.18);
+  --hero-aurora-2: rgba(199, 58, 82, 0.10);
+  --hero-line:     rgba(44, 45, 47, 0.10);
+
+  /* gradient for TEXT only — dark enough to read on light surfaces */
+  --grad-text:     linear-gradient(135deg, var(--c-teal-ink) 0%, var(--c-navy) 100%);
+
+  /* chart slice steps — validated for light surfaces (see ui-kit §9) */
+  --chart-theory:      #4a63d0;
+  --chart-walkthrough: #17a3b8;
+  --chart-coding:      #a62c43;
+  --chart-lab:         #b8940e;
+  --chart-qa:          #ed6a5a;
+  --chart-break:       #8f959e;
+}
+
+/* ---- 3. Semantic tokens · DARK ------------------------------------------- */
+:root[data-theme="dark"] {
+  --bg:          var(--c-navy);
+  --surface:     #0a1c3c;
+  --surface-2:   #11284c;
+  --surface-inset:#081633;
+  --text:        var(--c-paper);
+  --text-muted:  rgba(238, 238, 238, 0.66);
+  --text-faint:  rgba(238, 238, 238, 0.40);
+  --border:      rgba(238, 238, 238, 0.13);
+  --border-strong: rgba(238, 238, 238, 0.26);
+  --accent:      var(--c-cyan);       /* cyan sings on navy */
+  --accent-soft: rgba(13, 231, 231, 0.14);
+  --accent-line: var(--c-cyan);
+  --ring:        rgba(13, 231, 231, 0.7);
+  --code-bg:     #14181d;
+  --code-text:   #e6e7ea;
+  --shadow-soft: 0 2px 16px -6px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 14px 40px -12px rgba(0, 0, 0, 0.65);
+  --glow:        0 0 24px -6px rgba(13, 231, 231, 0.45);
+
+  /* hero — the navy keynote look */
+  --hero-bg:       var(--grad-hero);
+  --hero-text:     var(--c-paper);
+  --hero-muted:    rgba(238, 238, 238, 0.82);
+  --hero-eyebrow:  var(--c-cyan);
+  --hero-aurora-1: rgba(13, 231, 231, 0.32);
+  --hero-aurora-2: rgba(199, 58, 82, 0.28);
+  --hero-line:     transparent;
+
+  /* cyan→teal sings on navy */
+  --grad-text:     var(--grad-accent);
+
+  /* chart slice steps — validated for dark surfaces (see ui-kit §9) */
+  --chart-theory:      #5a74e8;
+  --chart-walkthrough: #17a3b8;
+  --chart-coding:      #a62c43;
+  --chart-lab:         #ad8a0d;
+  --chart-qa:          #e05747;
+  --chart-break:       #3a4a63;
+}
+/* follow the OS when no explicit choice is made */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--c-navy); --surface: #0a1c3c; --surface-2: #11284c; --surface-inset:#081633;
+    --text: var(--c-paper); --text-muted: rgba(238,238,238,0.66); --text-faint: rgba(238,238,238,0.40);
+    --border: rgba(238,238,238,0.13); --border-strong: rgba(238,238,238,0.26);
+    --accent: var(--c-cyan); --accent-soft: rgba(13,231,231,0.14); --accent-line: var(--c-cyan);
+    --ring: rgba(13,231,231,0.7); --code-bg:#14181d; --code-text:#e6e7ea;
+    --shadow-soft: 0 2px 16px -6px rgba(0,0,0,0.55); --shadow-lift: 0 14px 40px -12px rgba(0,0,0,0.65);
+    --glow: 0 0 24px -6px rgba(13,231,231,0.45);
+    --hero-bg: var(--grad-hero); --hero-text: var(--c-paper); --hero-muted: rgba(238,238,238,0.82);
+    --hero-eyebrow: var(--c-cyan); --hero-aurora-1: rgba(13,231,231,0.32); --hero-aurora-2: rgba(199,58,82,0.28);
+    --hero-line: transparent; --grad-text: var(--grad-accent);
+    --chart-theory:#5a74e8; --chart-walkthrough:#17a3b8; --chart-coding:#a62c43;
+    --chart-lab:#ad8a0d; --chart-qa:#e05747; --chart-break:#3a4a63;
+  }
+}
+
+/* ---- 4. Base ------------------------------------------------------------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, h4 { letter-spacing: -0.02em; line-height: 1.18; font-weight: 700; margin: 0 0 0.4em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 2.6vw, 3rem); }
+h2 { font-size: clamp(1.4rem, 1rem + 1.5vw, 2rem); }
+h3 { font-size: clamp(1.12rem, 0.95rem + 0.7vw, 1.4rem); }
+p  { margin: 0 0 1rem; }
+a  { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+hr, .divider { border: 0; height: 1px; background: var(--border); margin: 2.5rem 0; }
+::selection { background: var(--c-cyan); color: var(--c-navy); }
+
+/* ---- 5. Layout ----------------------------------------------------------- */
+.container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+.stack > * + * { margin-top: 1.25rem; }
+.section { padding: clamp(2rem, 5vw, 3.5rem) 0; }
+.prose { max-width: 72ch; }
+.grid { display: grid; gap: 1.1rem; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-auto { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+@media (max-width: 760px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* ---- 6. Eyebrow, gradient text, accent strip ---------------------------- */
+.eyebrow {
+  display: inline-block; font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.gradient-text {
+  background: var(--grad-text); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+/* .panel-dark stays navy in every theme → its text gradient is always the cyan→teal pair */
+.panel-dark .gradient-text { background: var(--grad-accent); -webkit-background-clip: text; background-clip: text; }
+.accent-strip { height: 4px; width: 100%; border-radius: var(--r-pill); background: var(--grad-line); }
+
+/* ---- 7. Hero / page header ---------------------------------------------- */
+.hero {
+  position: relative; overflow: hidden; color: var(--hero-text);
+  background: var(--hero-bg);
+  border: 1px solid var(--hero-line);
+  border-radius: var(--r-xl); padding: clamp(1.8rem, 4vw, 3rem);
+  box-shadow: var(--shadow-lift);
+}
+.hero::before { /* cyan aurora */
+  content: ""; position: absolute; inset: -40% 40% auto -10%; height: 380px;
+  background: radial-gradient(closest-side, var(--hero-aurora-1), transparent 70%);
+  pointer-events: none;
+}
+.hero::after { /* crimson counter-glow */
+  content: ""; position: absolute; inset: auto -10% -50% 45%; height: 360px;
+  background: radial-gradient(closest-side, var(--hero-aurora-2), transparent 70%);
+  pointer-events: none;
+}
+.hero > * { position: relative; }
+.hero .eyebrow { color: var(--hero-eyebrow); }
+.hero h1 { margin-bottom: 0.5rem; }
+.hero p { color: var(--hero-muted); max-width: 62ch; }
+
+/* a dark island inside a light page */
+.panel-dark {
+  background: var(--grad-hero); color: var(--c-paper);
+  border-radius: var(--r-lg); padding: clamp(1.2rem, 3vw, 2rem);
+  box-shadow: var(--shadow-lift);
+}
+.panel-dark a { color: var(--c-cyan); }
+
+/* ---- 8. Card ------------------------------------------------------------- */
+.card {
+  position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 1.25rem 1.35rem; box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.card.hover:hover, a.card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+.card--accent { border-top: 0; }
+.card--accent::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--grad-accent);
+}
+.card--cta::before { background: var(--grad-cta); }
+.card--gold::before { background: var(--c-gold); }
+.card h3 { margin-top: 0; }
+.card .card__meta { color: var(--text-muted); font-size: 0.85rem; }
+
+/* ---- 9. Badges / pills --------------------------------------------------- */
+.badge {
+  display: inline-flex; align-items: center; gap: 0.4em;
+  font-size: 0.74rem; font-weight: 600; line-height: 1;
+  padding: 0.4em 0.7em; border-radius: var(--r-pill); border: 1px solid transparent;
+}
+.badge--cyan   { background: rgba(13,231,231,0.14); color: var(--c-teal-ink); }
+.badge--teal   { background: rgba(28,185,200,0.16); color: var(--c-teal-ink); }
+.badge--crimson{ background: rgba(199,58,82,0.14); color: var(--c-crimson-ink); }
+.badge--coral  { background: rgba(237,106,90,0.16); color: #b23f30; }
+.badge--gold   { background: rgba(228,192,46,0.20); color: #8a6d00; }
+.badge--navy   { background: rgba(0,18,64,0.10); color: var(--c-navy); }
+:root[data-theme="dark"] .badge--cyan,
+:root[data-theme="dark"] .badge--teal { color: var(--c-cyan); }
+:root[data-theme="dark"] .badge--crimson { color: #ff8497; }
+:root[data-theme="dark"] .badge--gold { color: var(--c-gold); }
+:root[data-theme="dark"] .badge--navy { background: rgba(238,238,238,0.10); color: var(--c-paper); }
+
+/* ---- 10. Buttons --------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5em; cursor: pointer;
+  font-family: inherit; font-size: 0.92rem; font-weight: 600; line-height: 1;
+  padding: 0.7em 1.15em; border-radius: var(--r); border: 1px solid transparent;
+  transition: box-shadow 0.2s, transform 0.15s, background 0.2s, border-color 0.2s;
+  text-decoration: none;
+}
+.btn:hover { transform: translateY(-1px); text-decoration: none; }
+.btn:active { transform: translateY(0); }
+.btn-primary { background: var(--grad-cta); color: #fff; box-shadow: var(--shadow-soft); }
+.btn-primary:hover { box-shadow: var(--shadow-lift); }
+.btn-accent { background: var(--grad-accent); color: var(--c-navy); box-shadow: var(--shadow-soft); }
+.btn-accent:hover { box-shadow: var(--shadow-lift), var(--glow); }
+.btn-outline { background: transparent; border-color: var(--border-strong); color: var(--text); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: transparent; color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text); background: var(--surface-2); }
+
+/* ---- 11. Callouts -------------------------------------------------------- */
+.callout {
+  position: relative; border: 1px solid var(--border); border-left-width: 4px;
+  border-radius: var(--r); padding: 0.9rem 1.1rem; background: var(--surface);
+  margin: 1.25rem 0;
+}
+.callout__title { font-weight: 700; margin: 0 0 0.25rem; font-size: 0.92rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout--info   { border-left-color: var(--c-cyan);    background: color-mix(in srgb, var(--c-cyan) 7%, var(--surface)); }
+.callout--tip    { border-left-color: var(--c-gold);    background: color-mix(in srgb, var(--c-gold) 9%, var(--surface)); }
+.callout--warn   { border-left-color: var(--c-coral);   background: color-mix(in srgb, var(--c-coral) 8%, var(--surface)); }
+.callout--danger { border-left-color: var(--c-crimson); background: color-mix(in srgb, var(--c-crimson) 8%, var(--surface)); }
+.callout--success{ border-left-color: var(--c-teal);    background: color-mix(in srgb, var(--c-teal) 8%, var(--surface)); }
+.callout--info .callout__title   { color: var(--c-teal-ink); }
+.callout--tip .callout__title    { color: #8a6d00; }
+.callout--warn .callout__title   { color: #b23f30; }
+.callout--danger .callout__title { color: var(--c-crimson-ink); }
+.callout--success .callout__title{ color: var(--c-teal-ink); }
+:root[data-theme="dark"] .callout--info .callout__title,
+:root[data-theme="dark"] .callout--success .callout__title { color: var(--c-cyan); }
+:root[data-theme="dark"] .callout--tip .callout__title { color: var(--c-gold); }
+:root[data-theme="dark"] .callout--warn .callout__title,
+:root[data-theme="dark"] .callout--danger .callout__title { color: var(--c-coral); }
+
+/* ---- 12. Code ------------------------------------------------------------ */
+code {
+  font-family: var(--font-mono); font-size: 0.86em;
+  background: var(--accent-soft); color: var(--accent);
+  padding: 0.12em 0.4em; border-radius: var(--r-xs);
+}
+pre {
+  background: var(--code-bg); color: var(--code-text); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.05rem 1.2rem; overflow-x: auto; line-height: 1.55;
+  font-size: 0.86rem; box-shadow: var(--shadow-soft);
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+.code-block { position: relative; margin: 1.25rem 0; }
+.code-block__label {
+  position: absolute; top: 0; right: 0.9rem; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600;
+  color: var(--c-navy); background: var(--c-cyan); padding: 0.25em 0.6em;
+  border-radius: var(--r-pill);
+}
+
+/* ---- 13. Tables ---------------------------------------------------------- */
+.table-wrap { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: var(--surface); }
+thead th {
+  text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted); font-weight: 700; padding: 0.7rem 0.9rem;
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--surface-2); }
+
+/* ---- 14. Stat tile ------------------------------------------------------- */
+.stat { display: flex; flex-direction: column; gap: 0.15rem; }
+.stat__value { font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.4rem); font-weight: 800; letter-spacing: -0.03em; }
+.stat__value.gradient-text { background: var(--grad-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.stat__label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+
+/* ---- 15. Misc ------------------------------------------------------------ */
+kbd {
+  font-family: var(--font-mono); font-size: 0.78em; padding: 0.15em 0.45em;
+  border: 1px solid var(--border-strong); border-bottom-width: 2px;
+  border-radius: var(--r-xs); background: var(--surface-2); color: var(--text);
+}
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--r-xs); }
+
+/* ---- 16. Motion ---------------------------------------------------------- */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.animate-in { animation: rise 0.4s ease both; }
+.animate-in:nth-child(2){animation-delay:.05s}.animate-in:nth-child(3){animation-delay:.1s}
+.animate-in:nth-child(4){animation-delay:.15s}.animate-in:nth-child(5){animation-delay:.2s}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* ---- 17. App shell: side-nav layout · slides · page-nav · fixed footer ----
+   The standard chrome for every docs/ page. Markup:
+     <body>
+       <div class="layout container">
+         <aside class="side-nav"> …links href="#section-id"… </aside>
+         <main> <section id="…" class="doc-section"> … </section> … </main>
+       </div>
+       <nav class="page-nav"> ↑ ↓ ◐ buttons (data-nav="up|down|theme") </nav>
+       <footer class="site-footer"> … </footer>
+       <script src="../resources/nav.js"></script>
+     </body>                                                                  */
+
+.layout {
+  display: grid; grid-template-columns: 240px minmax(0, 1fr);
+  gap: clamp(1.2rem, 3vw, 2.5rem); align-items: start;
+  padding-bottom: calc(var(--footer-h) + 1.5rem);
+}
+
+/* — vertical section menu, persistent on the left — */
+.side-nav {
+  position: sticky; top: 0;
+  max-height: calc(100vh - var(--footer-h));
+  overflow-y: auto; padding: 1.4rem 0.5rem 1.4rem 0;
+  font-size: 0.87rem;
+}
+.side-nav__brand {
+  font-weight: 800; letter-spacing: -0.01em; line-height: 1.25;
+  padding: 0 0.8rem; margin-bottom: 0.35rem;
+}
+.side-nav__brand small { display: block; font-weight: 600; color: var(--text-faint); letter-spacing: 0.04em; }
+.side-nav__group {
+  display: block; font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--text-faint); padding: 0.9rem 0.8rem 0.25rem;
+}
+.side-nav__link {
+  display: block; padding: 0.4em 0.8rem; color: var(--text-muted);
+  border-left: 2px solid transparent; border-radius: 0 var(--r-xs) var(--r-xs) 0;
+}
+.side-nav__link:hover { color: var(--accent); background: var(--surface-2); text-decoration: none; }
+.side-nav__link.is-active {
+  color: var(--accent); border-left-color: var(--accent-line);
+  background: var(--accent-soft); font-weight: 600;
+}
+
+/* — document section: tutorial-length, flows at content height.
+     The ↑/↓ page-nav and side-nav jump between these; they are NOT
+     viewport-sized slides — write as much as the material needs. — */
+.doc-section {
+  padding: clamp(2rem, 5vh, 3.5rem) 0;
+  scroll-margin-top: 0.5rem;
+}
+.doc-section > * + * { margin-top: 1.25rem; }
+.doc-section h3 { margin-top: 2rem; }
+
+/* — fixed footer, persistent on every page — */
+.site-footer {
+  position: fixed; inset: auto 0 0 0; height: var(--footer-h); z-index: 40;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  padding: 0 1rem; text-align: center;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  font-size: 0.74rem; color: var(--text-faint); white-space: nowrap; overflow: hidden;
+}
+
+/* — bottom-right controls: previous / next slide + theme toggle — */
+.page-nav {
+  position: fixed; right: 1rem; bottom: calc(var(--footer-h) + 0.9rem); z-index: 50;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.page-nav .btn {
+  width: 2.6rem; height: 2.6rem; padding: 0; justify-content: center;
+  border-radius: var(--r-pill); font-size: 1.05rem;
+  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text);
+  box-shadow: var(--shadow-soft);
+}
+.page-nav .btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: var(--shadow-lift); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .side-nav { display: none; }
+}
+
+/* ---- 18. Charts ----------------------------------------------------------
+   Donut/pie for the session-agenda time split. Slice colours are the derived
+   --chart-* steps below (raw brand colours fail as area fills — these hexes
+   passed the dataviz six-check validator in BOTH themes, adjacent-pair mode,
+   ring order: lab → coding → theory → walkthrough → qa → break).
+   If you change any chart hex, re-validate before shipping.
+   Legend text wears text tokens, never the series colour.                   */
+.chart { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.4rem); flex-wrap: wrap; }
+.chart svg { width: 220px; max-width: 62vw; height: auto; flex: 0 0 auto; }
+.chart-legend {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 0.45rem;
+  font-size: 0.9rem; color: var(--text);
+}
+.chart-legend li { display: flex; align-items: center; gap: 0.55rem; }
+.chart-legend__swatch { width: 0.85rem; height: 0.85rem; border-radius: 3px; flex: 0 0 auto; }
+
+/* ---- 19. Diagrams ---------------------------------------------------------
+   Token-true box diagrams in plain HTML — hierarchies, flows, nesting.
+   .diagram wraps; .dg-stack (vertical) / .dg-row (horizontal, wraps) lay out;
+   .dg-box is a node; .dg-box--frame is a labelled container for nesting
+   (give it a .dg-label first child); .dg-arrow is a text arrow (→ or ↓).
+   Matrix cells in tables: td.dg-you / td.dg-provider / td.dg-shared.       */
+.diagram {
+  border: 1px dashed var(--border-strong); border-radius: var(--r-lg);
+  padding: 1.1rem; overflow-x: auto; background: var(--surface-inset);
+}
+.diagram__caption { font-size: 0.78rem; color: var(--text-muted); margin: 0.7rem 0 0; text-align: center; }
+.dg-stack { display: flex; flex-direction: column; gap: 0.5rem; }
+.dg-row { display: flex; gap: 0.5rem; align-items: stretch; flex-wrap: wrap; }
+.dg-box {
+  border: 1px solid var(--border-strong); background: var(--surface);
+  border-radius: var(--r-sm); padding: 0.5rem 0.8rem;
+  font-size: 0.85rem; text-align: center; flex: 1; min-width: 90px;
+}
+.dg-box--accent { border-color: var(--accent-line); background: var(--accent-soft); font-weight: 600; }
+.dg-box--muted { background: var(--surface-2); color: var(--text-muted); }
+.dg-box--frame { background: transparent; padding: 0.7rem; text-align: left; }
+.dg-label {
+  display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem; text-align: left;
+}
+.dg-arrow { align-self: center; color: var(--text-faint); font-size: 1.05rem; padding: 0 0.15rem; flex: 0 0 auto; }
+.dg-note { font-size: 0.78rem; color: var(--text-muted); align-self: center; }
+td.dg-you      { background: color-mix(in srgb, var(--c-teal) 16%, var(--surface)); font-weight: 600; }
+td.dg-shared   { background: color-mix(in srgb, var(--c-gold) 14%, var(--surface)); }
+td.dg-provider { background: var(--surface-2); color: var(--text-muted); }

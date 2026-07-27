@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classroom Heartbeat</title>
+<style>
+  :root {
+    --navy:#001240; --panel:#0a1c3c; --panel2:#11284c; --ink:#eeeeee;
+    --muted:rgba(238,238,238,.6); --faint:rgba(238,238,238,.35);
+    --cyan:#0de7e7; --teal:#1cb9c8; --crimson:#c73a52; --coral:#ed6a5a; --gold:#e4c02e;
+    --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--navy); color:var(--ink);
+         font:15px/1.5 Inter,system-ui,'Segoe UI',sans-serif; padding:1.2rem 1.4rem 2rem; }
+  h1 { font-size:1.25rem; margin:0; letter-spacing:-.01em; }
+  .row { display:flex; gap:.8rem; align-items:center; flex-wrap:wrap; }
+  .head { justify-content:space-between; margin-bottom:1rem; }
+  .pulse { width:12px; height:12px; border-radius:50%; background:var(--cyan);
+           box-shadow:0 0 12px var(--cyan); animation:pulse 1.6s infinite; }
+  .pulse.dead { background:var(--crimson); box-shadow:0 0 12px var(--crimson); animation:none; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.7);opacity:.6} }
+  .pill { font:600 .8rem/1 var(--mono); padding:.45em .8em; border-radius:999px; letter-spacing:.06em; }
+  .pill.live { background:rgba(13,231,231,.15); color:var(--cyan); border:1px solid rgba(13,231,231,.4); }
+  .pill.down { background:rgba(199,58,82,.2); color:#ff8497; border:1px solid var(--crimson); }
+  .sub { color:var(--muted); font-size:.8rem; }
+
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.7rem; margin-bottom:1rem; }
+  .stat { background:var(--panel); border:1px solid rgba(238,238,238,.1); border-radius:12px; padding:.7rem .9rem; }
+  .stat b { display:block; font:700 1.35rem/1.2 var(--mono); color:var(--cyan); }
+  .stat span { font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .stat.bad b { color:#ff8497; }
+
+  .controls { margin-bottom:.6rem; justify-content:space-between; }
+  .btns { display:flex; gap:.35rem; flex-wrap:wrap; }
+  button.ctl { font:600 .78rem var(--mono); color:var(--muted); background:var(--panel);
+               border:1px solid rgba(238,238,238,.15); border-radius:8px; padding:.4em .8em; cursor:pointer; }
+  button.ctl:hover { color:var(--ink); border-color:var(--teal); }
+  button.ctl.on { color:var(--navy); background:var(--cyan); border-color:var(--cyan); font-weight:700; }
+
+  #wrap { background:var(--panel); border:1px solid rgba(238,238,238,.1); border-radius:14px; padding:.8rem; }
+  canvas { display:block; width:100%; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin-top:.9rem; }
+  @media (max-width:860px){ .cols{grid-template-columns:1fr} }
+  .box { background:var(--panel); border:1px solid rgba(238,238,238,.1); border-radius:14px; padding:.8rem 1rem; }
+  .box h2 { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:.1rem 0 .5rem; }
+  table { width:100%; border-collapse:collapse; font:.82rem var(--mono); }
+  td,th { padding:.32em .5em; text-align:left; border-bottom:1px solid rgba(238,238,238,.07); white-space:nowrap; }
+  th { font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; color:var(--faint); font-weight:600; }
+  td.dur { color:#ff8497; font-weight:700; }
+  td.ok { color:var(--teal); }
+  .tag { font-size:.64rem; padding:.15em .5em; border-radius:999px; background:rgba(228,192,46,.18);
+         color:var(--gold); border:1px solid rgba(228,192,46,.4); margin-left:.4em; }
+  .empty { color:var(--faint); font-size:.8rem; padding:.4em 0; }
+  .foot { margin-top:1rem; color:var(--faint); font-size:.75rem; }
+  .foot code { font-family:var(--mono); color:var(--muted); background:var(--panel); padding:.15em .45em; border-radius:6px; }
+  a { color:var(--teal); }
+</style>
+</head>
+<body>
+
+  <div class="row head">
+    <div class="row" style="gap:.7rem;">
+      <div class="pulse" id="dot"></div>
+      <h1>Classroom Heartbeat</h1>
+      <span class="pill live" id="status">WAITING…</span>
+    </div>
+    <span class="sub">expecting a beat every <b id="int">__EXPECTED_INTERVAL__</b>s ·
+      gaps ≥ <b id="thr">?</b>s are flagged · times shown in your local timezone</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat" id="st-last"><b>—</b><span>last beat</span></div>
+    <div class="stat" id="st-beats"><b>0</b><span>beats in window</span></div>
+    <div class="stat" id="st-clients"><b>0</b><span>clients in window</span></div>
+    <div class="stat" id="st-gap"><b>—</b><span>longest gap in window</span></div>
+    <div class="stat" id="st-outages"><b>0</b><span>outages in window</span></div>
+  </div>
+
+  <div class="row controls">
+    <div class="btns" id="winBtns">
+      <button class="ctl" data-w="5">5 min</button>
+      <button class="ctl on" data-w="15">15 min</button>
+      <button class="ctl" data-w="60">1 h</button>
+      <button class="ctl" data-w="180">3 h</button>
+    </div>
+    <div class="btns" id="chips"></div>
+  </div>
+
+  <div id="wrap"><canvas id="tl"></canvas></div>
+
+  <div class="cols">
+    <div class="box">
+      <h2>Outages — precise timestamps</h2>
+      <table><thead><tr><th>From</th><th>To</th><th>Duration</th></tr></thead>
+        <tbody id="gaps"><tr><td colspan="3" class="empty">No gaps detected in this window.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="box">
+      <h2>Latest beats</h2>
+      <table><thead><tr><th>Time</th><th>Client</th><th>IP</th></tr></thead>
+        <tbody id="recent"><tr><td colspan="3" class="empty">Waiting for the first beat…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot">
+    Students: open <code id="pollUrl">/poll?id=yourname</code> in a browser and keep the tab open ·
+    or run <code>node beat.js <span id="hbBase"></span> --id yourname</code> ·
+    or poll <code id="hbUrl">/heartbeat?id=yourname</code> from any tool.
+    Every beat is appended to the server's JSON log.
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var EXPECTED_S = Number("__EXPECTED_INTERVAL__") || 5;
+  var GAP_MS = Math.max(EXPECTED_S * 2, 3) * 1000;   // a gap = silence longer than this
+  document.getElementById("thr").textContent = String(GAP_MS / 1000);
+  document.getElementById("pollUrl").textContent = location.origin + "/poll?id=yourname";
+  document.getElementById("hbUrl").textContent = location.origin + "/heartbeat?id=yourname";
+  document.getElementById("hbBase").textContent = location.origin;
+
+  var state = {
+    beats: [],            // {ms,t,id,ip} ascending
+    lastMs: 0,
+    skew: 0,              // serverNow - clientNow
+    windowMin: 15,
+    filter: null,         // null = ALL, else client id
+  };
+
+  /* ---------- data ---------- */
+  function poll() {
+    fetch("/api/beats?since=" + state.lastMs, { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        state.skew = d.now - Date.now();
+        if (d.beats && d.beats.length) {
+          for (var i = 0; i < d.beats.length; i++) {
+            var b = d.beats[i];
+            if (b.ms > state.lastMs) { state.beats.push(b); state.lastMs = b.ms; }
+          }
+          var cutoff = nowC() - 200 * 60000; // keep ~3h20m
+          if (state.beats.length && state.beats[0].ms < cutoff) {
+            state.beats = state.beats.filter(function (b) { return b.ms >= cutoff; });
+          }
+          rebuildChips();
+        }
+        render();
+      })
+      .catch(function () { /* server unreachable from HERE — status shows it */ });
+  }
+  function nowC() { return Date.now() + state.skew; }
+
+  /* ---------- series helpers ---------- */
+  function inWindow() {
+    var t0 = nowC() - state.windowMin * 60000;
+    return state.beats.filter(function (b) { return b.ms >= t0; });
+  }
+  function selected(list) {
+    if (!state.filter) return list;
+    return list.filter(function (b) { return b.id === state.filter; });
+  }
+  function computeGaps(msList, t0, tEnd) {
+    var gaps = [];
+    for (var i = 1; i < msList.length; i++) {
+      if (msList[i] - msList[i - 1] > GAP_MS) gaps.push({ from: msList[i - 1], to: msList[i], ongoing: false });
+    }
+    if (msList.length && tEnd - msList[msList.length - 1] > GAP_MS) {
+      gaps.push({ from: msList[msList.length - 1], to: tEnd, ongoing: true });
+    }
+    return gaps.filter(function (g) { return g.to > t0; });
+  }
+
+  /* ---------- formatting ---------- */
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function hms(ms) {
+    var d = new Date(ms);
+    return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+  function dayHms(ms) {
+    var d = new Date(ms), t = new Date();
+    var sameDay = d.toDateString() === t.toDateString();
+    return (sameDay ? "" : pad(d.getDate()) + "." + pad(d.getMonth() + 1) + " ") + hms(ms);
+  }
+  function dur(msLen) {
+    var s = Math.round(msLen / 1000);
+    if (s < 60) return s + " s";
+    var m = Math.floor(s / 60); s = s % 60;
+    if (m < 60) return m + " min " + pad(s) + " s";
+    var h = Math.floor(m / 60); m = m % 60;
+    return h + " h " + pad(m) + " min " + pad(s) + " s";
+  }
+  function ago(msLen) {
+    var s = msLen / 1000;
+    if (s < 60) return s.toFixed(s < 10 ? 1 : 0) + " s ago";
+    return dur(msLen) + " ago";
+  }
+
+  /* ---------- chips & window buttons ---------- */
+  var knownIds = [];
+  function rebuildChips() {
+    var ids = {};
+    inWindow().forEach(function (b) { ids[b.id] = 1; });
+    var list = Object.keys(ids).sort();
+    if (list.join("|") === knownIds.join("|")) return;
+    knownIds = list;
+    var host = document.getElementById("chips");
+    host.innerHTML = "";
+    var all = document.createElement("button");
+    all.className = "ctl" + (state.filter === null ? " on" : "");
+    all.textContent = "ALL";
+    all.onclick = function () { state.filter = null; rebuildChipsForce(); render(); };
+    host.appendChild(all);
+    list.forEach(function (id) {
+      var b = document.createElement("button");
+      b.className = "ctl" + (state.filter === id ? " on" : "");
+      b.textContent = id;
+      b.onclick = function () { state.filter = (state.filter === id ? null : id); rebuildChipsForce(); render(); };
+      host.appendChild(b);
+    });
+  }
+  function rebuildChipsForce() { knownIds = [" "]; rebuildChips(); }
+  document.getElementById("winBtns").addEventListener("click", function (e) {
+    if (!e.target.dataset.w) return;
+    state.windowMin = Number(e.target.dataset.w);
+    var bs = this.querySelectorAll("button");
+    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle("on", bs[i] === e.target);
+    render();
+  });
+
+  /* ---------- canvas ---------- */
+  var canvas = document.getElementById("tl"), ctx = canvas.getContext("2d");
+  function axisStepMs(windowMin) {
+    if (windowMin <= 5) return 30000;
+    if (windowMin <= 15) return 60000;
+    if (windowMin <= 60) return 300000;
+    return 900000;
+  }
+  function draw(win, lanes, gaps, tEnd) {
+    var dpr = window.devicePixelRatio || 1;
+    var W = canvas.clientWidth || canvas.parentNode.clientWidth - 26;
+    var AXIS = 24, MERGED = 58, LANE = 32;
+    var H = AXIS + MERGED + lanes.length * LANE + 6;
+    canvas.style.height = H + "px";
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    var t0 = tEnd - state.windowMin * 60000;
+    function X(ms) { return ((ms - t0) / (tEnd - t0)) * W; }
+
+    /* axis grid + labels */
+    ctx.font = "10px " + "'JetBrains Mono',monospace";
+    var step = axisStepMs(state.windowMin);
+    var first = Math.ceil(t0 / step) * step;
+    for (var ts = first; ts <= tEnd; ts += step) {
+      var x = X(ts);
+      ctx.strokeStyle = "rgba(238,238,238,.07)";
+      ctx.beginPath(); ctx.moveTo(x, AXIS - 6); ctx.lineTo(x, H); ctx.stroke();
+      ctx.fillStyle = "rgba(238,238,238,.45)";
+      ctx.fillText(hms(ts), Math.min(x + 3, W - 58), 12);
+    }
+
+    /* gap bands (merged series) */
+    for (var g = 0; g < gaps.length; g++) {
+      var gp = gaps[g];
+      var x1 = Math.max(0, X(gp.from)), x2 = Math.min(W, X(gp.to));
+      ctx.fillStyle = gp.ongoing ? "rgba(199,58,82,.30)" : "rgba(199,58,82,.22)";
+      ctx.fillRect(x1, AXIS, x2 - x1, MERGED - 8);
+      ctx.strokeStyle = "#c73a52";
+      ctx.strokeRect(x1 + .5, AXIS + .5, Math.max(1, x2 - x1 - 1), MERGED - 9);
+      if (x2 - x1 > 46) {
+        ctx.fillStyle = "#ff8497";
+        ctx.font = "bold 10px 'JetBrains Mono',monospace";
+        ctx.fillText(dur(gp.to - gp.from), x1 + 4, AXIS + 13);
+        ctx.font = "10px 'JetBrains Mono',monospace";
+      }
+    }
+
+    /* merged lane */
+    ctx.fillStyle = "rgba(238,238,238,.5)";
+    ctx.fillText(state.filter ? state.filter.toUpperCase() : "ALL", 2, AXIS + MERGED - 14);
+    var mergedList = selected(win);
+    ctx.strokeStyle = "#0de7e7"; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (var i = 0; i < mergedList.length; i++) {
+      var mx = X(mergedList[i].ms);
+      ctx.moveTo(mx, AXIS + 4); ctx.lineTo(mx, AXIS + MERGED - 24);
+    }
+    ctx.stroke();
+
+    /* per-client lanes */
+    for (var l = 0; l < lanes.length; l++) {
+      var y = AXIS + MERGED + l * LANE;
+      ctx.strokeStyle = "rgba(238,238,238,.08)";
+      ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(W, y + .5); ctx.stroke();
+      ctx.fillStyle = "rgba(238,238,238,.5)";
+      ctx.fillText(lanes[l], 2, y + 12);
+      ctx.strokeStyle = state.filter && state.filter !== lanes[l] ? "rgba(28,185,200,.25)" : "#1cb9c8";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (var k = 0; k < win.length; k++) {
+        if (win[k].id !== lanes[l]) continue;
+        var lx = X(win[k].ms);
+        ctx.moveTo(lx, y + 16); ctx.lineTo(lx, y + LANE - 4);
+      }
+      ctx.stroke();
+    }
+
+    /* "now" edge */
+    ctx.strokeStyle = "rgba(228,192,46,.8)";
+    ctx.beginPath(); ctx.moveTo(W - .5, AXIS - 6); ctx.lineTo(W - .5, H); ctx.stroke();
+  }
+
+  /* ---------- render ---------- */
+  function setStat(id, val, bad) {
+    var el = document.getElementById(id);
+    el.firstElementChild.textContent = val;
+    el.classList.toggle("bad", !!bad);
+  }
+  function render() {
+    var tEnd = nowC();
+    var win = inWindow();
+    var sel = selected(win);
+    var msList = sel.map(function (b) { return b.ms; });
+    var t0 = tEnd - state.windowMin * 60000;
+    var gaps = computeGaps(msList, t0, tEnd);
+
+    /* status pill uses the FULL merged stream (room truth), not the filter */
+    var lastAny = state.beats.length ? state.beats[state.beats.length - 1].ms : 0;
+    var dot = document.getElementById("dot"), pill = document.getElementById("status");
+    if (!lastAny) { pill.textContent = "WAITING…"; pill.className = "pill down"; dot.className = "pulse dead"; }
+    else if (tEnd - lastAny > GAP_MS) {
+      pill.textContent = "DOWN · " + ago(tEnd - lastAny);
+      pill.className = "pill down"; dot.className = "pulse dead";
+    } else {
+      pill.textContent = "LIVE";
+      pill.className = "pill live"; dot.className = "pulse";
+    }
+
+    var lastSel = msList.length ? msList[msList.length - 1] : 0;
+    setStat("st-last", lastSel ? ago(tEnd - lastSel) : "—", lastSel ? (tEnd - lastSel > GAP_MS) : true);
+    setStat("st-beats", String(sel.length));
+    var ids = {}; win.forEach(function (b) { ids[b.id] = 1; });
+    setStat("st-clients", String(Object.keys(ids).length));
+    var longest = 0;
+    gaps.forEach(function (g) { longest = Math.max(longest, g.to - g.from); });
+    setStat("st-gap", longest ? dur(longest) : "—", longest > 0);
+    setStat("st-outages", String(gaps.length), gaps.length > 0);
+
+    draw(win, Object.keys(ids).sort(), gaps, tEnd);
+
+    /* outages table */
+    var gb = document.getElementById("gaps");
+    if (!gaps.length) {
+      gb.innerHTML = '<tr><td colspan="3" class="empty">No gaps detected in this window.</td></tr>';
+    } else {
+      gb.innerHTML = gaps.slice().reverse().map(function (g) {
+        return "<tr><td>" + dayHms(g.from) + "</td><td>" +
+          (g.ongoing ? "—<span class='tag'>ongoing</span>" : dayHms(g.to)) +
+          "</td><td class='dur'>" + dur(g.to - g.from) + "</td></tr>";
+      }).join("");
+    }
+
+    /* recent beats table */
+    var rb = document.getElementById("recent");
+    var recent = sel.slice(-14).reverse();
+    if (recent.length) {
+      rb.innerHTML = recent.map(function (b) {
+        return "<tr><td class='ok'>" + hms(b.ms) + "</td><td>" + b.id + "</td><td>" + (b.ip || "") + "</td></tr>";
+      }).join("");
+    }
+  }
+
+  window.addEventListener("resize", render);
+  poll();
+  setInterval(poll, 1000);
+  setInterval(render, 500);
+})();
+</script>
+</body>
+</html>
