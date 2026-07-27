@@ -1,19 +1,50 @@
 {
   "info": {
     "name": "RAG Teaching API",
-    "description": "Demo flow for the Libra Bank Academy RAG backend. Run top to bottom: Ops → Chunking (compare the four strategies on the same text) → Ingestion → Retrieval → Generation (ask with use_rag false, then true, and compare prompt_sent).",
+    "description": "Demo flow for the Libra Bank Academy RAG backend. Run top to bottom: Ops → Chunking (compare the four strategies) → Ingestion → Retrieval → Generation (use_rag false vs true) → Agents (where each one runs; local vs Foundry) → Tools. Folders 5 and 6 exercise the newer surface; some of their calls need identity auth or an Azure Speech resource and say so in each request's description.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:7799" },
-    { "key": "sampleText", "value": "Libra Bank issues debit and credit cards to retail customers. A card can be blocked automatically after three failed PIN attempts, after a suspicious transaction is detected by the fraud engine, or at the customer's own request through the mobile application. A blocked card can be unblocked in the branch after identity verification, or through the call center using the phone banking password.\\n\\nFor lost or stolen cards, the customer must call the 24/7 support line immediately. The card is cancelled and a replacement is issued within five working days. Replacement fees are waived for premium accounts. Transactions made after the loss was reported are fully covered by the bank.\\n\\nMortgage loans at Libra Bank require a down payment of at least fifteen percent for a first home. The interest rate can be fixed for the first five years, then variable, indexed to IRCC plus a fixed margin. Early repayment is possible at any time; for the fixed-rate period an early repayment fee of one percent applies, while in the variable period early repayment is free of charge.\\n\\nTerm deposits can be opened in RON, EUR or USD, with maturities from one month to two years. Interest is paid at maturity. Breaking a deposit before maturity forfeits the accrued interest, and the principal is returned in full to the current account." }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:7799"
+    },
+    {
+      "key": "sampleText",
+      "value": "Libra Bank issues debit and credit cards to retail customers. A card can be blocked automatically after three failed PIN attempts, after a suspicious transaction is detected by the fraud engine, or at the customer's own request through the mobile application. A blocked card can be unblocked in the branch after identity verification, or through the call center using the phone banking password.\\n\\nFor lost or stolen cards, the customer must call the 24/7 support line immediately. The card is cancelled and a replacement is issued within five working days. Replacement fees are waived for premium accounts. Transactions made after the loss was reported are fully covered by the bank.\\n\\nMortgage loans at Libra Bank require a down payment of at least fifteen percent for a first home. The interest rate can be fixed for the first five years, then variable, indexed to IRCC plus a fixed margin. Early repayment is possible at any time; for the fixed-rate period an early repayment fee of one percent applies, while in the variable period early repayment is free of charge.\\n\\nTerm deposits can be opened in RON, EUR or USD, with maturities from one month to two years. Interest is paid at maturity. Breaking a deposit before maturity forfeits the accrued interest, and the principal is returned in full to the current account."
+    },
+    {
+      "key": "agentId",
+      "value": "",
+      "description": "Paste a hosted agent id here to use the delete request"
+    }
   ],
   "item": [
     {
       "name": "0 · Ops",
       "item": [
-        { "name": "Health", "request": { "method": "GET", "url": "{{baseUrl}}/health" } },
-        { "name": "Config (sanitized)", "request": { "method": "GET", "url": "{{baseUrl}}/config" } }
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Config (sanitized)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/config"
+          }
+        },
+        {
+          "name": "Azure environment",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/azure",
+            "description": "Resource, region, subscription, both endpoints, the auth lane and the live model deployments. Under key auth the deployment list is unavailable and says why."
+          }
+        }
       ]
     },
     {
@@ -24,8 +55,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/chunk",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"static\",\n  \"chunk_size\": 300,\n  \"chunk_overlap\": 50\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"static\",\n  \"chunk_size\": 300,\n  \"chunk_overlap\": 50\n}"
+            }
           }
         },
         {
@@ -33,8 +72,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/chunk",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"sentence\",\n  \"sentences_per_chunk\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"sentence\",\n  \"sentences_per_chunk\": 3\n}"
+            }
           }
         },
         {
@@ -42,8 +89,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/chunk",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80\n}"
+            }
           }
         },
         {
@@ -51,8 +106,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/chunk",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"semantic\",\n  \"semantic_threshold\": 0.75\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"semantic\",\n  \"semantic_threshold\": 0.75\n}"
+            }
           }
         }
       ]
@@ -65,12 +128,32 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/ingest",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80,\n  \"source\": \"retail-faq\"\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{sampleText}}\",\n  \"strategy\": \"dynamic\",\n  \"chunk_size\": 400,\n  \"chunk_overlap\": 80,\n  \"source\": \"retail-faq\"\n}"
+            }
           }
         },
-        { "name": "Collection info", "request": { "method": "GET", "url": "{{baseUrl}}/collection" } },
-        { "name": "Reset collection (clean slate)", "request": { "method": "DELETE", "url": "{{baseUrl}}/collection" } }
+        {
+          "name": "Collection info",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/collection"
+          }
+        },
+        {
+          "name": "Reset collection (clean slate)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/collection"
+          }
+        }
       ]
     },
     {
@@ -81,8 +164,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/search",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"query\": \"my card got frozen, what do I do?\",\n  \"top_k\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"my card got frozen, what do I do?\",\n  \"top_k\": 3\n}"
+            }
           }
         },
         {
@@ -90,8 +181,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/search",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"query\": \"can I pay my mortgage back sooner and does it cost anything?\",\n  \"top_k\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"can I pay my mortgage back sooner and does it cost anything?\",\n  \"top_k\": 3\n}"
+            }
           }
         },
         {
@@ -99,8 +198,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/search",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"query\": \"what is the weather like in Cluj?\",\n  \"top_k\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"what is the weather like in Cluj?\",\n  \"top_k\": 3\n}"
+            }
           }
         }
       ]
@@ -113,8 +220,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/ask",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": false\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": false\n}"
+            }
           }
         },
         {
@@ -122,8 +237,16 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/ask",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What fee does Libra Bank charge for early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}"
+            }
           }
         },
         {
@@ -131,8 +254,200 @@
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/ask",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What is the interest rate for student loans?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}" }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the interest rate for student loans?\",\n  \"use_rag\": true,\n  \"top_k\": 3\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 · Agents — where each one runs",
+      "description": "Personas are JSON files; some also exist as hosted agents in Foundry. `runs_on` tells you which: local, both, foundry, or unknown.",
+      "item": [
+        {
+          "name": "List agents (see runs_on)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agents",
+            "description": "Every agent and where it can run. Also reports whether the Agent Service could be queried at all — under key auth it cannot, so state is 'unknown'."
+          }
+        },
+        {
+          "name": "One persona + its system prompt",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agents/default",
+            "description": "The exact system prompt this JSON produces, grounded and plain."
+          }
+        },
+        {
+          "name": "Deploy a persona to Foundry",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/agents/lyrical/deploy",
+            "description": "Publishes the persona as a hosted agent. Requires identity auth — run the backend locally after `az login`; it fails by design inside Docker.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Hosted agents in the project",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agents/hosted",
+            "description": "What actually exists in Foundry, whatever created it — scripts, SDK or portal."
+          }
+        },
+        {
+          "name": "Remove a hosted agent",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/agents/hosted/{{agentId}}",
+            "description": "Set the collection variable `agentId` first. The local JSON file is untouched."
+          }
+        },
+        {
+          "name": "Ask · default persona",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "description": "The professional baseline voice.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What fee applies to early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 2,\n  \"agent\": \"default\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Ask · lyrical persona (same facts, in verse)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "description": "Only the persona JSON changed — the Python did not.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What fee applies to early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 2,\n  \"agent\": \"lyrical\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Ask · run it in Foundry instead",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ask",
+            "description": "Same persona, executed by the Azure Agent Service. Needs identity auth and a deployed agent; look at agent.mode in the response.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What fee applies to early mortgage repayment?\",\n  \"use_rag\": true,\n  \"top_k\": 2,\n  \"agent\": \"lyrical\",\n  \"agent_mode\": \"foundry\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 · Tools — services beside the model",
+      "description": "The capabilities an agent can call, each a separate service.",
+      "item": [
+        {
+          "name": "Web fetch · simple page",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tools/web-fetch",
+            "description": "The naive scraper on an easy page: no warnings.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Web fetch · a real site (read the warnings)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tools/web-fetch",
+            "description": "Check `warnings` and `stats.signal_ratio` — everything the do-it-yourself approach could not handle.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Text to speech (returns a WAV)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tools/speak",
+            "description": "Needs an Azure Speech resource: AZURE_SPEECH_KEY and AZURE_SPEECH_REGION. Use Postman's Send and Download to save the audio.",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Your card was blocked after three failed PIN attempts.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Speech to text (upload a WAV)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/tools/transcribe",
+            "description": "Upload the WAV you just generated and read it back as text.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
           }
         }
       ]
