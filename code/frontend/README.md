@@ -25,8 +25,10 @@ The Agents screen answers this with a badge on every row:
 | **Foundry: unknown** | The Agent Service could not be queried, so hosted state is genuinely unknown. Hover for the reason. |
 
 That last state is not a bug. The Agent Service accepts **only** Microsoft Entra
-authentication, and the Docker stack runs with an API key — so inside Docker the answer
-is unknowable, and the console says so instead of guessing.
+authentication, and the Docker stack runs with an API key *by default* — so there the
+answer is unknowable, and the console says so instead of guessing. Give the container a
+service principal (see the [backend README](../backend/README.md#identity-inside-a-container))
+and the badges resolve inside Docker too.
 
 ## Run it — option A: everything in Docker
 

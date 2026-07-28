@@ -52,9 +52,41 @@ docker compose up --build
 #   :7800 console · :7799/docs Swagger · :7833/dashboard Qdrant
 ```
 
-Self-contained and one command, but the API container authenticates with a **key** (a
-container cannot see your `az login`), so the Agent Service and the control plane are
-unavailable there. The console reports that honestly rather than showing an empty list.
+Self-contained and one command. By default the API container authenticates with a
+**key**, because it cannot borrow your `az login` — and keys are enough for chat and
+embeddings but *not* for the Agent Service or the control plane, which require
+Microsoft Entra. The console reports that honestly rather than showing an empty list.
+
+### Identity inside a container
+
+That default is a convenience, not a limit — a container can absolutely hold an Entra
+identity. Give it a **service principal**: an application identity with its own id and
+secret, which `DefaultAzureCredential` picks up from the environment *before* it ever
+looks for the Azure CLI.
+
+```bash
+# create one, scoped to your Foundry resource only
+RES=$(az cognitiveservices account show --name <resource> --resource-group <rg> --query id -o tsv)
+az ad sp create-for-rbac --name sp-libra-console --role "Azure AI User" --scopes "$RES"
+```
+
+Paste the three values it prints into `.env` and flip the compose override:
+
+```ini
+DOCKER_AZURE_AI_AUTH=identity
+AZURE_CLIENT_ID=<appId>
+AZURE_CLIENT_SECRET=<password>
+AZURE_TENANT_ID=<tenant>
+```
+
+`docker compose up -d` and the container now has a real identity: hosted agents,
+deployments and the Agent Service all work inside Docker. Treat the secret like any
+other — it lives in the git-ignored `.env`, and it expires, so rotate it.
+
+**In production you would use neither.** A container running in Azure gets a *managed
+identity* — same `DefaultAzureCredential`, same code, no secret to store or rotate at
+all. The three lanes, in order of preference: managed identity → service principal →
+key.
 
 The app container overrides `QDRANT_URL` automatically and bind-mounts `./app`,
 so **live reload works inside the container too** — edit a file, watch it restart.
