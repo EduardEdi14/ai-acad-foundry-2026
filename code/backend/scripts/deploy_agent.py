@@ -24,8 +24,7 @@ from app.agents.persona import PersonaNotFound, available_names, load_persona  #
 from app.config import settings  # noqa: E402
 
 
-def main() -> int:
-    name = sys.argv[1] if len(sys.argv) > 1 else settings.agent_persona
+def deploy_one(name: str) -> int:
     try:
         persona = load_persona(name)
     except PersonaNotFound as e:
@@ -33,9 +32,6 @@ def main() -> int:
         return 2
 
     print(f"→ deploying persona '{persona.name}' ({persona.display_name})")
-    print(f"  project : {settings.azure_ai_project_endpoint or '(not set)'}")
-    print(f"  model   : {settings.azure_ai_chat_deployment}")
-
     try:
         result = deploy(persona)
     except FoundryUnavailable as e:
@@ -45,13 +41,36 @@ def main() -> int:
         print(f"✗ deployment failed: {type(e).__name__}: {e}")
         return 4
 
-    print(f"\n✓ agent {result['action']}")
-    print(f"  id   : {result['agent_id']}")
-    print(f"  name : {result['name']}")
+    portal = result.get("portal", {})
+    print(f"  ✓ agent service : {result['action']}  ({result['agent_id']})")
+    print(f"  ✓ portal        : {portal.get('action', '?')}"
+          + (f"  — {portal['error']}" if portal.get("error") else ""))
+    return 0
+
+
+def main() -> int:
+    args = sys.argv[1:]
+    print(f"  project : {settings.azure_ai_project_endpoint or '(not set)'}")
+    print(f"  model   : {settings.azure_ai_chat_deployment}\n")
+
+    if args and args[0] in ("--all", "-a"):
+        names = available_names()
+        print(f"deploying all {len(names)} personas: {', '.join(names)}\n")
+        failures = 0
+        for name in names:
+            failures += 1 if deploy_one(name) else 0
+        print(f"\n{len(names) - failures}/{len(names)} deployed.")
+        print("They are now runnable (agent_mode=foundry) and visible in the Foundry portal.")
+        return 1 if failures else 0
+
+    code = deploy_one(args[0] if args else settings.agent_persona)
+    if code:
+        return code
+
     print("\nNext:")
-    print(f"  1. put this in .env →  FOUNDRY_AGENT_ID={result['agent_id']}")
-    print("  2. set               →  AGENT_MODE=foundry")
-    print('  3. call /ask with    →  {"question": "...", "agent_mode": "foundry"}')
+    print('  · run it     →  /ask with {"agent": "<name>", "agent_mode": "foundry"}')
+    print("  · see it     →  ai.azure.com → your project → Agents")
+    print(f"  · deploy all →  uv run python scripts/deploy_agent.py --all")
     print(f"\n  (personas available: {', '.join(available_names())})")
     return 0
 

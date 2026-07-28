@@ -29,8 +29,20 @@ from .local_agent import AgentReply, build_user_prompt
 from .persona import Persona
 
 API_VERSION = "2025-05-01"
-SCOPE = "https://ai.azure.com/.default"
 TIMEOUT = 60.0
+SCOPE = "https://ai.azure.com/.default"
+
+# A Foundry project exposes TWO agent surfaces, and they are separate catalogues:
+#
+#   /assistants  (API_VERSION)         the Agent Service we run against — threads,
+#                                      messages and runs. This is what invokes.
+#   /agents      (API_VERSION_PORTAL)  the newer surface the Foundry portal lists
+#                                      under "Agents" when New Foundry is on. It
+#                                      stores versioned definitions.
+#
+# An agent created on one does NOT appear on the other. So a deploy publishes to
+# both: /assistants so our code can run it, /agents so you can see it in the portal.
+API_VERSION_PORTAL = "v1"
 
 
 class FoundryUnavailable(Exception):
@@ -75,18 +87,70 @@ def _token() -> str:
         ) from e
 
 
-def _call(method: str, path: str, json: dict | None = None) -> dict:
+def _call(method: str, path: str, json: dict | None = None,
+          api_version: str = API_VERSION, allow: tuple[int, ...] = ()) -> dict:
+    """One request to the project endpoint. `allow` lists status codes to return
+    rather than raise on — used to detect "already exists" without an exception."""
     base = settings.azure_ai_project_endpoint.rstrip("/")
     url = f"{base}/{path.lstrip('/')}"
     headers = {"Authorization": f"Bearer {_token()}", "Content-Type": "application/json"}
-    response = httpx.request(method, url, params={"api-version": API_VERSION},
+    response = httpx.request(method, url, params={"api-version": api_version},
                              headers=headers, json=json, timeout=TIMEOUT)
-    if response.status_code >= 400:
+    if response.status_code >= 400 and response.status_code not in allow:
         raise FoundryUnavailable(
             f"Agent Service returned HTTP {response.status_code} for {method} {path}: "
             f"{response.text[:300]}"
         )
-    return response.json() if response.content else {}
+    body = response.json() if response.content else {}
+    if isinstance(body, dict):
+        body["_status"] = response.status_code
+    return body
+
+
+# --- the portal surface (/agents) ---------------------------------------------
+
+def list_portal() -> list[dict]:
+    """Agents as the Foundry portal lists them. Separate catalogue from /assistants."""
+    data = _call("GET", "agents", api_version=API_VERSION_PORTAL)
+    out: list[dict] = []
+    for a in data.get("data", []):
+        latest = (a.get("versions") or {}).get("latest") or {}
+        definition = latest.get("definition") or {}
+        out.append({
+            "name": a.get("name") or a.get("id"),
+            "state": a.get("state"),
+            "model": definition.get("model"),
+            "version": latest.get("version"),
+        })
+    return out
+
+
+def deploy_portal(persona: Persona, model: str | None = None) -> dict:
+    """Publish the persona to the surface the portal shows.
+
+    Creating twice is a conflict, so an existing agent gets a new *version*
+    instead — which is also what the portal's own version history displays.
+    """
+    model = model or settings.azure_ai_chat_deployment
+    definition = {
+        "kind": "prompt",
+        "model": model,
+        "instructions": persona.system_prompt(grounded=True),
+    }
+
+    created = _call("POST", "agents", {"name": persona.name, "definition": definition},
+                    api_version=API_VERSION_PORTAL, allow=(409,))
+    if created.get("_status") != 409:
+        return {"action": "created", "name": persona.name, "model": model}
+
+    _call("POST", f"agents/{persona.name}/versions", {"definition": definition},
+          api_version=API_VERSION_PORTAL)
+    return {"action": "new version", "name": persona.name, "model": model}
+
+
+def delete_portal(name: str) -> bool:
+    _call("DELETE", f"agents/{name}", api_version=API_VERSION_PORTAL)
+    return True
 
 
 # --- capability probe ----------------------------------------------------------
@@ -163,11 +227,20 @@ def deploy(persona: Persona, model: str | None = None) -> dict:
         agent = _call("POST", "assistants", body)
         action = "created"
 
+    # Mirror onto the surface the portal lists, so the agent is visible there too.
+    # This is presentation only — running still goes through /assistants — so a
+    # failure here is reported, not raised.
+    try:
+        portal = deploy_portal(persona, model)
+    except Exception as e:                       # noqa: BLE001
+        portal = {"action": "failed", "error": str(e)[:200]}
+
     return {
         "action": action,
         "agent_id": agent.get("id"),
         "name": persona.name,
         "model": model,
+        "portal": portal,
         "instructions_preview": instructions[:280],
     }
 
