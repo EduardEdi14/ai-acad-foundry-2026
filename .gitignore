@@ -50,3 +50,6 @@ code/frontend/dist/
 # --- local run logs ---
 code/backend/*.log
 code/frontend/*.log
+
+# --- local editor/agent tooling state ---
+.claude/
