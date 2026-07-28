@@ -1786,6 +1786,73 @@ Next:
           and you will have written a persona, run it locally, published it to Azure, seen it in
           the portal, invoked it four different ways, updated it and deleted it.</p>
 
+        <div class="callout callout--warn">
+          <p class="callout__title">Windows first — the commands on this page are written for bash</p>
+          <p>Copying them into PowerShell or <code>cmd</code> will fail for three reasons, and all
+            three have a one-line fix. Read this once and the rest of the page works.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>What breaks</th><th>Why</th><th>On Windows, do this</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A command split over lines with <code>\</code></td>
+                <td><code>\</code> is <em>bash</em>'s line continuation. PowerShell uses a backtick, <code>cmd</code> uses <code>^</code></td>
+                <td>Easiest: delete the <code>\</code> and put the whole command on <strong>one line</strong></td>
+              </tr>
+              <tr>
+                <td><code>curl -X POST … -d '{…}'</code></td>
+                <td>In PowerShell, <code>curl</code> is an <em>alias for</em> <code>Invoke-WebRequest</code> — it does not take curl's flags. And single quotes do not work the same way</td>
+                <td>Either call the real binary as <code>curl.exe</code>, or use PowerShell's own <code>irm</code> (below)</td>
+              </tr>
+              <tr>
+                <td><code>$(some command)</code> inside another</td>
+                <td>bash command substitution</td>
+                <td>PowerShell uses <code>$(…)</code> too, but run the inner command first and store it in a variable when in doubt</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The PowerShell equivalents of the calls you will use most. Note the
+          pattern: build the body as a hashtable, let <code>ConvertTo-Json</code> handle the
+          quoting, and read fields off the response object directly.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — the same requests, natively</span>
+          <pre><code># GET — no body, no quoting problems
+irm http://localhost:7799/health
+irm http://localhost:7799/agents | ConvertTo-Json -Depth 5
+
+# POST with a JSON body — this is the pattern to remember
+$body = @{
+  question   = "Can I repay my mortgage early?"
+  use_rag    = $true
+  top_k      = 2
+  agent      = "default"
+  agent_mode = "local"
+} | ConvertTo-Json
+
+$r = irm http://localhost:7799/ask -Method Post -ContentType 'application/json' -Body $body
+$r.answer
+$r.agent.mode
+$r.usage
+
+# POST with no body at all
+irm http://localhost:7799/agents/lyrical/deploy -Method Post
+
+# an az command that was written multi-line — just put it on one line
+az cognitiveservices account deployment list --name libra-ai-acad-resource --resource-group libra-ai-acad --query "[].{deployment:name, model:properties.model.name}" -o table</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Or avoid the terminal entirely</p>
+          <p>Every call on this page also exists in <strong>Swagger</strong>
+            (<code>localhost:7799/docs</code> → <em>Try it out</em>), in the
+            <strong>Postman collection</strong>, and — for the common ones — as a button in the
+            <strong>console</strong>. For teaching, Swagger is the most reliable: no shell quoting
+            rules at all.</p>
+        </div>
+
         <h3>0 · Two words that are easy to confuse</h3>
         <div class="table-wrap">
           <table>
@@ -2006,8 +2073,77 @@ uv run python examples/10_agent_local.py "Can I repay my mortgage early?"</code>
           the same list without a browser:</p>
         <div class="code-block">
           <span class="code-block__label">the portal's list, from the terminal</span>
-          <pre><code>curl http://localhost:7799/agents/hosted
-./scripts/azure/05-inspect.ps1              # includes hosted agents, deployments and roles</code></pre>
+          <pre><code>irm http://localhost:7799/agents/hosted        # PowerShell
+curl http://localhost:7799/agents/hosted       # bash
+./scripts/azure/05-inspect.ps1                 # agents, deployments and roles</code></pre>
+        </div>
+
+        <h4 style="margin-top:1.6rem;">If the portal's Agents page says zero</h4>
+        <p class="prose">This one confuses everybody once, so it is worth understanding rather
+          than working around. A Foundry project exposes <strong>two agent catalogues</strong>,
+          and they are genuinely separate — an agent in one does not appear in the other:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Catalogue</th><th>API</th><th>What it is</th><th>Can our code run it?</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Agent Service</strong></td>
+                <td><code>/assistants</code></td>
+                <td>The threads-and-runs service this session has been using</td>
+                <td><strong>Yes</strong> — this is what <code>agent_mode: "foundry"</code> invokes</td>
+              </tr>
+              <tr>
+                <td><strong>Portal agents</strong></td>
+                <td><code>/agents</code></td>
+                <td>The newer, versioned definitions the portal lists under <em>Agents</em> when <em>New&nbsp;Foundry</em> is switched on</td>
+                <td>Not through the thread protocol — it speaks a different one</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">So an agent published only to the Agent Service is fully working and
+          <em>invisible</em> on that page — which looks like a failed deployment and is not one.
+          Rather than making you choose, <strong>a deploy from this course publishes to both</strong>:
+          to <code>/assistants</code> so your code can run it, and to <code>/agents</code> so you
+          can see and inspect it in the portal. The response tells you what happened on each:</p>
+        <div class="code-block">
+          <span class="code-block__label">POST /agents/lyrical/deploy</span>
+          <pre><code>{
+  "action": "updated",                       ← the Agent Service (runnable)
+  "agent_id": "asst_rJGxr4UC…",
+  "name": "lyrical",
+  "model": "gpt-5-mini",
+  "portal": { "action": "created" }          ← the catalogue the portal lists
+}</code></pre>
+        </div>
+        <p class="prose">The portal surface is versioned, so re-deploying an existing one reports
+          <code>"new version"</code> rather than <code>"created"</code> — and the portal shows that
+          version history. If you only ever see the Agent Service copy, check the
+          <strong>New Foundry</strong> toggle at the top right of the portal: the two views read
+          different catalogues.</p>
+        <div class="code-block">
+          <span class="code-block__label">proving they are different, with two calls</span>
+          <pre><code>$proj = "https://&lt;resource&gt;.services.ai.azure.com/api/projects/&lt;project&gt;"
+
+# the Agent Service catalogue
+az rest --method get --url "$proj/assistants?api-version=2025-05-01" --resource "https://ai.azure.com" --query "data[].name" -o tsv
+
+# the catalogue the portal lists
+az rest --method get --url "$proj/agents?api-version=v1" --resource "https://ai.azure.com" --query "data[].name" -o tsv</code></pre>
+        </div>
+
+        <h4 style="margin-top:1.6rem;">Publishing every persona at once</h4>
+        <p class="prose">Deploying four personas one at a time gets old immediately:</p>
+        <div class="code-block">
+          <span class="code-block__label">all of them, both catalogues</span>
+          <pre><code>uv run python scripts/deploy_agent.py --all
+
+  ✓ agent service : updated  (asst_KBJqO37I…)
+  ✓ portal        : new version
+  … one pair of lines per persona …
+  4/4 deployed.</code></pre>
         </div>
 
         <h3>6 · Run the hosted agent</h3>
@@ -2034,6 +2170,36 @@ uv run python scripts/invoke_agent.py "Can I repay my mortgage early?" --persona
           it to be <strong>slower</strong> than local (roughly 15–35 seconds versus a few): the
           platform is running the loop, polling included. That is the cost of the capabilities the
           hosted lane buys.</p>
+
+        <h3>6b · What goes in .env, and what does not</h3>
+        <p class="prose">Two settings confuse people because they look required and are not:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Setting</th><th>What it really does</th><th>Recommended</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>AGENT_PERSONA</code></td>
+                <td>The persona used when a request does not name one. Any request with
+                    <code>"agent": "…"</code> overrides it</td>
+                <td>Leave at <code>default</code> unless you want a different fallback</td>
+              </tr>
+              <tr>
+                <td><code>FOUNDRY_AGENT_ID</code></td>
+                <td><strong>A fallback only.</strong> The hosted agent is normally found <em>by
+                    name</em> — the persona's name is matched against the project. This id is used
+                    only when no agent of that name exists</td>
+                <td><strong>Leave it empty.</strong> A stale id here points every unmatched persona
+                    at one specific agent, which is confusing during a demo</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">In other words: if you deployed <code>lyrical</code> and ask with
+          <code>"agent": "lyrical"</code>, the right agent runs whether or not
+          <code>FOUNDRY_AGENT_ID</code> is set. The setting exists for the case where you want to
+          point at an agent whose name does not match any persona file.</p>
 
         <h3>7 · Change it later</h3>
         <p class="prose">Edit the JSON and deploy again. The deploy is idempotent: it looks for an
@@ -2403,11 +2569,53 @@ docker compose up -d          # hosted agents now work inside the container too<
         </div>
         <div class="callout callout--tip">
           <p class="callout__title">A detail worth pointing out on screen</p>
-          <p>In <code>docker-compose.yml</code> the API service sets <code>AZURE_AI_AUTH=key</code>
-            while your <code>.env</code> keeps <code>identity</code>. Same image, same code: run it
-            locally and it authenticates as you through the Azure CLI; run it in a container, where
-            no <code>az login</code> exists, and it uses the key. One codebase, both lanes, decided
-            by where it runs.</p>
+          <p>In <code>docker-compose.yml</code> the API service defaults to
+            <code>AZURE_AI_AUTH=key</code> while your <code>.env</code> keeps
+            <code>identity</code>. Same image, same code: run it locally and it authenticates as
+            you through the Azure CLI; run it in a container with no <code>az login</code> and it
+            falls back to the key. One codebase, both lanes, decided by where it runs.</p>
+        </div>
+
+        <h3>The console finds the backend by itself</h3>
+        <p class="prose">There are three sensible places the API can be, and the console probes for
+          it at startup rather than making you configure it: the <code>api</code> container beside
+          it, your machine via <code>host.docker.internal</code>, or plain <code>localhost</code>
+          when the console runs under <code>npm run dev</code>. The first one that answers
+          <code>/health</code> wins, and it prints its choice:</p>
+        <div class="code-block">
+          <span class="code-block__label">console startup</span>
+          <pre><code>  ➜  API:      http://host.docker.internal:7799     ← backend on your machine
+  ➜  Local:    http://localhost:7800/</code></pre>
+        </div>
+        <p class="prose">So both of these work with no file edited and no code changed:</p>
+        <div class="code-block">
+          <span class="code-block__label">two lanes, same commands</span>
+          <pre><code># everything in containers
+docker compose up
+
+# Qdrant and the console in containers, the backend on your machine
+# (the lane you want for Foundry agents, because it has your az login)
+docker compose up -d qdrant console
+uv run uvicorn app.main:app --reload --port 7799</code></pre>
+        </div>
+        <p class="prose">One caveat, since the probe runs once: if you start the backend
+          <em>after</em> the console, restart the console so it looks again. If it cannot find the
+          API at all, requests return a 502 whose message says exactly that — not a blank error.</p>
+
+        <div class="callout callout--info">
+          <p class="callout__title">"Then why containerise the backend at all, if it needs az login?"</p>
+          <p>Because <code>az login</code> is a <em>developer</em> convenience, not how the
+            container authenticates in production. Containers exist to make the application
+            <strong>portable and reproducible</strong> — one image with pinned dependencies that
+            runs identically on your laptop, a colleague's, CI, and Azure. That value has nothing
+            to do with credentials.</p>
+          <p>What changes between environments is only where the identity comes from:
+            <strong>your laptop</strong> borrows your CLI sign-in; <strong>a container outside
+            Azure</strong> uses a service principal; <strong>a container running in Azure</strong>
+            gets a managed identity and holds no secret whatsoever. Same image, same code, same
+            <code>DefaultAzureCredential</code> — which is precisely why shipping the backend as a
+            container is not only possible but the target. Session 6 deploys this image to
+            Container Apps, and there the whole question disappears.</p>
         </div>
       </section>
 
