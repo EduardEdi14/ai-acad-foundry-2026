@@ -50,8 +50,10 @@ services:
       - ../frontend/src:/srv/src              # live reload: edit locally, HMR in the browser
       - ../frontend/index.html:/srv/index.html
       - ../frontend/vite.config.js:/srv/vite.config.js   # proxy routes, without a rebuild
-    depends_on:
-      - api
+    # deliberately NO depends_on: the console probes for the API at startup, so it
+    # works whether the API runs beside it in compose or on your machine under uv.
+    # Declaring a dependency would drag the API container up even when you wanted
+    # to run the backend yourself — the usual cause of "two backends on port 7799".
     extra_hosts:
       # "the machine running Docker" — unused in this lane, required by the host-api one
       - "host.docker.internal:host-gateway"
