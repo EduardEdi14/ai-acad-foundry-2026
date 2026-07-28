@@ -448,6 +448,23 @@ pip install azure-ai-inference azure-identity</code></pre>
         <p class="prose"><strong>Expected:</strong> your prompt now shows <code>(.venv)</code>, and
           pip reports the packages installed. That prefix is your reminder that the environment is
           active; if it disappears (new terminal), activate it again before running anything.</p>
+        <div class="callout callout--tip">
+          <p class="callout__title">uv — the faster way, used by the course backend</p>
+          <p><code>uv</code> replaces <code>venv</code> + <code>pip</code> with one tool and is what
+            <code>code/backend</code> is locked with. Install it in PowerShell with
+            <code>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code>,
+            then <strong>open a new terminal</strong> — a terminal reads <code>PATH</code> only when
+            it starts, which is why "uv is not recognized" is almost always a terminal that is older
+            than the installation. After that, <code>uv sync</code> creates the environment and
+            <code>uv run …</code> uses it without activating anything.</p>
+          <p>Prefer the plain way, or uv is unavailable? <code>py -3.12 -m venv .venv</code>,
+            activate it, and <code>pip install -r requirements.txt</code> — that file is generated
+            from <code>uv.lock</code>, so both paths install identical versions. If
+            <code>Activate.ps1</code> is blocked, either
+            <code>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser</code> or skip activation and
+            call <code>.\.venv\Scripts\python.exe -m uvicorn …</code> directly. The full symptom
+            table is in the <a href="../../code/backend/README.md">backend README</a>.</p>
+        </div>
 
         <h3>Step 4 — prove the whole chain works (≈8′)</h3>
         <p class="prose">This script does something deliberately small and enormously informative:

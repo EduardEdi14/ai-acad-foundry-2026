@@ -17,6 +17,76 @@ text ─► POST /chunk ─► POST /ingest ─► Qdrant ─► POST /search �
 - **Postman:** import `postman/rag-teaching-api.postman_collection.json`
 - **Deps:** managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`)
 
+## Python setup on Windows — uv, or a plain virtual environment
+
+`uv` is a fast replacement for `python -m venv` + `pip`. It is what the project is
+locked with, but **it is not required** — a plain virtual environment works too.
+
+### Option 1 — install uv (recommended)
+
+```powershell
+# PowerShell, no admin rights needed
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# or, if you have either of these
+winget install --id=astral-sh.uv -e
+pip install uv
+```
+
+The installer puts `uv.exe` in `%USERPROFILE%\.local\bin` and adds it to your `PATH`.
+**Close the terminal and open a new one** — a terminal reads `PATH` when it starts, so
+an already-open one will still say "uv is not recognized". Then:
+
+```powershell
+uv --version
+cd code\backend
+uv sync                                   # creates .venv and installs from uv.lock
+uv run uvicorn app.main:app --reload --port 7799
+```
+
+`uv run` uses `code/backend/.venv` automatically — you never activate anything.
+
+### Option 2 — plain venv + pip, no uv at all
+
+```powershell
+cd code\backend
+py -3.12 -m venv .venv                    # `py` is the Windows Python launcher
+.\.venv\Scripts\Activate.ps1              # your prompt now shows (.venv)
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 7799
+```
+
+`requirements.txt` is generated from `uv.lock`, so both paths install exactly the same
+versions. Regenerate it after changing dependencies:
+
+```powershell
+uv export --format requirements-txt --no-hashes --no-dev -o requirements.txt
+```
+
+If `Activate.ps1` is blocked by execution policy:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+# or sidestep activation entirely — call the interpreter directly:
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 7799
+```
+
+### When `uv run` misbehaves
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `uv : The term 'uv' is not recognized` | Terminal opened before installation | Close every terminal, open a new one |
+| `warning: VIRTUAL_ENV=…\venv does not match the project environment path .venv` | **Another virtual environment is active** — often one at the repository root | Harmless: uv ignores it and uses `.venv`. To silence it, run `deactivate`, or add `--active` to use the active one instead |
+| `No such file or directory: pyproject.toml` | You are in the wrong folder | `uv run` must be run from `code/backend` |
+| `ModuleNotFoundError: fastapi` | Dependencies not installed | `uv sync` (or `pip install -r requirements.txt`) |
+| `Address already in use` on 7799 | The Docker API container is still running | `docker compose stop api`, or use `--port 7801` |
+| `python` points somewhere unexpected | A stale venv is activated in this shell | `deactivate`, then check with `where.exe python` |
+
+Everything below assumes one of the two setups above is done.
+
+---
+
 ## Run it — option A: locally, without Docker (recommended for teaching)
 
 Only the vector database runs in a container; the API runs on your machine, where it can
@@ -31,6 +101,9 @@ docker compose up qdrant -d        # just the vector DB
 uv sync                            # create .venv from uv.lock
 az login                           # what makes AZURE_AI_AUTH=identity work
 uv run uvicorn app.main:app --reload --port 7799
+
+# without uv, the same thing:
+#   .\.venv\Scripts\Activate.ps1 && uvicorn app.main:app --reload --port 7799
 ```
 
 Add the console in a second terminal:
