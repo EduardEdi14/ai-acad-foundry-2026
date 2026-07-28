@@ -43,7 +43,8 @@ services:
     ports:
       - "7800:7800"
     environment:
-      # inside the compose network the API is a hostname, not localhost
+      # inside the compose network the API is a hostname, not localhost.
+      # docker-compose.host-api.yml points this at the host instead.
       VITE_API_TARGET: http://api:7799
     volumes:
       - ../frontend/src:/srv/src              # live reload: edit locally, HMR in the browser
@@ -51,6 +52,9 @@ services:
       - ../frontend/vite.config.js:/srv/vite.config.js   # proxy routes, without a rebuild
     depends_on:
       - api
+    extra_hosts:
+      # "the machine running Docker" — unused in this lane, required by the host-api one
+      - "host.docker.internal:host-gateway"
 
 volumes:
   qdrant-data:

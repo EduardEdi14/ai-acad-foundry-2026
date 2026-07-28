@@ -169,6 +169,43 @@ identity lane.
 
 Qdrant has a visual dashboard: http://localhost:7833/dashboard — great on a shared screen.
 
+## Run it — option C: API on the host, everything else in Docker
+
+Option A's identity lane without needing Node installed: the API — the only part that
+wants your `az login` — runs on your machine, while Qdrant and the console stay in
+containers.
+
+```bash
+# terminal 1 — the API, on your machine
+az login
+uv run uvicorn app.main:app --reload --port 7799
+
+# terminal 2
+docker compose -f docker-compose.yml -f docker-compose.host-api.yml up
+```
+
+The override file swaps the console's proxy target to `host.docker.internal` and leaves
+the `api` service out, so it does not fight your local uvicorn for port 7799.
+
+`host.docker.internal` is how a container names the machine running Docker — its own
+`localhost` is just its own loopback. How much that costs you depends on which Docker
+you are running:
+
+| | Docker Desktop (Windows, macOS) | Docker Engine on Linux |
+|---|---|---|
+| The name | built in, no configuration | created by `extra_hosts: ["host.docker.internal:host-gateway"]` — already set on the console service, the compose form of `--add-host` |
+| Points at | the host's loopback | the bridge gateway, a real network interface |
+| uvicorn bind | the default `127.0.0.1` is reachable | must add `--host 0.0.0.0`, otherwise the connection is refused |
+
+So the commands above are complete on Docker Desktop. On Linux, add
+`--host 0.0.0.0` — which also publishes the API to your local network.
+
+When it does fail, split the problem: `curl http://localhost:7799/health` on the host
+proves uvicorn is up, and
+`docker compose exec console wget -qO- http://host.docker.internal:7799/health` proves
+the container can reach it. A hang instead of a refusal is usually Windows Defender
+Firewall dropping the inbound connection to `python.exe`.
+
 ## The demo, in order
 
 | Step | Call | What to look at |
