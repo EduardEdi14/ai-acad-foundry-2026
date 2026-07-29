@@ -9,6 +9,7 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
   const [useRag, setUseRag] = useState(true)
   const [mode, setMode] = useState('local')
   const [topK, setTopK] = useState(3)
+  const [product, setProduct] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const endRef = useRef(null)
@@ -21,7 +22,10 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
     setQuestion(''); setError(null); setBusy(true)
     setMessages((m) => [...m, { role: 'user', text }])
     try {
-      const data = await api.ask({ question: text, use_rag: useRag, top_k: Number(topK), agent, agent_mode: mode })
+      const data = await api.ask({
+        question: text, use_rag: useRag, top_k: Number(topK), agent, agent_mode: mode,
+        product: product || undefined,
+      })
       setMessages((m) => [...m, { role: 'bot', data }])
     } catch (e) {
       setMessages((m) => [...m, { role: 'err', text: e.message }])
@@ -43,6 +47,14 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
     if (localImpossible && mode !== 'foundry') setMode('foundry')
     else if (foundryBlocked && mode === 'foundry') setMode('local')
   }, [agent, localImpossible, foundryBlocked])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A persona can scope itself to one corner of the knowledge base (Edi_Libra ->
+  // "cybersecurity", set in its JSON as default_product). Switching to it re-scopes the
+  // filter automatically so it never answers from unrelated documents; switching away
+  // clears it. The field stays editable — this is a default, not a lock.
+  useEffect(() => {
+    setProduct(current?.default_product || '')
+  }, [agent])   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="chat-wrap">
@@ -73,6 +85,11 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
         </select>
         <input type="number" min="1" max="10" value={topK} onChange={(e) => setTopK(e.target.value)}
                style={{ width: '4.5rem', flex: '0 0 auto' }} title="Passages to retrieve" />
+        <input type="text" value={product} onChange={(e) => setProduct(e.target.value)}
+               placeholder="product filter (e.g. cybersecurity)" style={{ width: '10.5rem', flex: '0 0 auto' }}
+               title={current?.default_product
+                 ? `${current.display_name} defaults to product="${current.default_product}" — clear to search everything`
+                 : 'Scope retrieval to one metadata product; empty = search the whole knowledge base'} />
         <button className="btn btn-outline btn-sm" onClick={() => setMessages([])}>clear</button>
         {current && <span className="badge muted" title={current.description}>temp {current.temperature ?? '—'}</span>}
       </div>
@@ -80,7 +97,7 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
       <div className="msgs">
         {messages.length === 0 && (
           <div className="card" style={{ alignSelf: 'center', maxWidth: '46rem', textAlign: 'center' }}>
-            <h3>Libra Assist</h3>
+            <h3>Edi_Libra</h3>
             <p className="muted" style={{ margin: 0 }}>
               Ask a question about the documents you have ingested. Switch the persona to change how
               it answers, or turn RAG off to see the model answer without grounding.
@@ -100,6 +117,7 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
                 <span className={`badge ${d.augmented ? 'gold' : 'muted'}`}>{d.augmented ? 'grounded' : 'no retrieval'}</span>
                 <span className="badge muted">{d.agent?.mode}</span>
                 <span className="badge muted">{d.model}</span>
+                {d.product_filter && <span className="badge" title="Retrieval was scoped to this metadata product">scoped: {d.product_filter}</span>}
                 {d.usage && <span className="badge muted">{d.usage.prompt_tokens}↑ {d.usage.completion_tokens}↓ tokens</span>}
               </div>
               {d.retrieved?.length > 0 && (
@@ -126,7 +144,7 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
 
       <Err error={error} />
       <div className="composer">
-        <textarea value={question} placeholder="Ask Libra Assist…  (Enter to send, Shift+Enter for a new line)"
+        <textarea value={question} placeholder="Ask Edi_Libra…  (Enter to send, Shift+Enter for a new line)"
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
         <button className="btn btn-primary" onClick={send} disabled={busy || !question.trim()}>Send</button>

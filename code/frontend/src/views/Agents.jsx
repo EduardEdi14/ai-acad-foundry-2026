@@ -71,6 +71,13 @@ export default function Agents({ agents, hostedOnly = [], foundry, reload, azure
                 <td>
                   <strong>{a.display_name}</strong>
                   <div className="faint mono">{a.name}</div>
+                  {a.default_product && (
+                    <div style={{ marginTop: '.3rem' }}>
+                      <span className="badge gold" title={`/ask defaults product="${a.default_product}" for this agent unless the request overrides it`}>
+                        scoped: {a.default_product}
+                      </span>
+                    </div>
+                  )}
                   {a.hosted && <div className="faint mono" style={{ fontSize: '.68rem' }}>{a.hosted.agent_id}</div>}
                 </td>
                 <td>

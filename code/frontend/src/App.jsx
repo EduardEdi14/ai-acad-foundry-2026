@@ -46,7 +46,15 @@ export default function App() {
   return (
     <div className="app">
       <aside className="side">
-        <p className="brand">Libra Assist<small>console</small></p>
+        <p className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          </span>
+          <span className="brand-text">Edi_Libra<small>console</small></span>
+        </p>
         {groups.map((g) => (
           <div key={g}>
             <div className="nav-group">{g}</div>

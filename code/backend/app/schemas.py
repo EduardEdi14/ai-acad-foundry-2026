@@ -171,6 +171,9 @@ class PersonaSummary(BaseModel):
     refuse_when_unsupported: bool = True
     reasoning_effort: Optional[str] = None
     tools: list[str] = Field(default_factory=list)
+    default_product: Optional[str] = Field(
+        None, description="When set, /ask scopes retrieval to this metadata `product` unless the request overrides it"
+    )
     runs_on: Literal["local", "both", "foundry", "unknown"] = Field(
         "local",
         description="local = JSON file only · both = also hosted in Foundry · "
@@ -248,6 +251,10 @@ class AskResponse(BaseModel):
     system_prompt: str = Field(description="The system message actually sent")
     prompt_sent: str = Field(description="The exact user prompt sent to the model — compare with/without RAG")
     retrieved: list[SearchHit] = Field(default_factory=list)
+    product_filter: Optional[str] = Field(
+        None, description="The `product` filter actually applied to retrieval — from the request, "
+                          "or from the persona's `default_product` when the request left it unset"
+    )
     nothing_relevant: bool = Field(
         False,
         description="true when use_rag was on but every hit fell below score_threshold, or the "

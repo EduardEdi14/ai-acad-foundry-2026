@@ -32,6 +32,7 @@ class Persona:
     refuse_when_unsupported: bool = True   # when grounded, forbid guessing
     reasoning_effort: str | None = None    # gpt-5 family: minimal | low | medium | high
     tools: list[str] = field(default_factory=list)   # names only — see /agents
+    default_product: str | None = None     # scopes retrieval to this metadata `product` unless overridden
 
     # ---- the composition step: JSON -> the system prompt actually sent -------
     def system_prompt(self, *, grounded: bool) -> str:
@@ -69,6 +70,7 @@ class Persona:
             "refuse_when_unsupported": self.refuse_when_unsupported,
             "reasoning_effort": self.reasoning_effort,
             "tools": self.tools,
+            "default_product": self.default_product,
         }
 
 
@@ -100,6 +102,7 @@ def _parse(path: Path) -> Persona:
         refuse_when_unsupported=raw.get("refuse_when_unsupported", True),
         reasoning_effort=raw.get("reasoning_effort"),
         tools=raw.get("tools", []),
+        default_product=raw.get("default_product"),
     )
 
 

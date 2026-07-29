@@ -104,3 +104,45 @@ The stale 2025 schedule no longer competes.
   case without the caller having to ask for it explicitly.
 - No hybrid/keyword search yet (Part 5 improvement #3) — exact tokens like
   IBANs or product codes still rely on the embedding alone.
+
+## Edi_Libra — a dedicated cybersecurity / fraud-response agent
+
+**The agent.** `app/agents/personas/Edi_Libra.json` (this file was present but empty on
+disk, which crashed `GET /agents` entirely — `persona.py::_parse` calls `json.loads()` on
+every file in the folder with no error handling. Populating it fixed a real, live bug, not
+just added a feature). Edi_Libra gives customers step-by-step fraud/incident guidance:
+numbered procedures, the immediate action first, never asks for a PIN/CVV/password, and
+refuses outside the provided context instead of inventing a procedure.
+
+**The knowledge base.** Same Qdrant collection as the banking corpus (`libra_rag`), not a
+separate one — new documents `data/13`–`21` (9 files, see `data/README.md`) all carry
+`product: cybersecurity` in their front-matter. `scripts/load_corpus.py` needed no changes:
+it already walks the whole `data/` directory, so `uv run python scripts/load_corpus.py`
+ingested the new documents alongside the existing 12 in one run (51 points total).
+
+**Scoping retrieval to the persona (the new mechanism).** Added `default_product` to the
+persona schema (`persona.py`, `schemas.py::PersonaSummary`) and to `/ask` (`main.py`):
+`product_filter = req.product or persona.default_product` — a request-level `product` still
+wins, but Edi_Libra defaults to `product: "cybersecurity"` so it never surfaces a mortgage
+or fee document. `AskResponse.product_filter` reports whatever was actually applied, so the
+console can show it. Confirmed live: every retrieved passage for Edi_Libra across all 15
+golden questions came from `13`–`21`, never from the banking corpus, with no `product` set
+on the request.
+
+**Console changes (the "button logic").** `Chat.jsx`: a product-filter input next to `top_k`
+that re-scopes automatically to the selected persona's `default_product` on every agent
+switch (clears when switching to an unscoped agent), stays editable, and is sent as
+`product` on `/ask`; the reply's `product_filter` is shown as a badge. `Agents.jsx`: a
+"scoped: cybersecurity" badge under any agent that declares `default_product`.
+
+**Golden question set.** `data/questions_cybersecurity.md` — 15 questions (7 simple / 5
+multi-step / 3 must-refuse), run live against Edi_Libra on 2026-07-29. 12/15 fully correct,
+0 hallucinations, all 3 group-C refusals correct. The two real misses are documented there
+in detail: one is a generation gap (the model under-used a retrieved passage rather than
+paraphrase loosely), the other is a genuine chunking gap — `dynamic` chunking separated the
+"(Archive)"/"(Current)" disambiguating heading from its table in the near-duplicate SLA
+documents, so the model saw both tables with no way to tell which was current from the text
+alone, even though the correct `effective`/`version` metadata was sitting in the same Qdrant
+payload the whole time. That is Part 4 improvement #5 (prefix each chunk with its document
+title before it reaches the model) — not implemented here, but now it is clear exactly which
+question would be fixed by it.

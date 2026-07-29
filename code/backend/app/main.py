@@ -353,6 +353,10 @@ def ask(req: AskRequest) -> AskResponse:
 
     # ---- retrieval (unchanged behaviour, now feeding the agent) -------------
     nothing_relevant = False
+    # A persona may scope itself to one corner of the knowledge base (e.g. Edi_Libra ->
+    # product "cybersecurity") so it never answers from unrelated documents. An explicit
+    # `product` on the request still wins — this is a default, not a hard restriction.
+    product_filter = req.product or (persona.default_product if persona is not None else None)
     if req.use_rag:
         _require_qdrant()
         if not store.info()["exists"]:
@@ -361,7 +365,7 @@ def ask(req: AskRequest) -> AskResponse:
                                        "or set use_rag=false for a plain LLM answer.")
         top_k = req.top_k or settings.top_k
         qvec = _embed([req.question])[0]
-        filters = {"product": req.product, "audience": req.audience,
+        filters = {"product": product_filter, "audience": req.audience,
                    "effective": req.effective, "source": req.source}
         retrieved = [SearchHit(**h) for h in
                      store.search(qvec, top_k, score_threshold=req.score_threshold, filters=filters)]
@@ -387,7 +391,7 @@ def ask(req: AskRequest) -> AskResponse:
         )
         return AskResponse(
             answer="Nothing relevant found in the knowledge base for this question"
-                   + (" with the filters given." if any([req.product, req.audience, req.effective, req.source])
+                   + (" with the filters given." if any([product_filter, req.audience, req.effective, req.source])
                       else "."),
             augmented=True,
             provider="none",
@@ -396,6 +400,7 @@ def ask(req: AskRequest) -> AskResponse:
             system_prompt="",
             prompt_sent=req.question,
             retrieved=[],
+            product_filter=product_filter,
             nothing_relevant=True,
             usage=Usage(),
         )
@@ -433,6 +438,7 @@ def ask(req: AskRequest) -> AskResponse:
         system_prompt=reply.system_prompt,
         prompt_sent=reply.prompt_sent,
         retrieved=retrieved,
+        product_filter=product_filter if req.use_rag else None,
         usage=Usage(prompt_tokens=reply.prompt_tokens, completion_tokens=reply.completion_tokens),
     )
 
