@@ -52,7 +52,7 @@ export default function Agents({ agents, hostedOnly = [], foundry, reload, azure
 
         {foundry && !foundry.available && (
           <div className="err" style={{ marginBottom: '.9rem', borderLeftColor: 'var(--c-gold)',
-                                        background: 'rgba(228,192,46,.10)' }}>
+                                        background: 'rgba(217,83,106,.12)' }}>
             <strong>Hosted state is unknown.</strong> {foundry.reason}
           </div>
         )}

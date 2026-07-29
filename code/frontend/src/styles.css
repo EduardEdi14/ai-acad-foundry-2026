@@ -1,8 +1,8 @@
-/* Libra Assist console — same palette and tokens as the course UI kit. */
+/* Libra Assist console — red & white palette only (near-black/white kept as neutral ink). */
 :root {
-  --c-ink: #2c2d2f; --c-cyan: #0de7e7; --c-crimson: #c73a52; --c-paper: #eeeeee;
-  --c-teal: #1cb9c8; --c-navy: #001240; --c-coral: #ed6a5a; --c-slate: #292f36;
-  --c-gold: #e4c02e; --c-teal-ink: #0e7f8a; --c-crimson-ink: #a62c43;
+  --c-ink: #200609; --c-cyan: #e5122b; --c-crimson: #9c1420; --c-paper: #ffffff;
+  --c-teal: #6b0f1a; --c-navy: #ffffff; --c-coral: #ff5a6e; --c-slate: #2a1216;
+  --c-gold: #d9536a; --c-teal-ink: #8c1420; --c-crimson-ink: #7a0f19;
 
   --grad-accent: linear-gradient(135deg, var(--c-cyan) 0%, var(--c-teal) 100%);
   --grad-cta: linear-gradient(135deg, var(--c-crimson) 0%, var(--c-coral) 100%);
@@ -14,18 +14,18 @@
 
 /* dark (default — it is a console) */
 :root, :root[data-theme='dark'] {
-  --bg: var(--c-navy); --surface: #0a1c3c; --surface-2: #11284c; --surface-inset: #081633;
-  --text: var(--c-paper); --text-muted: rgba(238,238,238,.66); --text-faint: rgba(238,238,238,.40);
-  --border: rgba(238,238,238,.13); --border-strong: rgba(238,238,238,.26);
-  --accent: var(--c-cyan); --accent-soft: rgba(13,231,231,.14);
-  --code-bg: #14181d; --shadow: 0 2px 16px -6px rgba(0,0,0,.55);
+  --bg: #200308; --surface: #350710; --surface-2: #430a15; --surface-inset: #180205;
+  --text: var(--c-paper); --text-muted: rgba(255,255,255,.66); --text-faint: rgba(255,255,255,.40);
+  --border: rgba(255,255,255,.13); --border-strong: rgba(255,255,255,.26);
+  --accent: var(--c-cyan); --accent-soft: rgba(229,18,43,.20);
+  --code-bg: #1a0407; --shadow: 0 2px 16px -6px rgba(0,0,0,.55);
 }
 :root[data-theme='light'] {
-  --bg: #f4f5f7; --surface: #fff; --surface-2: #eef0f3; --surface-inset: #f7f8fa;
-  --text: var(--c-ink); --text-muted: rgba(44,45,47,.64); --text-faint: rgba(44,45,47,.42);
-  --border: rgba(44,45,47,.12); --border-strong: rgba(44,45,47,.22);
-  --accent: var(--c-teal-ink); --accent-soft: rgba(28,185,200,.12);
-  --code-bg: #f5f2ee; --shadow: 0 2px 14px -6px rgba(0,18,64,.16);
+  --bg: #fff5f6; --surface: #fff; --surface-2: #ffeaec; --surface-inset: #fff4f5;
+  --text: var(--c-ink); --text-muted: rgba(32,6,9,.64); --text-faint: rgba(32,6,9,.42);
+  --border: rgba(229,18,43,.14); --border-strong: rgba(229,18,43,.28);
+  --accent: var(--c-teal-ink); --accent-soft: rgba(229,18,43,.10);
+  --code-bg: #fff5f5; --shadow: 0 2px 14px -6px rgba(180,10,25,.14);
 }
 
 * { box-sizing: border-box; }
@@ -58,10 +58,10 @@ button, input, textarea, select { font-family: inherit; font-size: inherit; }
 @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } .side { flex-direction: row; overflow-x: auto; } .nav-group { display: none; } }
 
 .badge { display: inline-flex; align-items: center; gap: .35em; font-size: .72rem; font-weight: 600; padding: .32em .7em; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
-.badge.gold { background: rgba(228,192,46,.18); color: var(--c-gold); }
-.badge.crimson { background: rgba(199,58,82,.18); color: #ff8497; }
+.badge.gold { background: rgba(217,83,106,.20); color: var(--c-gold); }
+.badge.crimson { background: rgba(156,20,32,.22); color: #ff8497; }
 .badge.muted { background: var(--surface-2); color: var(--text-muted); }
-:root[data-theme='light'] .badge.gold { color: #8a6d00; }
+:root[data-theme='light'] .badge.gold { color: #9c1322; }
 :root[data-theme='light'] .badge.crimson { color: var(--c-crimson-ink); }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; cursor: pointer; font-weight: 600; font-size: .9rem; padding: .62em 1.1em; border-radius: var(--r); border: 1px solid transparent; transition: .15s; }
@@ -89,7 +89,7 @@ pre.out { background: var(--code-bg); border: 1px solid var(--border); border-ra
 .mono { font-family: var(--font-mono); font-size: .8rem; }
 .muted { color: var(--text-muted); }
 .faint { color: var(--text-faint); font-size: .78rem; }
-.err { border-left: 3px solid var(--c-crimson); background: rgba(199,58,82,.1); padding: .7rem .9rem; border-radius: var(--r-sm); font-size: .86rem; }
+.err { border-left: 3px solid var(--c-crimson); background: rgba(156,20,32,.10); padding: .7rem .9rem; border-radius: var(--r-sm); font-size: .86rem; }
 
 /* ---- chat ---- */
 .chat-wrap { display: flex; flex-direction: column; height: calc(100vh - 8.5rem); }
@@ -97,7 +97,7 @@ pre.out { background: var(--code-bg); border: 1px solid var(--border); border-ra
 .msg { max-width: 78%; padding: .75rem 1rem; border-radius: var(--r-lg); white-space: pre-wrap; word-break: break-word; }
 .msg.user { align-self: flex-end; background: var(--grad-accent); color: var(--c-navy); font-weight: 500; }
 .msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }
-.msg.err { align-self: flex-start; background: rgba(199,58,82,.12); border: 1px solid var(--c-crimson); }
+.msg.err { align-self: flex-start; background: rgba(156,20,32,.12); border: 1px solid var(--c-crimson); }
 .msg-meta { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .55rem; padding-top: .5rem; border-top: 1px solid var(--border); }
 .composer { display: flex; gap: .6rem; padding-top: .8rem; border-top: 1px solid var(--border); }
 .composer textarea { min-height: 46px; max-height: 140px; font-family: var(--font-sans); font-size: .95rem; }

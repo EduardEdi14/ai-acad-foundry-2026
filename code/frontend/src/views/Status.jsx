@@ -95,7 +95,7 @@ export default function Status({ health, reload, azure, reloadAzure }) {
 
             {azure.auth_note && (
               <div className="err" style={{ marginTop: '.8rem', borderLeftColor: 'var(--c-gold)',
-                                            background: 'rgba(228,192,46,.10)' }}>
+                                            background: 'rgba(217,83,106,.12)' }}>
                 {azure.auth_note}
               </div>
             )}
