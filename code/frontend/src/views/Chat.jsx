@@ -34,16 +34,25 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
   const all = [...agents, ...hostedOnly]
   const current = all.find((a) => a.name === agent)
 
-  // Where this agent CAN run decides which lanes are offered.
-  const hostedKnown = foundry?.available
+  // Three states, not two. `available === false` is not "we don't know" — it is a
+  // definite no: the Agent Service cannot be reached from here at all, whichever agent
+  // you pick, because a key was used where Entra is required. Offering the lane anyway
+  // is how you get a 503 in the chat window instead of a greyed-out option.
+  const foundryReachable = foundry?.available                 // true | false | undefined
   const isHosted = current?.runs_on === 'both' || current?.runs_on === 'foundry'
   const localImpossible = current?.runs_on === 'foundry'      // no JSON file to run here
-  const foundryBlocked = hostedKnown && !isHosted             // definitely not deployed
+  const foundryBlocked =
+    foundryReachable === false ||                             // no identity — nothing can
+    (foundryReachable === true && !isHosted)                  // reachable, but not deployed
+  const foundryWhy =
+    foundryReachable === false
+      ? (foundry?.reason || 'The Agent Service cannot be reached from here.')
+      : 'Not deployed to Foundry — deploy it from the Agents view'
 
   // Keep the mode legal whenever the selected agent changes.
   useEffect(() => {
-    if (localImpossible && mode !== 'foundry') setMode('foundry')
-    else if (foundryBlocked && mode === 'foundry') setMode('local')
+    if (foundryBlocked && mode === 'foundry') setMode('local')
+    else if (localImpossible && mode !== 'foundry') setMode('foundry')
   }, [agent, localImpossible, foundryBlocked])   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -73,13 +82,18 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
                   title={localImpossible ? 'This agent has no local JSON file' : ''}>
             local agent
           </option>
-          <option value="foundry" disabled={foundryBlocked}
-                  title={foundryBlocked ? 'Not deployed to Foundry — deploy it from the Agents view' : ''}>
-            Foundry agent{foundryBlocked ? ' — not deployed' : ''}
+          <option value="foundry" disabled={foundryBlocked} title={foundryBlocked ? foundryWhy : ''}>
+            Foundry agent{foundryReachable === false ? ' — no identity'
+                          : foundryBlocked ? ' — not deployed' : ''}
           </option>
         </select>
         <input type="number" min="1" max="10" value={topK} onChange={(e) => setTopK(e.target.value)}
                style={{ width: '4.5rem', flex: '0 0 auto' }} title="Passages to retrieve" />
+        {foundryReachable === false && (
+          <span className="badge muted" title={foundryWhy}>
+            hosted agents off — key auth
+          </span>
+        )}
         <button className="btn btn-outline btn-sm" onClick={() => setMessages([])}>clear</button>
         {current && <span className="badge muted" title={current.description}>temp {current.temperature ?? '—'}</span>}
       </div>
