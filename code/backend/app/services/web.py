@@ -13,16 +13,32 @@ maintaining scrapers.
 """
 from __future__ import annotations
 
+import html
 import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import httpx
+
+from ..config import settings
 
 SKIP_TAGS = {"script", "style", "noscript", "template", "svg", "canvas"}
 BOILERPLATE_TAGS = {"nav", "header", "footer", "aside", "form"}
 USER_AGENT = "LibraAcademyTeachingBot/1.0 (+course exercise)"
+
+# Search engines serve an anti-bot challenge to clients that identify as bots, so
+# the honest UA above returns no results at all. A browser-shaped one works. That
+# tension — declare yourself and be blocked, or blend in and be tolerated — has no
+# clean answer, and it is a large part of why production systems buy a search API
+# instead of scraping one. Do not carry this pattern into anything commercial
+# without reading the target's terms of use.
+SEARCH_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+
+
+class WebSearchBlocked(Exception):
+    """The engine returned a challenge page rather than results."""
 
 
 class _TextExtractor(HTMLParser):
@@ -66,6 +82,148 @@ class _TextExtractor(HTMLParser):
         text = data.strip()
         if text:
             self.chunks.append(text)
+
+
+@dataclass
+class SearchHitWeb:
+    rank: int
+    title: str
+    url: str
+    snippet: str
+
+
+def search(query: str, max_results: int = 5, timeout: float = 20.0) -> tuple[list[SearchHitWeb], str]:
+    """Search the web through whichever provider is configured.
+
+    Returns the hits and the provider that answered, because *which* one answered
+    is the lesson. Order of preference:
+
+      brave / serper   a real search API — a documented contract, a key, a quota,
+                       and results that arrive every time. Both have free tiers.
+      duckduckgo       scraping the HTML endpoint. No key, no contract, and it
+                       serves a bot challenge under any real load — including a
+                       classroom running it at the same moment.
+
+    In Foundry the managed equivalent is *Grounding with Bing Search*, an agent
+    tool. It needs a Bing-eligible subscription (`SkuNotEligible` otherwise), which
+    is why this module exists at all.
+    """
+    provider = (settings.search_provider or "auto").lower()
+    key = settings.search_api_key
+
+    if provider in ("brave", "auto") and key and provider != "serper":
+        try:
+            return _search_brave(query, max_results, key, timeout), "brave-search-api (managed)"
+        except Exception:
+            if provider == "brave":
+                raise
+    if provider in ("serper", "auto") and key:
+        try:
+            return _search_serper(query, max_results, key, timeout), "serper.dev (managed)"
+        except Exception:
+            if provider == "serper":
+                raise
+    return _search_duckduckgo(query, max_results, timeout), "duckduckgo-html (keyless, unmanaged)"
+
+
+def _search_brave(query: str, max_results: int, key: str, timeout: float) -> list[SearchHitWeb]:
+    response = httpx.get(
+        "https://api.search.brave.com/res/v1/web/search",
+        params={"q": query, "count": max_results},
+        headers={"X-Subscription-Token": key, "Accept": "application/json"},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    results = response.json().get("web", {}).get("results", [])[:max_results]
+    return [
+        SearchHitWeb(rank=i, title=r.get("title", ""), url=r.get("url", ""),
+                     snippet=_strip_tags(r.get("description", "")))
+        for i, r in enumerate(results, start=1)
+    ]
+
+
+def _search_serper(query: str, max_results: int, key: str, timeout: float) -> list[SearchHitWeb]:
+    response = httpx.post(
+        "https://google.serper.dev/search",
+        json={"q": query, "num": max_results},
+        headers={"X-API-KEY": key, "Content-Type": "application/json"},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    results = response.json().get("organic", [])[:max_results]
+    return [
+        SearchHitWeb(rank=i, title=r.get("title", ""), url=r.get("link", ""),
+                     snippet=r.get("snippet", ""))
+        for i, r in enumerate(results, start=1)
+    ]
+
+
+def _search_duckduckgo(query: str, max_results: int = 5, timeout: float = 20.0) -> list[SearchHitWeb]:
+    """Search the open web without an API key.
+
+    We use DuckDuckGo's HTML endpoint and parse the result list. This is honest
+    about what it is — screen scraping, subject to every fragility documented in
+    `scrape()` — and it exists so the "search the web" capability can be exercised
+    on any subscription.
+
+    The managed alternative is *Grounding with Bing Search*, a Foundry agent tool.
+    It is better in every way that matters (stable contract, no parsing, terms of
+    use sorted) and requires a subscription eligible for the Bing SKU — which many,
+    including trials, are not. That trade-off is the lesson.
+    """
+    response = httpx.post(
+        "https://html.duckduckgo.com/html/",
+        data={"q": query},
+        headers={"User-Agent": SEARCH_USER_AGENT, "Accept-Language": "en-US,en;q=0.9"},
+        timeout=timeout,
+        follow_redirects=True,
+    )
+    response.raise_for_status()
+
+    # 202 with a short body is the anti-bot challenge, not a result page.
+    if response.status_code == 202 or "result__a" not in response.text:
+        raise WebSearchBlocked(
+            "The search engine served a bot challenge instead of results "
+            f"(HTTP {response.status_code}, {len(response.text)} bytes). This is the "
+            "normal failure mode of do-it-yourself web search: the contract is HTML "
+            "that can change or be withheld at any moment. A managed grounding tool "
+            "returns a supported API response instead."
+        )
+
+    hits: list[SearchHitWeb] = []
+    blocks = re.split(r'class="result__body"', response.text)[1:]
+    for i, block in enumerate(blocks[: max_results * 2], start=1):
+        link = re.search(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.S)
+        if not link:
+            continue
+        snippet = re.search(r'class="result__snippet"[^>]*>(.*?)</a>', block, re.S)
+        url = _clean_url(html.unescape(link.group(1)))
+        if not url:
+            continue
+        hits.append(SearchHitWeb(
+            rank=len(hits) + 1,
+            title=_strip_tags(link.group(2)),
+            url=url,
+            snippet=_strip_tags(snippet.group(1)) if snippet else "",
+        ))
+        if len(hits) >= max_results:
+            break
+    return hits
+
+
+def _strip_tags(fragment: str) -> str:
+    return html.unescape(re.sub(r"<[^>]+>", "", fragment)).strip()
+
+
+def _clean_url(href: str) -> str:
+    """DuckDuckGo wraps results in a redirect; unwrap it to the real destination."""
+    if href.startswith("//"):
+        href = "https:" + href
+    parsed = urlparse(href)
+    if "duckduckgo.com" in parsed.netloc and parsed.path.startswith("/l/"):
+        target = parse_qs(parsed.query).get("uddg", [""])[0]
+        return unquote(target)
+    return href
 
 
 @dataclass

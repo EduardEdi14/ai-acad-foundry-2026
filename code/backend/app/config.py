@@ -35,7 +35,18 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str = ""          # the OpenAI-compatible surface of the same resource
     foundry_agent_id: str = ""              # printed by scripts/deploy_agent.py
 
-    # --- Azure AI Speech (a SEPARATE resource from Foundry) -------------------
+    # --- Azure AI Search (the managed alternative to the local vector store) ---
+    azure_search_endpoint: str = ""          # https://<service>.search.windows.net
+    azure_search_index: str = "libra-docs"
+    azure_search_key: str = ""               # empty → use the Entra identity instead
+
+    # --- Web search & fact checking --------------------------------------------
+    search_provider: str = "auto"            # auto | brave | serper | duckduckgo
+    search_api_key: str = ""                 # brave or serper key; empty → scraping only
+    web_search_results: int = 5
+    fact_check_pages: int = 3                # how many results to actually read
+
+    # --- Azure AI Speech (falls back to the Foundry resource when unset) -------
     azure_speech_key: str = ""
     azure_speech_region: str = ""           # e.g. swedencentral
     azure_speech_voice: str = "en-US-AvaMultilingualNeural"
