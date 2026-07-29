@@ -43,16 +43,27 @@ function answers(base, timeout = 2000) {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function pickTarget() {
-  // Two rounds: inside a container the first probe can run before DNS is ready,
-  // and a false negative here would send every request to the wrong place.
-  for (let round = 0; round < 2; round++) {
+  // An explicit choice is not a candidate to be tested — it is an instruction. Under
+  // `docker compose up` the console and the API start together and the API takes about
+  // ten seconds to boot, so probing it would fail and silently fall through to some
+  // other address. Vite retries the proxy on every request, so trusting the setting is
+  // both simpler and more reliable than racing the container.
+  if (process.env.VITE_API_TARGET) {
+    console.log(`  ➜  API:      ${process.env.VITE_API_TARGET}  (VITE_API_TARGET)`)
+    return process.env.VITE_API_TARGET
+  }
+
+  // Nothing was specified, so find it. Four rounds, because inside a container the
+  // first probe can run before DNS is ready and a false negative here would send every
+  // request to the wrong place.
+  for (let round = 0; round < 4; round++) {
     for (const candidate of CANDIDATES) {
       if (await answers(candidate)) {
         console.log(`  ➜  API:      ${candidate}`)
         return candidate
       }
     }
-    if (round === 0) await wait(1500)
+    await wait(1500)
   }
   const fallback = CANDIDATES[0]
   console.log(`  ➜  API:      ${fallback}  (nothing answered — start the backend, then restart this)`)

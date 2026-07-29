@@ -634,12 +634,30 @@ def web_search(req: WebSearchRequest) -> WebSearchResponse:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Web search failed: {e}")
+    # Zero hits from the keyless engine is not "nothing matched" — it is the engine
+    # declining to answer a scraper. Saying so is the difference between a lesson and
+    # a mystery, and it is the case a classroom will hit first, all searching at once.
+    keyless = "keyless" in provider
+    if not hits and keyless:
+        note = ("The engine returned a page with no results in it. That is what screen "
+                "scraping looks like under load or from a datacentre IP — the contract is "
+                "HTML that can be withheld at any moment, and there is no error to catch. "
+                "Set SEARCH_API_KEY to a Brave (api-dashboard.search.brave.com) or Serper "
+                "(serper.dev) key — both have free tiers — and this answers every time. "
+                "The managed Azure equivalent is Grounding with Bing Search, which needs a "
+                "Bing-eligible subscription. For a deterministic demo, pass explicit `urls` "
+                "to /tools/fact-check instead of searching.")
+    elif keyless:
+        note = ("Set SEARCH_API_KEY (Brave or Serper, both have free tiers) for a managed "
+                "provider that answers every time. Without one this is screen scraping and "
+                "will be rate-limited — which is the lesson, not a defect.")
+    else:
+        note = ("Answered by a managed search API: a documented contract, a quota, and "
+                "results every time. Compare with the keyless path by clearing SEARCH_API_KEY.")
     return WebSearchResponse(
         query=req.query, provider=provider, count=len(hits),
         results=[WebSearchHit(**h.__dict__) for h in hits],
-        note="Set SEARCH_API_KEY (Brave or Serper, both have free tiers) for a managed "
-             "provider that answers every time. Without one this is screen scraping and "
-             "will be rate-limited — which is the lesson, not a defect.",
+        note=note,
     )
 
 
