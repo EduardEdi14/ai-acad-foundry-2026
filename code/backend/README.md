@@ -80,7 +80,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | `warning: VIRTUAL_ENV=…\venv does not match the project environment path .venv` | **Another virtual environment is active** — often one at the repository root | Harmless: uv ignores it and uses `.venv`. To silence it, run `deactivate`, or add `--active` to use the active one instead |
 | `No such file or directory: pyproject.toml` | You are in the wrong folder | `uv run` must be run from `code/backend` |
 | `ModuleNotFoundError: fastapi` | Dependencies not installed | `uv sync` (or `pip install -r requirements.txt`) |
-| `Address already in use` on 7799 | The Docker API container is still running | `docker compose stop api`, or use `--port 7801` |
+| `Address already in use` on 7799 | The Docker API container is still running, or an orphaned `--reload` child | `docker compose stop api`, or `./scripts/dev.ps1 -Force`, or `--port 7801` |
 | `python` points somewhere unexpected | A stale venv is activated in this shell | `deactivate`, then check with `where.exe python` |
 
 Everything below assumes one of the two setups above is done.
@@ -92,13 +92,19 @@ the Azure identity comes from**. Pick by what you have installed:
 
 | | You need installed | Identity | Hosted agents & deployments visible |
 |---|---|---|---|
-| **A · everything in Docker** | Docker only | a service principal in `.env` | yes, once you run `09-create-service-principal` |
+| **A · everything in Docker** | Docker only | a service principal in `.env` | only with `09-create-service-principal` |
 | **B · locally, no Docker** | Python (uv) + Node | your own `az login` | yes |
-| **C · API on the host, rest in Docker** | Python (uv) + Docker | your own `az login` | yes |
+| **C · API on the host, rest in Docker** | Python (uv) + Docker | your own `az login` | **yes, with nothing to create** |
 
-**Option A is the one to use if you do not have Node or Python set up** — it needs
-nothing but Docker, and with a service principal it is not a second-class lane: the
-container holds a real Entra identity and every feature works.
+**If Docker is all you have, use A.** Reaching the Agent Service from a container needs
+a service principal — and registering an application is a *directory* permission that
+many tenants (universities, banks) do not grant ordinary users. Without one, A still
+does everything except hosted agents and the Azure panel.
+
+**If you can run Python but your students cannot run Node, use C.** It is one command,
+`scripts/dev.ps1`, and it is the only lane that needs no secret and no permission from
+anybody: the API runs as you, so it inherits your `az login`, while the console runs in
+a container so nobody needs `npm`.
 
 ## Run it — option A: everything in Docker
 
@@ -189,6 +195,31 @@ Option B's identity lane without needing Node installed: the API — the only pa
 wants your `az login` — runs on your machine, while Qdrant and the console stay in
 containers.
 
+One command does all of it — it checks that `az` is reachable and that you are signed
+in, warns if `.env` disagrees with this lane, starts Qdrant and the console, and then
+runs the API in the foreground:
+
+```powershell
+cd code/backend
+./scripts/dev.ps1                  # bash: ./scripts/dev.sh
+#   :7800 console · :7799/docs Swagger · :7833/dashboard Qdrant
+```
+
+Ctrl+C stops the API; the containers keep running. Useful switches:
+
+| Flag | When |
+|---|---|
+| `-Force` | something is still holding 7799 — see the note below |
+| `-Port 7801` | you would rather move than argue with it |
+| `-BindAll` | Docker Engine on Linux, where `host.docker.internal` is a real interface |
+| `-SkipDocker` | the containers are already up |
+
+**There is deliberately no `api` container in this lane.** Docker Desktop will show
+`rag-qdrant` and `rag-console` and nothing else — that is the point: the backend is the
+process in your terminal. `docker compose ps` agreeing with you is the check.
+
+By hand, if you would rather see the two halves:
+
 ```bash
 # terminal 1 — the API, on your machine
 az login
@@ -197,6 +228,13 @@ uv run uvicorn app.main:app --reload --port 7799
 # terminal 2
 docker compose -f docker-compose.yml -f docker-compose.host-api.yml up
 ```
+
+**When 7799 stays busy after you stopped the server.** `uvicorn --reload` runs the
+server in a *child* process; close the terminal at the wrong moment and the parent dies
+while the child keeps the socket. The child's command line says
+`multiprocessing.spawn`, not `uvicorn`, so the obvious "kill anything called uvicorn"
+misses it and the port looks occupied by nothing at all. `./scripts/dev.ps1 -Force`
+clears exactly that case.
 
 The override file swaps the console's proxy target to `host.docker.internal` and leaves
 the `api` service out, so it does not fight your local uvicorn for port 7799.
