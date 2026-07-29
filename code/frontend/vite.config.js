@@ -82,7 +82,13 @@ function proxyTo(target) {
   }
 }
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ command }) => {
+  // `vite build` produces static files: there is no dev server, so there is no
+  // proxy and nothing to probe for. Skipping it keeps the production image build
+  // from waiting on three connections that cannot succeed. In production nginx
+  // forwards the same routes — see frontend/nginx.conf.template.
+  if (command === 'build') return { plugins: [react()] }
+
   const target = await pickTarget()
   return {
     plugins: [react()],
