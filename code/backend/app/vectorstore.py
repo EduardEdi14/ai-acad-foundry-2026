@@ -14,6 +14,32 @@ from qdrant_client import QdrantClient, models
 
 from .config import settings
 
+# Payload keys a chunk carries beyond text/index/strategy/source — see Assignment 3,
+# Part 4 improvement #2 (real metadata) and Part 5 improvement #2 (metadata filters).
+METADATA_FIELDS = ("title", "product", "audience", "effective", "version")
+
+
+def stable_point_id(source: str, index: int) -> str:
+    """Deterministic id from source + chunk index (Assignment 3, Part 4, improvement #1).
+
+    A random uuid4 per chunk means re-ingesting the same document creates brand
+    new points every time — the collection grows without bound and duplicate
+    chunks start competing with each other at search time (see the troubleshooting
+    table in a3.md: "ingesting the same document twice doubles the hits"). Deriving
+    the id from (source, index) instead makes ingestion idempotent: the same
+    document, chunked the same way, always upserts onto the same points.
+    """
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"libra-rag:{source}:{index}"))
+
+
+def _build_filter(filters: dict) -> models.Filter | None:
+    must = [
+        models.FieldCondition(key=key, match=models.MatchValue(value=value))
+        for key, value in filters.items()
+        if value is not None
+    ]
+    return models.Filter(must=must) if must else None
+
 
 class DimensionMismatch(Exception):
     def __init__(self, existing: int, incoming: int) -> None:
@@ -51,8 +77,10 @@ class VectorStore:
 
     # --- data ----------------------------------------------------------------
     def upsert(self, chunks: list[str], vectors: list[list[float]], strategy: str,
-               source: str | None) -> list[str]:
-        ids = [str(uuid.uuid4()) for _ in chunks]
+               source: str | None, metadata: dict | None = None) -> list[str]:
+        src = source or "adhoc"
+        meta = metadata or {}
+        ids = [stable_point_id(src, i) for i in range(len(chunks))]
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         self.client.upsert(
             collection_name=self.collection,
@@ -64,8 +92,9 @@ class VectorStore:
                         "text": text,
                         "index": i,
                         "strategy": strategy,
-                        "source": source or "adhoc",
+                        "source": src,
                         "ingested_at": now,
+                        **{k: meta.get(k) for k in METADATA_FIELDS if meta.get(k) is not None},
                     },
                 )
                 for i, (pid, text, vec) in enumerate(zip(ids, chunks, vectors))
@@ -73,9 +102,12 @@ class VectorStore:
         )
         return ids
 
-    def search(self, vector: list[float], top_k: int) -> list[dict]:
+    def search(self, vector: list[float], top_k: int, *,
+               score_threshold: float | None = None,
+               filters: dict | None = None) -> list[dict]:
         hits = self.client.query_points(
-            collection_name=self.collection, query=vector, limit=top_k, with_payload=True
+            collection_name=self.collection, query=vector, limit=top_k, with_payload=True,
+            score_threshold=score_threshold, query_filter=_build_filter(filters or {}),
         ).points
         return [
             {
@@ -85,6 +117,7 @@ class VectorStore:
                 "index": (h.payload or {}).get("index"),
                 "strategy": (h.payload or {}).get("strategy"),
                 "source": (h.payload or {}).get("source"),
+                **{k: (h.payload or {}).get(k) for k in METADATA_FIELDS},
             }
             for h in hits
         ]

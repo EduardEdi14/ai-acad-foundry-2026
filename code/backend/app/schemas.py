@@ -52,6 +52,11 @@ class IngestRequest(ChunkRequest):
     }]}}
 
     source: Optional[str] = Field(None, description="Label stored with every chunk (e.g. 'cards-faq')")
+    title: Optional[str] = Field(None, description="Document title, from the corpus front-matter")
+    product: Optional[str] = Field(None, description="e.g. 'cards', 'mortgages', 'accounts'")
+    audience: Optional[str] = Field(None, description="e.g. 'retail', 'business'")
+    effective: Optional[str] = Field(None, description="Effective date, e.g. '2026-01-01'")
+    version: Optional[str] = Field(None, description="Document version, e.g. '2'")
 
 
 class IngestResponse(BaseModel):
@@ -73,6 +78,15 @@ class SearchRequest(BaseModel):
 
     query: str = Field(..., min_length=1)
     top_k: Optional[int] = Field(None, ge=1, le=50)
+    score_threshold: Optional[float] = Field(
+        None, ge=0, le=1,
+        description="Drop hits scoring below this cosine similarity — weak matches are "
+                    "omitted instead of being returned as if they were relevant",
+    )
+    product: Optional[str] = Field(None, description="Filter: only chunks with this metadata product")
+    audience: Optional[str] = Field(None, description="Filter: only chunks with this metadata audience")
+    effective: Optional[str] = Field(None, description="Filter: only chunks with this exact effective date")
+    source: Optional[str] = Field(None, description="Filter: only chunks from this source")
 
 
 class SearchHit(BaseModel):
@@ -81,6 +95,11 @@ class SearchHit(BaseModel):
     index: Optional[int] = None
     strategy: Optional[str] = None
     source: Optional[str] = None
+    title: Optional[str] = None
+    product: Optional[str] = None
+    audience: Optional[str] = None
+    effective: Optional[str] = None
+    version: Optional[str] = None
     id: str
 
 
@@ -104,6 +123,14 @@ class AskRequest(BaseModel):
     question: str = Field(..., min_length=1)
     use_rag: bool = Field(True, description="false = plain LLM; true = retrieve then augment")
     top_k: Optional[int] = Field(None, ge=1, le=50)
+    score_threshold: Optional[float] = Field(
+        None, ge=0, le=1,
+        description="Drop retrieved chunks below this cosine similarity before augmenting",
+    )
+    product: Optional[str] = Field(None, description="Filter retrieval to this metadata product")
+    audience: Optional[str] = Field(None, description="Filter retrieval to this metadata audience")
+    effective: Optional[str] = Field(None, description="Filter retrieval to this exact effective date")
+    source: Optional[str] = Field(None, description="Filter retrieval to this source")
     temperature: Optional[float] = Field(None, ge=0, le=2)
     agent: Optional[str] = Field(
         None,
@@ -221,6 +248,11 @@ class AskResponse(BaseModel):
     system_prompt: str = Field(description="The system message actually sent")
     prompt_sent: str = Field(description="The exact user prompt sent to the model — compare with/without RAG")
     retrieved: list[SearchHit] = Field(default_factory=list)
+    nothing_relevant: bool = Field(
+        False,
+        description="true when use_rag was on but every hit fell below score_threshold, or the "
+                    "filter matched nothing — the model was not called with weak/no context",
+    )
     usage: Optional[Usage] = None
 
 

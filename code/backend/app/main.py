@@ -269,7 +269,11 @@ def ingest(req: IngestRequest) -> IngestResponse:
         store.ensure_collection(dim)
     except DimensionMismatch as e:
         raise HTTPException(status_code=409, detail=str(e))
-    ids = store.upsert(pieces, vectors, p["strategy"], req.source)
+    metadata = {
+        "title": req.title, "product": req.product, "audience": req.audience,
+        "effective": req.effective, "version": req.version,
+    }
+    ids = store.upsert(pieces, vectors, p["strategy"], req.source, metadata)
     return IngestResponse(
         strategy=p["strategy"], count=len(pieces), vector_dimension=dim,
         embedding_preview=[round(x, 5) for x in vectors[0][:8]],
@@ -294,13 +298,19 @@ def collection_reset() -> dict:
 @app.post("/search", response_model=SearchResponse, tags=["3 · retrieval"])
 def search(req: SearchRequest) -> SearchResponse:
     """Embed the query, return the nearest chunks with their cosine similarity
-    scores — retrieval with the curtain open."""
+    scores — retrieval with the curtain open.
+
+    `score_threshold` drops weak hits instead of always returning *something*;
+    `product` / `audience` / `effective` / `source` filter by the metadata stored
+    at ingestion (Assignment 3, Part 5, improvements #1 and #2)."""
     _require_qdrant()
     if not store.info()["exists"]:
         raise HTTPException(status_code=404, detail="Collection is empty — POST /ingest first.")
     top_k = req.top_k or settings.top_k
     qvec = _embed([req.query])[0]
-    hits = store.search(qvec, top_k)
+    filters = {"product": req.product, "audience": req.audience,
+               "effective": req.effective, "source": req.source}
+    hits = store.search(qvec, top_k, score_threshold=req.score_threshold, filters=filters)
     return SearchResponse(
         query=req.query, top_k=top_k, embedding_model=_embedder().describe(),
         query_embedding_preview=[round(x, 5) for x in qvec[:8]],
@@ -342,6 +352,7 @@ def ask(req: AskRequest) -> AskResponse:
             raise HTTPException(status_code=404, detail=str(e))
 
     # ---- retrieval (unchanged behaviour, now feeding the agent) -------------
+    nothing_relevant = False
     if req.use_rag:
         _require_qdrant()
         if not store.info()["exists"]:
@@ -350,10 +361,44 @@ def ask(req: AskRequest) -> AskResponse:
                                        "or set use_rag=false for a plain LLM answer.")
         top_k = req.top_k or settings.top_k
         qvec = _embed([req.question])[0]
-        retrieved = [SearchHit(**h) for h in store.search(qvec, top_k)]
+        filters = {"product": req.product, "audience": req.audience,
+                   "effective": req.effective, "source": req.source}
+        retrieved = [SearchHit(**h) for h in
+                     store.search(qvec, top_k, score_threshold=req.score_threshold, filters=filters)]
+        nothing_relevant = not retrieved
 
     chunks = [h.model_dump() for h in retrieved]
     mode = mode_requested
+
+    # ---- nothing relevant: refuse deterministically, do not call the model --
+    # Assignment 3, Part 5, improvement #1: retrieval that always returns *something*
+    # turns weak hits into confident wrong answers. When score_threshold or a
+    # metadata filter leaves zero hits, say so instead of falling back to an
+    # ungrounded (and unlabelled) guess from the model.
+    if nothing_relevant:
+        info = AgentInfo(
+            name=persona.name, display_name=persona.display_name,
+            description=persona.description, mode=mode,
+            temperature=persona.temperature, style_rules=persona.style_rules,
+        ) if persona is not None else AgentInfo(
+            name=hosted_only["name"], display_name=hosted_only["name"],
+            description=hosted_only.get("description") or "Hosted in Foundry — no local persona file.",
+            mode=mode,
+        )
+        return AskResponse(
+            answer="Nothing relevant found in the knowledge base for this question"
+                   + (" with the filters given." if any([req.product, req.audience, req.effective, req.source])
+                      else "."),
+            augmented=True,
+            provider="none",
+            model="none",
+            agent=info,
+            system_prompt="",
+            prompt_sent=req.question,
+            retrieved=[],
+            nothing_relevant=True,
+            usage=Usage(),
+        )
 
     # ---- run the agent ------------------------------------------------------
     try:
