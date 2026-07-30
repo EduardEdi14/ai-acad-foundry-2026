@@ -2,6 +2,73 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { Err, RunsOnBadge } from '../components'
 
+// Two things persist in the browser, per agent:
+//  - the ACTIVE conversation (still being added to — survives reloads and agent switches)
+//  - the ARCHIVE (past conversations, saved off by "new chat" or by restoring a different one)
+const ACTIVE_PREFIX = 'edi-libra-chat:'
+const ARCHIVE_PREFIX = 'edi-libra-chat-archive:'
+
+function loadActive(agentName) {
+  try {
+    const raw = localStorage.getItem(ACTIVE_PREFIX + agentName)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveActive(agentName, messages) {
+  try {
+    localStorage.setItem(ACTIVE_PREFIX + agentName, JSON.stringify(messages))
+  } catch {
+    /* storage full or unavailable — history just won't persist this time */
+  }
+}
+
+function loadArchive(agentName) {
+  try {
+    const raw = localStorage.getItem(ARCHIVE_PREFIX + agentName)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveArchive(agentName, entries) {
+  try {
+    localStorage.setItem(ARCHIVE_PREFIX + agentName, JSON.stringify(entries))
+  } catch {
+    /* storage full or unavailable — archive just won't persist this time */
+  }
+}
+
+// A short label for an archived conversation — the customer's first message, so the
+// list is scannable without opening each one.
+function conversationTitle(messages) {
+  const firstUser = messages.find((m) => m.role === 'user')
+  if (!firstUser) return 'Conversation'
+  const t = firstUser.text.trim()
+  return t.length > 56 ? t.slice(0, 56) + '…' : t
+}
+
+// General security-awareness facts (not this bank's specific numbers, so they never
+// contradict a grounded answer) — one is shown when a conversation starts empty.
+const CYBER_TIPS = [
+  "Most account takeovers don't start with a hacked password — they start with a phone call or text that convinces someone to hand over a one-time code.",
+  "An SMS code is better than nothing, but SIM-swapping can intercept it. An authenticator app or hardware key is much harder to steal.",
+  "Ransomware rarely triggers the moment it lands on a system — attackers often sit quietly inside a network for days or weeks first, studying what's valuable.",
+  "The padlock icon in your browser only means the connection is encrypted — it says nothing about whether the site itself is trustworthy. Phishing sites use HTTPS too.",
+  "Password reuse is the single biggest amplifier of a data breach: one leaked password from an unrelated site is often enough to unlock accounts elsewhere.",
+  "Public Wi-Fi attacks rarely involve 'hacking' the network itself — more often it's a fake hotspot with a familiar-looking name, waiting for a device to connect automatically.",
+  "Organizations often take months to even notice a breach — which is exactly why fast, customer-side reporting matters so much.",
+  "Social engineering usually wins through urgency, not technical skill: 'act now or lose access' is designed to short-circuit the moment you'd normally stop and verify.",
+  "Encryption 'in transit' (moving over a network) and 'at rest' (stored on a disk) are two separate protections — a system can have one without the other.",
+]
+
+function pickTip() {
+  return CYBER_TIPS[Math.floor(Math.random() * CYBER_TIPS.length)]
+}
+
 // Float32 samples (from the Web Audio API) -> a 16-bit PCM mono WAV blob.
 function encodeWav(chunks, sampleRate) {
   const length = chunks.reduce((n, c) => n + c.length, 0)
@@ -54,18 +121,37 @@ function formatAnswer(text) {
   })
 }
 
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+
 export default function Chat({ agents, hostedOnly = [], foundry }) {
-  const [messages, setMessages] = useState([])
-  const [question, setQuestion] = useState('')
   const [agent, setAgent] = useState('default')
+  const [messages, setMessages] = useState(() => loadActive('default'))
+  const [archive, setArchive] = useState(() => loadArchive('default'))
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [tip, setTip] = useState(pickTip)
+  const [lastCleared, setLastCleared] = useState(null)   // messages wiped by "clear", restorable by "undo"
+  const [question, setQuestion] = useState('')
   const [useRag, setUseRag] = useState(true)
   const [factCheck, setFactCheck] = useState(false)
   const [mode, setMode] = useState('local')
   const [topK, setTopK] = useState(3)
+  // Below this cosine similarity, a retrieved passage is noise, not grounding evidence —
+  // without it, a plain "hello" still returns *something* (Qdrant always returns its
+  // nearest neighbours) and the persona treats that as context to answer strictly from.
+  // 0.45 was calibrated live against this corpus/embedding model (see NOTES.md #1):
+  // real matches score ~0.41-0.55, small talk and off-topic queries top out ~0.22-0.25.
+  const [scoreThreshold, setScoreThreshold] = useState(0.45)
   const [product, setProduct] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [speaking, setSpeaking] = useState(null)
+  const [speaking, setSpeaking] = useState(null)      // index of the message loading or playing TTS
+  const [ttsPlaying, setTtsPlaying] = useState(false)  // true once playback has actually started
+  const [ttsPaused, setTtsPaused] = useState(false)    // true while paused mid-playback
+  const [ttsSpeed, setTtsSpeed] = useState(1)          // 1 or 2 — a preference, kept across messages
   const [recording, setRecording] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const endRef = useRef(null)
@@ -73,27 +159,92 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
   const streamRef = useRef(null)
   const processorRef = useRef(null)
   const samplesRef = useRef([])
+  const ttsAudioRef = useRef(null)
+  const speakTokenRef = useRef(0)
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, busy])
+
+  // Switching agents loads THAT agent's active conversation and its archive (not
+  // before messages has already been persisted for whichever agent was active —
+  // see the save effect).
+  useEffect(() => {
+    const loaded = loadActive(agent)
+    setMessages(loaded)
+    setArchive(loadArchive(agent))
+    setHistoryOpen(false)
+    setLastCleared(null)
+    if (loaded.length === 0) setTip(pickTip())
+  }, [agent])
+
+  // Every change to messages is persisted under the currently selected agent. This
+  // intentionally does not depend on `agent` — only on `messages` — so an agent
+  // switch never re-saves the outgoing agent's messages under the incoming agent's key.
+  useEffect(() => { saveActive(agent, messages) }, [messages]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Text-to-speech for a bot answer, via the Azure Speech tool the backend already
   // exposes at /tools/speak. Each persona can set its own `voice` in its JSON —
   // edi-libra does — so the same message read back sounds like that agent, not a
   // generic default.
-  async function listen(i, text, voice) {
-    setSpeaking(i); setError(null)
+  //
+  // `speakTokenRef` guards against a stale response landing after the user has
+  // already stopped playback or started reading a different message — without it,
+  // a slow /tools/speak call could still start playing audio after being "stopped".
+  function stopSpeaking() {
+    speakTokenRef.current++
+    if (ttsAudioRef.current) {
+      ttsAudioRef.current.pause()
+      ttsAudioRef.current.currentTime = 0
+      ttsAudioRef.current = null
+    }
+    setSpeaking(null)
+    setTtsPlaying(false)
+    setTtsPaused(false)
+  }
+
+  // Pauses/resumes in place — unlike stopSpeaking, this keeps the already-fetched
+  // audio and its playback position, so resuming does not re-call /tools/speak.
+  function togglePause() {
+    const audio = ttsAudioRef.current
+    if (!audio) return
+    if (ttsPaused) { audio.play(); setTtsPaused(false) }
+    else { audio.pause(); setTtsPaused(true) }
+  }
+
+  // Toggles 1x/2x. Applies instantly to whatever is currently playing (the browser
+  // adjusts playbackRate live, no restart needed) and to whatever plays next.
+  function toggleSpeed() {
+    const next = ttsSpeed === 1 ? 2 : 1
+    setTtsSpeed(next)
+    if (ttsAudioRef.current) ttsAudioRef.current.playbackRate = next
+  }
+
+  async function startSpeaking(i, text, voice) {
+    stopSpeaking()   // only one message speaks at a time; also resets a paused session
+    setError(null)
+    setSpeaking(i)
+    const token = ++speakTokenRef.current
     try {
       const blob = await api.speak({ text, voice })
+      if (speakTokenRef.current !== token) return     // superseded while we were fetching
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
-      audio.onended = () => URL.revokeObjectURL(url)
+      audio.playbackRate = ttsSpeed
+      ttsAudioRef.current = audio
+      audio.onended = () => { URL.revokeObjectURL(url); if (speakTokenRef.current === token) stopSpeaking() }
+      setTtsPlaying(true)
       await audio.play()
     } catch (e) {
-      setError(e.message)
-    } finally {
-      setSpeaking(null)
+      if (speakTokenRef.current === token) { setError(e.message); stopSpeaking() }
     }
   }
+
+  function listen(i, text, voice) {
+    if (speaking === i) { stopSpeaking(); return }   // clicking the active message again = stop
+    startSpeaking(i, text, voice)
+  }
+
+  // Leaving the Chat view (switching to another page) should not leave audio playing.
+  useEffect(() => () => { ttsAudioRef.current?.pause() }, [])
 
   // Speech-to-text: capture the mic as raw PCM via the Web Audio API and encode a
   // plain WAV ourselves, instead of MediaRecorder's webm/opus output — the backend's
@@ -140,21 +291,129 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
     }
   }
 
+  // Archives the active conversation into this agent's history list and returns the
+  // resulting array — callers that also need to modify the archive right afterwards
+  // (restoreConversation) must build on this return value, not on the `archive` state
+  // variable, since setState here has not been applied yet within the same call.
+  function archiveCurrent() {
+    if (messages.length === 0) return archive
+    const entry = {
+      id: crypto.randomUUID?.() || String(Date.now()),
+      title: conversationTitle(messages),
+      savedAt: Date.now(),
+      messages,
+    }
+    const next = [entry, ...archive]
+    setArchive(next)
+    saveArchive(agent, next)
+    return next
+  }
+
+  function startNewChat() {
+    archiveCurrent()
+    stopSpeaking()
+    setQuestion('')
+    setError(null)
+    setMessages([])
+    setHistoryOpen(false)
+    setLastCleared(null)
+    setTip(pickTip())
+  }
+
+  function restoreConversation(entry) {
+    const afterArchiving = archiveCurrent()   // don't lose whatever's active right now
+    stopSpeaking()
+    setQuestion('')
+    setError(null)
+    setMessages(entry.messages)
+    const next = afterArchiving.filter((e) => e.id !== entry.id)
+    setArchive(next)
+    saveArchive(agent, next)
+    setHistoryOpen(false)
+    setLastCleared(null)
+  }
+
+  function deleteArchived(id) {
+    setArchive((prev) => {
+      const next = prev.filter((e) => e.id !== id)
+      saveArchive(agent, next)
+      return next
+    })
+  }
+
   async function send() {
     const text = question.trim()
     if (!text || busy) return
-    setQuestion(''); setError(null); setBusy(true)
-    setMessages((m) => [...m, { role: 'user', text }])
+    setQuestion(''); setError(null); setBusy(true); setLastCleared(null)
+    setMessages((m) => [...m, { role: 'user', text, at: Date.now() }])
     try {
       const data = await api.ask({
-        question: text, use_rag: useRag, top_k: Number(topK), agent, agent_mode: mode,
-        product: product || undefined, fact_check: factCheck,
+        question: text, use_rag: useRag, top_k: Number(topK), score_threshold: Number(scoreThreshold),
+        agent, agent_mode: mode, product: product || undefined, fact_check: factCheck,
       })
-      setMessages((m) => [...m, { role: 'bot', data }])
+      setMessages((m) => [...m, { role: 'bot', data, at: Date.now() }])
     } catch (e) {
-      setMessages((m) => [...m, { role: 'err', text: e.message }])
+      setMessages((m) => [...m, { role: 'err', text: e.message, at: Date.now() }])
       setError(e.message)
     } finally { setBusy(false) }
+  }
+
+  // Exports the conversation as a printable HTML document and opens the browser's
+  // print dialog, where "Save as PDF" produces the actual file — no PDF-generation
+  // library needed, and every browser already knows how to do this reliably.
+  function exportConversation() {
+    if (messages.length === 0) return
+    const win = window.open('', '_blank')
+    if (!win) { setError("Could not open the export window — check your browser's popup blocker."); return }
+
+    const rows = messages.map((m) => {
+      const when = m.at ? new Date(m.at).toLocaleString() : ''
+      if (m.role === 'user') {
+        return `<div class="row user"><div class="bubble">
+          <div class="who">You <span class="when">${escapeHtml(when)}</span></div>
+          <div class="text">${escapeHtml(m.text)}</div>
+        </div></div>`
+      }
+      if (m.role === 'err') {
+        return `<div class="row"><div class="bubble err">
+          <div class="who">Error <span class="when">${escapeHtml(when)}</span></div>
+          <div class="text">${escapeHtml(m.text)}</div>
+        </div></div>`
+      }
+      const d = m.data
+      return `<div class="row"><div class="bubble">
+        <div class="who">${escapeHtml(d.agent?.display_name || 'Agent')} <span class="when">${escapeHtml(when)}</span></div>
+        <div class="text">${escapeHtml(d.answer)}</div>
+        <div class="meta">${escapeHtml(d.augmented ? 'grounded' : 'no retrieval')}${d.agent?.mode ? ' · ' + escapeHtml(d.agent.mode) : ''}${d.model ? ' · ' + escapeHtml(d.model) : ''}</div>
+      </div></div>`
+    }).join('\n')
+
+    win.document.write(`<!doctype html>
+<html><head><meta charset="utf-8"><title>edi-libra conversation — ${escapeHtml(new Date().toLocaleDateString())}</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; max-width: 720px; margin: 2.5rem auto; color: #18181b; line-height: 1.5; }
+  h1 { font-size: 1.25rem; margin-bottom: .1rem; }
+  .subtitle { color: #71717a; font-size: .85rem; margin-bottom: 2rem; }
+  .row { margin: 1rem 0; display: flex; }
+  .row.user { justify-content: flex-end; }
+  .bubble { max-width: 80%; padding: .7rem 1rem; border-radius: 10px; background: #f4f4f5; }
+  .row.user .bubble { background: #b91c1c; color: #fff; }
+  .bubble.err { background: #fee2e2; color: #7f1d1d; }
+  .who { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; opacity: .65; margin-bottom: .3rem; }
+  .when { font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: .4rem; }
+  .text { white-space: pre-wrap; word-break: break-word; }
+  .meta { margin-top: .4rem; font-size: .72rem; opacity: .6; }
+  @media print { body { margin: 0 auto; } }
+</style></head>
+<body>
+  <h1>edi-libra — conversation transcript</h1>
+  <div class="subtitle">Exported ${escapeHtml(new Date().toLocaleString())} · ${messages.length} message${messages.length === 1 ? '' : 's'}</div>
+  ${rows}
+</body></html>`)
+    win.document.close()
+    win.focus()
+    // Give the new document a moment to lay out before the print dialog opens.
+    setTimeout(() => win.print(), 300)
   }
 
   const all = [...agents, ...hostedOnly]
@@ -250,23 +509,85 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
               <input type="number" min="1" max="10" value={topK} onChange={(e) => setTopK(e.target.value)}
                      title="Passages to retrieve" />
             </div>
+            <div>
+              <label style={{ marginBottom: '.2rem' }}>min. relevance</label>
+              <input type="number" min="0" max="1" step="0.05" value={scoreThreshold}
+                     onChange={(e) => setScoreThreshold(e.target.value)}
+                     title="Below this cosine similarity, a passage is treated as irrelevant — off-topic questions (e.g. a greeting) get no grounding instead of being answered from the nearest, unrelated document" />
+            </div>
             {current && <span className="badge muted" title={current.description}>temp {current.temperature ?? '—'}</span>}
           </div>
         </details>
 
-        <button className="btn btn-outline btn-sm" onClick={() => setMessages([])} style={{ marginLeft: 'auto' }}>
-          clear
-        </button>
+        <div style={{ display: 'flex', gap: '.5rem', marginLeft: 'auto' }}>
+          <button className={`btn btn-sm ${historyOpen ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setHistoryOpen((o) => !o)}
+                  title="Past conversations with this agent, saved in this browser">
+            history{archive.length > 0 ? ` (${archive.length})` : ''}
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={startNewChat}
+                  title="Save the current conversation to history and start a blank one">
+            + new chat
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={exportConversation} disabled={messages.length === 0}
+                  title="Export this conversation as a PDF (opens the browser's print dialog)">
+            export PDF
+          </button>
+          <button className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    if (messages.length > 0) setLastCleared(messages)
+                    setMessages([]); setTip(pickTip())
+                  }}
+                  title="Discard the current conversation without saving it to history">
+            clear
+          </button>
+          {lastCleared && (
+            <button className="btn btn-outline btn-sm"
+                    onClick={() => { setMessages(lastCleared); setLastCleared(null) }}
+                    title="Restore the conversation you just cleared">
+              ↩ undo
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="msgs">
-        {messages.length === 0 && (
-          <div className="card" style={{ alignSelf: 'center', maxWidth: '46rem', textAlign: 'center' }}>
-            <h3>edi-libra</h3>
+      {historyOpen && (
+        <div className="card" style={{ marginBottom: '.9rem' }}>
+          <h3 style={{ marginBottom: '.6rem' }}>Past conversations with {current?.display_name || agent}</h3>
+          {archive.length === 0 ? (
             <p className="muted" style={{ margin: 0 }}>
-              Ask a question about the documents you have ingested. Switch the persona to change how
-              it answers, or turn RAG off to see the model answer without grounding.
+              Nothing saved yet — "+ new chat" or restoring a different conversation archives the
+              current one here first.
             </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+              {archive.map((entry) => (
+                <div key={entry.id} className="src"
+                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.6rem' }}>
+                  <button className="btn btn-outline btn-sm"
+                          style={{ flex: 1, justifyContent: 'flex-start', textAlign: 'left', textTransform: 'none' }}
+                          onClick={() => restoreConversation(entry)}>
+                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '.15rem' }}>
+                      <span>{entry.title}</span>
+                      <span className="faint">
+                        {new Date(entry.savedAt).toLocaleString()} · {entry.messages.length} message{entry.messages.length === 1 ? '' : 's'}
+                      </span>
+                    </span>
+                  </button>
+                  <button className="pill-x" onClick={() => deleteArchived(entry.id)}
+                          aria-label="Delete this conversation" title="Delete">×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="msgs">
+        {messages.length === 0 && !historyOpen && (
+          <div className="card" style={{ alignSelf: 'center', maxWidth: '46rem', textAlign: 'center' }}>
+            <h3>{current?.display_name || 'edi-libra'}</h3>
+            <p style={{ margin: 0 }}>💡 {tip}</p>
           </div>
         )}
 
@@ -284,10 +605,29 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
                 <span className="badge muted">{d.model}</span>
                 {d.product_filter && <span className="badge" title="Retrieval was scoped to this metadata product">scoped: {d.product_filter}</span>}
                 {d.usage && <span className="badge muted">{d.usage.prompt_tokens}↑ {d.usage.completion_tokens}↓ tokens</span>}
-                <button className="btn btn-outline btn-sm" onClick={() => listen(i, d.answer, d.agent?.voice)}
-                        disabled={speaking === i} title="Read this answer aloud (Azure Speech)">
-                  {speaking === i ? <span className="spin" /> : '🔊'} listen
-                </button>
+                {speaking === i && ttsPlaying ? (
+                  <>
+                    <button className="btn btn-outline btn-sm" onClick={togglePause}
+                            title={ttsPaused ? 'Resume playback' : 'Pause playback'}>
+                      {ttsPaused ? <>▶ resume</> : <>⏸ pause</>}
+                    </button>
+                    <button className="btn btn-outline btn-sm"
+                            onClick={() => startSpeaking(i, d.answer, d.agent?.voice)}
+                            title="Restart this answer from the beginning">
+                      🔄 reload
+                    </button>
+                    <button className={`btn btn-sm ${ttsSpeed === 2 ? 'btn-primary' : 'btn-outline'}`}
+                            onClick={toggleSpeed}
+                            title={ttsSpeed === 2 ? 'Playing at 2x — click for normal speed' : 'Play at 2x speed'}>
+                      {ttsSpeed}x
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn btn-outline btn-sm" onClick={() => listen(i, d.answer, d.agent?.voice)}
+                          disabled={speaking === i} title="Read this answer aloud (Azure Speech)">
+                    {speaking === i ? <span className="spin" /> : '🔊'} listen
+                  </button>
+                )}
               </div>
               {d.fact_check && (
                 <div className="src" style={{ marginTop: '.55rem',
