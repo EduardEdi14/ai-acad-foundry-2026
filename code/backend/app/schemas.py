@@ -159,6 +159,7 @@ class AgentInfo(BaseModel):
     mode: str = Field(description="Where this run executed: local or foundry")
     temperature: Optional[float] = None
     style_rules: list[str] = Field(default_factory=list)
+    voice: Optional[str] = Field(None, description="Azure Speech neural voice for this persona's replies")
 
 
 class HostedAgent(BaseModel):
@@ -183,6 +184,9 @@ class PersonaSummary(BaseModel):
     tools: list[str] = Field(default_factory=list)
     default_product: Optional[str] = Field(
         None, description="When set, /ask scopes retrieval to this metadata `product` unless the request overrides it"
+    )
+    voice: Optional[str] = Field(
+        None, description="Azure Speech neural voice for this persona's replies; falls back to AZURE_SPEECH_VOICE"
     )
     runs_on: Literal["local", "both", "foundry", "unknown"] = Field(
         "local",

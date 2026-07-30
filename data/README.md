@@ -8,7 +8,7 @@ Part 5 improvement #2, metadata filters):
   (documents `01`–`12`) — the general banking corpus, served by the `default` / `teller` /
   `compliance` / `lyrical` agents.
 - `product: cybersecurity` (documents `13`–`21`) — the fraud/incident-response corpus,
-  served by the **Edi_Libra** agent.
+  served by the **edi-libra** agent.
 
 ## Documents
 
@@ -36,7 +36,7 @@ Part 5 improvement #2, metadata filters):
 | 20 | `20_device_and_remote_access_policy.md` | cybersecurity | staff | precise numbers (5-min lock, 8h VPN session) |
 | 21 | `21_ransomware_and_malware_guidance.md` | cybersecurity | mixed | long procedure with steps |
 
-**Deliberately absent** (Edi_Libra must refuse, not invent — see `data/questions_cybersecurity.md`
+**Deliberately absent** (edi-libra must refuse, not invent — see `data/questions_cybersecurity.md`
 group C): bug-bounty program terms, cyber-insurance add-on pricing, and the bank's internal
 firewall/network architecture. None of the above documents mention them.
 

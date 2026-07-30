@@ -53,7 +53,7 @@ export default function App() {
               <path d="m9 12 2 2 4-4" />
             </svg>
           </span>
-          <span className="brand-text">Edi_Libra<small>console</small></span>
+          <span className="brand-text">edi-libra<small>console</small></span>
         </p>
         {groups.map((g) => (
           <div key={g}>
@@ -66,23 +66,25 @@ export default function App() {
           </div>
         ))}
         <div className="side-foot">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
-            <span className="dot" style={{ width: 7, height: 7, borderRadius: '50%',
-              background: online ? 'var(--c-cyan)' : 'var(--c-crimson)', display: 'inline-block' }} />
-            {online ? `${health.llm.provider} · ${health.llm.model}` : 'backend offline'}
-          </div>
-          {azure?.configured && (
-            <div style={{ marginBottom: '.5rem' }} title={azure.auth === 'identity'
-              ? 'Signed in with Microsoft Entra — the Agent Service and control plane are available'
-              : 'Key authentication — the Agent Service and control plane cannot be queried'}>
-              <span className={`badge ${azure.auth === 'identity' ? '' : 'gold'}`}>
-                {azure.auth === 'identity' ? 'Entra identity' : 'key auth'}
-              </span>
+          <div className="profile-card">
+            <div className="profile-row">
+              <span className={`status-dot ${online ? 'online' : 'offline'}`} />
+              {online ? `${health.llm.provider} · ${health.llm.model}` : 'backend offline'}
             </div>
-          )}
-          <button className="btn btn-outline btn-sm" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            ◐ {theme === 'dark' ? 'light' : 'dark'}
-          </button>
+            {azure?.configured && (
+              <div className="profile-badges">
+                <span className={`badge ${azure.auth === 'identity' ? '' : 'gold'}`}
+                      title={azure.auth === 'identity'
+                        ? 'Signed in with Microsoft Entra — the Agent Service and control plane are available'
+                        : 'Key authentication — the Agent Service and control plane cannot be queried'}>
+                  {azure.auth === 'identity' ? 'Entra identity' : 'key auth'}
+                </span>
+              </div>
+            )}
+            <button className="btn btn-outline btn-sm" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              ◐ {theme === 'dark' ? 'light' : 'dark'}
+            </button>
+          </div>
         </div>
       </aside>
 

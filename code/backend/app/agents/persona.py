@@ -33,6 +33,7 @@ class Persona:
     reasoning_effort: str | None = None    # gpt-5 family: minimal | low | medium | high
     tools: list[str] = field(default_factory=list)   # names only — see /agents
     default_product: str | None = None     # scopes retrieval to this metadata `product` unless overridden
+    voice: str | None = None               # Azure Speech neural voice; falls back to AZURE_SPEECH_VOICE
 
     # ---- the composition step: JSON -> the system prompt actually sent -------
     def system_prompt(self, *, grounded: bool) -> str:
@@ -71,6 +72,7 @@ class Persona:
             "reasoning_effort": self.reasoning_effort,
             "tools": self.tools,
             "default_product": self.default_product,
+            "voice": self.voice,
         }
 
 
@@ -103,6 +105,7 @@ def _parse(path: Path) -> Persona:
         reasoning_effort=raw.get("reasoning_effort"),
         tools=raw.get("tools", []),
         default_product=raw.get("default_product"),
+        voice=raw.get("voice"),
     )
 
 

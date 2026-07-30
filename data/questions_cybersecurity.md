@@ -1,7 +1,7 @@
 # Golden question set — Edi_Libra (cybersecurity / fraud-response agent)
 
 15 questions against the `product: cybersecurity` corpus (`data/13`–`21`, see
-`data/README.md`), run live through `POST /ask` with `"agent": "Edi_Libra"`,
+`data/README.md`), run live through `POST /ask` with `"agent": "edi-libra"`,
 `"use_rag": true`, `top_k: 4`, no explicit `product` filter — the persona's
 `default_product: "cybersecurity"` applied automatically (confirmed by
 `product_filter: "cybersecurity"` on every response, and every retrieved

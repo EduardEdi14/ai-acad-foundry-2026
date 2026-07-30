@@ -354,7 +354,7 @@ def ask(req: AskRequest) -> AskResponse:
 
     # ---- retrieval (unchanged behaviour, now feeding the agent) -------------
     nothing_relevant = False
-    # A persona may scope itself to one corner of the knowledge base (e.g. Edi_Libra ->
+    # A persona may scope itself to one corner of the knowledge base (e.g. edi-libra ->
     # product "cybersecurity") so it never answers from unrelated documents. An explicit
     # `product` on the request still wins — this is a default, not a hard restriction.
     product_filter = req.product or (persona.default_product if persona is not None else None)
@@ -384,7 +384,7 @@ def ask(req: AskRequest) -> AskResponse:
         info = AgentInfo(
             name=persona.name, display_name=persona.display_name,
             description=persona.description, mode=mode,
-            temperature=persona.temperature, style_rules=persona.style_rules,
+            temperature=persona.temperature, style_rules=persona.style_rules, voice=persona.voice,
         ) if persona is not None else AgentInfo(
             name=hosted_only["name"], display_name=hosted_only["name"],
             description=hosted_only.get("description") or "Hosted in Foundry — no local persona file.",
@@ -423,7 +423,7 @@ def ask(req: AskRequest) -> AskResponse:
     info = AgentInfo(
         name=persona.name, display_name=persona.display_name,
         description=persona.description, mode=reply.mode,
-        temperature=persona.temperature, style_rules=persona.style_rules,
+        temperature=persona.temperature, style_rules=persona.style_rules, voice=persona.voice,
     ) if persona is not None else AgentInfo(
         name=hosted_only["name"], display_name=hosted_only["name"],
         description=hosted_only.get("description") or "Hosted in Foundry — no local persona file.",
