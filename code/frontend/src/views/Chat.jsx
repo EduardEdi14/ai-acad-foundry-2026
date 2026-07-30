@@ -683,7 +683,7 @@ export default function Chat({ agents, hostedOnly = [], foundry }) {
         <div className="composer-bar">
           <span className="composer-hint">Enter to send · Shift+Enter for a new line</span>
           <div className="composer-actions">
-            <button className={`btn btn-sm ${recording ? 'btn-primary' : 'btn-outline'}`}
+            <button className={`btn btn-mic ${recording ? 'btn-primary' : 'btn-outline'}`}
                     onClick={toggleRecording} disabled={transcribing}
                     title={recording ? 'Stop recording' : 'Dictate your question (Azure Speech)'}>
               {transcribing ? <span className="spin" /> : recording ? '⏹' : '🎙'}
