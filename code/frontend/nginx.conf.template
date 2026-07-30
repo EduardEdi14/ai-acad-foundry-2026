@@ -1,0 +1,49 @@
+# Production console: static files plus a reverse proxy.
+#
+# In development, vite.config.js forwards these same paths to the backend so the
+# browser only ever talks to one origin and there is no CORS to configure. Once
+# React is compiled there is no dev server left to do that, so nginx takes over
+# the job. Keep this list and the ROUTES array in vite.config.js in step.
+#
+# ${API_URL} is substituted at container start from the environment.
+
+server {
+    listen 7800;
+    server_name _;
+
+    # gzip pays for itself on a JS bundle
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # --- the API, same-origin ------------------------------------------------
+    location ~ ^/(health|config|azure|chunk|ingest|collection|search|ask|agents|tools) {
+        proxy_pass         ${API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+
+        # A grounded answer with fact checking can take a while: the model runs,
+        # then pages are fetched and read, then the model runs again. nginx's
+        # 60-second default would cut that off mid-request.
+        proxy_connect_timeout 10s;
+        proxy_send_timeout   300s;
+        proxy_read_timeout   300s;
+        proxy_buffering      off;
+    }
+
+    # --- the console ----------------------------------------------------------
+    location / {
+        root      /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;      # client-side routing
+    }
+
+    # hashed assets never change; the entry point always must be re-checked
+    location /assets/ {
+        root      /usr/share/nginx/html;
+        expires   1y;
+        add_header Cache-Control "public, immutable";
+    }
+}

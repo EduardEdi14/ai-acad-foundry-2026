@@ -16,6 +16,7 @@ and rebuildable from nothing.
 | `04-invoke-agent` | The full agent loop from the shell: thread → message → run → answer |
 | `05-inspect` | Everything you own: deployments, quota, agents, roles |
 | `06-teardown` | Deletes the resource group — the one-command cleanup |
+| `07-provision-search` | Creates an Azure AI Search service — the managed alternative to the Qdrant container |
 
 Both shells are provided: `.ps1` for PowerShell, `.sh` for bash/zsh.
 
@@ -27,6 +28,7 @@ cd code/backend/scripts/azure
 ./03-create-agent.ps1 -Persona lyrical   # reads app/agents/personas/lyrical.json
 ./04-invoke-agent.ps1 -Question "Why was my card blocked?"
 ./05-inspect.ps1
+./07-provision-search.ps1 -Sku free      # -Keyless for Entra instead of an admin key
 ```
 
 ```bash
@@ -36,6 +38,7 @@ cd code/backend/scripts/azure
 ./02-deploy-model.sh gpt-4.1-mini fast 20
 ./03-create-agent.sh lyrical
 ./04-invoke-agent.sh "Why was my card blocked?"
+./07-provision-search.sh libra-ai-acad srch-libra-acad swedencentral free
 ```
 
 ## The same thing in Python

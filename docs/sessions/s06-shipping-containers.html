@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session 6 — Shipping the container · AI Engineering on Azure</title>
+  <link rel="stylesheet" href="../../resources/theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout container">
+
+    <!-- ============ SIDE NAV ============ -->
+    <aside class="side-nav">
+      <p class="side-nav__brand">Session 6<small>AI Engineering on Azure</small></p>
+      <a class="side-nav__link" href="#overview">Overview</a>
+      <a class="side-nav__link" href="#agenda">Agenda</a>
+      <a class="side-nav__link" href="#outcomes">Outcomes</a>
+      <span class="side-nav__group">Understanding the problem</span>
+      <a class="side-nav__link" href="#why-local">Why Python runs on your machine</a>
+      <a class="side-nav__link" href="#anatomy">What is inside an image</a>
+      <a class="side-nav__link" href="#dev-vs-ship">Development images vs shipped ones</a>
+      <a class="side-nav__link" href="#identity">The identity problem, exactly</a>
+      <a class="side-nav__link" href="#managed-identity">Managed identity — the fix</a>
+      <span class="side-nav__group">Preparing to ship</span>
+      <a class="side-nav__link" href="#changes">What must change</a>
+      <a class="side-nav__link" href="#state">Where the state goes</a>
+      <a class="side-nav__link" href="#lab-a">Lab A — build the images</a>
+      <a class="side-nav__link" href="#targets">Where a container can run</a>
+      <span class="side-nav__group">Deploying</span>
+      <a class="side-nav__link" href="#recipe">The complete recipe</a>
+      <a class="side-nav__link" href="#secrets">Configuration &amp; secrets</a>
+      <a class="side-nav__link" href="#operate">Logs, probes &amp; revisions</a>
+      <a class="side-nav__link" href="#cost">What it costs</a>
+      <a class="side-nav__link" href="#automation">One script for all of it</a>
+      <a class="side-nav__link" href="#troubleshooting">When it breaks</a>
+      <a class="side-nav__link" href="#lab-b">Lab B — deploy your own</a>
+      <span class="side-nav__group">Wrap-up</span>
+      <a class="side-nav__link" href="#conclusions">Conclusions</a>
+      <a class="side-nav__link" href="#takeaways">Takeaways</a>
+      <a class="side-nav__link" href="#references">References</a>
+      <a class="side-nav__link" href="#assignment">Assignment</a>
+    </aside>
+
+    <main>
+
+      <!-- ============ OVERVIEW ============ -->
+      <section id="overview" class="doc-section">
+        <header class="hero animate-in">
+          <span class="eyebrow">Session 6 · AI Engineering on Azure</span>
+          <h1>Shipping the container — from <span class="gradient-text">your laptop to a public URL</span></h1>
+          <p><strong>Today the application stops being something you run and becomes something that runs.</strong></p>
+          <p>For five sessions the backend has lived on your machine. There is a
+            <code>Dockerfile</code>, there is a <code>docker compose up</code>, and yet the
+            instruction has consistently been <em>run the Python on the host</em>. That was not an
+            oversight and it was not a limitation of containers — it was a precise consequence of
+            one fact: <strong>a container on your laptop has no identity</strong>. This session
+            explains that fact properly, shows exactly what a development image does that a shipped
+            image must not, and then walks the whole road to Azure: a registry, an image, an
+            environment, a managed identity, configuration, secrets, logs, revisions and a URL
+            anyone can open. Every command is given for <strong>Windows PowerShell first</strong>,
+            with the bash equivalent beside it, because that is what is on your screen.</p>
+          <div style="margin-top:1.2rem; display:flex; gap:.6rem; flex-wrap:wrap;">
+            <span class="badge badge--cyan">Wed 29 Jul · 09:30–12:00 · online</span>
+            <span class="badge badge--gold">Two labs · 35 minutes hands-on</span>
+            <span class="badge badge--navy">Windows first · PowerShell throughout</span>
+            <span class="badge badge--coral">You end with a public URL</span>
+          </div>
+        </header>
+      </section>
+
+      <!-- ============ AGENDA ============ -->
+      <section id="agenda" class="doc-section">
+        <div>
+          <span class="eyebrow">Agenda</span>
+          <h2>The 150 minutes</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Segment</th><th>Min</th><th>Format</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>09:30</td><td>Framing: what "it works on my machine" actually costs</td><td>10</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>09:40</td><td>Why the Python has been running on your machine — the honest answer</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>09:55</td><td>Anatomy of an image; the difference between a dev image and a shipped one</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:10</td><td><strong>Lab A</strong> — build the two images you will ship, and run them</td><td>20</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>10:30</td><td>Break</td><td>10</td><td>—</td></tr>
+              <tr><td>10:40</td><td>Identity: <code>az login</code>, service principals, managed identity</td><td>15</td><td><span class="badge badge--navy">Theory</span></td></tr>
+              <tr><td>10:55</td><td>Live: the complete recipe — registry → environment → app → URL</td><td>30</td><td><span class="badge badge--crimson">Live coding</span></td></tr>
+              <tr><td>11:25</td><td>Configuration, secrets, logs, revisions and what it costs</td><td>15</td><td><span class="badge badge--cyan">Walkthrough</span></td></tr>
+              <tr><td>11:40</td><td><strong>Lab B</strong> — deploy your own, and prove it from another device</td><td>15</td><td><span class="badge badge--gold">Lab</span></td></tr>
+              <tr><td>11:55</td><td>Questions &amp; what's next</td><td>5</td><td><span class="badge badge--coral">Q&amp;A</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 100 100" role="img" aria-label="Time split of the 150 minutes: labs 35, live coding 30, theory 55, walkthrough 15, questions 5, break 10.">
+          <path fill="var(--chart-lab)" stroke="var(--surface)" stroke-width="2" d="M 50.00 4.00 A 46 46 0 0 1 95.75 45.19 L 76.85 47.18 A 27 27 0 0 0 50.00 23.00 Z"><title>Labs — 35′ (23%)</title></path>
+          <path fill="var(--chart-coding)" stroke="var(--surface)" stroke-width="2" d="M 95.75 45.19 A 46 46 0 0 1 68.71 92.02 L 60.98 74.67 A 27 27 0 0 0 76.85 47.18 Z"><title>Live coding — 30′ (20%)</title></path>
+          <path fill="var(--chart-theory)" stroke="var(--surface)" stroke-width="2" d="M 68.71 92.02 A 46 46 0 0 1 6.25 35.79 L 24.32 41.66 A 27 27 0 0 0 60.98 74.67 Z"><title>Theory — 55′ (37%)</title></path>
+          <path fill="var(--chart-walkthrough)" stroke="var(--surface)" stroke-width="2" d="M 6.25 35.79 A 46 46 0 0 1 22.96 12.79 L 34.13 28.16 A 27 27 0 0 0 24.32 41.66 Z"><title>Walkthrough — 15′ (10%)</title></path>
+          <path fill="var(--chart-qa)" stroke="var(--surface)" stroke-width="2" d="M 22.96 12.79 A 46 46 0 0 1 31.29 7.98 L 39.02 25.33 A 27 27 0 0 0 34.13 28.16 Z"><title>Q&amp;A — 5′ (3%)</title></path>
+          <path fill="var(--chart-break)" stroke="var(--surface)" stroke-width="2" d="M 31.29 7.98 A 46 46 0 0 1 50.00 4.00 L 50.00 23.00 A 27 27 0 0 0 39.02 25.33 Z"><title>Break — 10′ (7%)</title></path>
+            <text x="50" y="49" text-anchor="middle" style="font: 700 13px var(--font-sans); fill: var(--text);">150′</text>
+            <text x="50" y="59" text-anchor="middle" style="font: 600 5.5px var(--font-sans); fill: var(--text-muted); letter-spacing: .08em; text-transform: uppercase;">total</text>
+          </svg>
+          <ul class="chart-legend">
+            <li><span class="chart-legend__swatch" style="background:var(--chart-lab)"></span>Labs — 35′ (23%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-coding)"></span>Live coding — 30′ (20%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-theory)"></span>Theory — 55′ (37%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-walkthrough)"></span>Walkthrough — 15′ (10%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-qa)"></span>Q&amp;A — 5′ (3%)</li>
+            <li><span class="chart-legend__swatch" style="background:var(--chart-break)"></span>Break — 10′ (7%)</li>
+          </ul>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Bring a working environment</p>
+          <p>Today builds directly on what you own: a resource group, a Foundry resource with a chat
+            model and an embedding model deployed, and the backend answering <code>/health</code>.
+            If any of that is missing, fix it in the first ten minutes — nothing here can be
+            deployed on top of an environment that does not exist yet.</p>
+        </div>
+      </section>
+
+      <!-- ============ OUTCOMES ============ -->
+      <section id="outcomes" class="doc-section">
+        <div>
+          <span class="eyebrow">Outcomes</span>
+          <h2>By the end of this session you can…</h2>
+        </div>
+        <ul>
+          <li><strong>Explain</strong>, in one paragraph and without hand-waving, why a container on
+            your laptop cannot use your Azure login — and why the same container in Azure can.</li>
+          <li><strong>Tell a development image from a shippable one</strong> by reading its
+            <code>Dockerfile</code>: bind mounts, <code>--reload</code>, dev servers and
+            <code>.env</code> files are all development devices, and each has a production
+            counterpart.</li>
+          <li><strong>Build and tag</strong> a production image for the API and one for the console,
+            and run them with no source tree present.</li>
+          <li><strong>Push to Azure Container Registry</strong> — including from a machine with no
+            local Docker, by building in the cloud.</li>
+          <li><strong>Deploy to Azure Container Apps</strong>: environment, ingress, replicas,
+            CPU and memory, and a public HTTPS URL with a certificate you did not have to obtain.</li>
+          <li><strong>Give the running container an identity</strong> — a system-assigned managed
+            identity — and grant it exactly the roles it needs on Foundry, the registry and
+            Azure AI Search, so that <em>no key exists anywhere</em>.</li>
+          <li><strong>Configure it</strong> with environment variables and secrets instead of a
+            <code>.env</code> file, and know which of the two each value belongs in.</li>
+          <li><strong>Operate it</strong>: read live logs, list revisions, split traffic between two
+            versions, roll back, and delete everything in one command.</li>
+          <li><strong>Estimate what it costs</strong> and configure it to cost nothing while idle.</li>
+        </ul>
+      </section>
+
+      <!-- ============ WHY LOCAL ============ -->
+      <section id="why-local" class="doc-section">
+        <div>
+          <span class="eyebrow">The question behind today</span>
+          <h2>Why the Python has been running on <span class="gradient-text">your machine</span></h2>
+        </div>
+        <p class="prose">You have a <code>Dockerfile</code>. You have a <code>docker compose up</code>
+          that starts three services. And yet, every time the agent features came up, the
+          instruction was: <em>stop the API container and run uvicorn on the host</em>. That looks
+          like an admission that the containers do not work. It is not. It is the consequence of a
+          single, precise fact, and once you see it the whole picture reorganizes itself.</p>
+
+        <div class="callout callout--info">
+          <p class="callout__title">The fact</p>
+          <p><code>az login</code> does not log <em>you</em> in. It writes a token cache into a
+            folder inside your Windows user profile — <code>%USERPROFILE%\.azure</code>. Anything
+            that can read that folder inherits your Azure identity. A container cannot read it: it
+            has its own filesystem, its own users, and no access to your profile unless you
+            deliberately mount it in.</p>
+        </div>
+
+        <p class="prose">So a container is not "denied" Azure — it is simply <strong>anonymous</strong>.
+          And an anonymous process has exactly one way left to prove who it is: a key. That is why
+          <code>docker-compose.yml</code> sets <code>AZURE_AI_AUTH=key</code> for the API service.
+          It is a workaround, and it works — but only for the half of Azure that accepts keys.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>What you call</th><th>Surface</th><th>API key</th><th>Entra token</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Chat completions, embeddings</td><td>Data plane, OpenAI-compatible</td><td class="dg-you">accepted</td><td class="dg-you">accepted</td></tr>
+              <tr><td>Speech (text to speech)</td><td>Data plane</td><td class="dg-you">accepted</td><td class="dg-you">accepted</td></tr>
+              <tr><td>Azure AI Search queries</td><td>Data plane</td><td class="dg-you">accepted</td><td class="dg-you">accepted</td></tr>
+              <tr><td><strong>Foundry Agent Service</strong></td><td>Data plane</td><td class="dg-provider">refused</td><td class="dg-you">required</td></tr>
+              <tr><td><strong>Listing your deployments, roles, quota</strong></td><td>Control plane (ARM)</td><td class="dg-provider">refused</td><td class="dg-you">required</td></tr>
+              <tr><td><strong>Creating anything at all</strong></td><td>Control plane (ARM)</td><td class="dg-provider">refused</td><td class="dg-you">required</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="prose">Read the two refused rows again: they are exactly the features that go dark
+          when you run the API in Docker. The <em>Foundry agent</em> mode in the console fails; the
+          Azure panel cannot list your deployments; <code>GET /agents</code> reports
+          <code>foundry.available: false</code> with the reason. Nothing is broken. The container is
+          telling you the truth about itself.</p>
+
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:1">
+                <span class="dg-label">Your laptop</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--accent">uvicorn on the host<br><small>reads %USERPROFILE%\.azure</small></div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box">Entra token</div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box dg-box--accent">everything works</div>
+                </div>
+                <div class="dg-row" style="margin-top:.5rem">
+                  <div class="dg-box dg-box--muted">the same code in Docker<br><small>cannot see that folder</small></div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box dg-box--muted">API key</div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box dg-box--muted">chat &amp; embeddings only</div>
+                </div>
+              </div>
+            </div>
+            <div class="dg-row">
+              <div class="dg-box dg-box--frame" style="flex:1">
+                <span class="dg-label">The same image, in Azure</span>
+                <div class="dg-row">
+                  <div class="dg-box dg-box--accent">the container<br><small>has a managed identity</small></div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box">Entra token</div>
+                  <span class="dg-arrow">→</span>
+                  <div class="dg-box dg-box--accent">everything works — and no key exists</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">The container is not the problem. The <em>laptop</em> is the
+            one place where a container has no identity of its own.</p>
+        </div>
+
+        <p class="prose">Which turns the question inside out. It is not <em>"why can't I run this in
+          Docker?"</em> It is <em>"why would I run it in Docker on the one machine where containers
+          are least useful?"</em> A container's job is to make an application reproducible somewhere
+          <strong>else</strong>. On your own machine you already have the source, the interpreter and
+          the login; the container adds isolation you do not need and removes an identity you do.
+          In Azure the trade reverses completely, and the identity story gets <em>better</em> than it
+          is locally: the platform hands the container a credential nobody had to create, store or
+          rotate.</p>
+
+        <div class="callout callout--success">
+          <p class="callout__title">The sentence to remember</p>
+          <p>You have not been avoiding containers. You have been running the container
+            <em>where the container is worth having</em> — Qdrant and the console — and running the
+            one piece that needs your personal identity as your personal user. Today the API stops
+            needing your identity, because it gets one of its own.</p>
+        </div>
+      </section>
+
+      <!-- ============ ANATOMY ============ -->
+      <section id="anatomy" class="doc-section">
+        <div>
+          <span class="eyebrow">Fundamentals</span>
+          <h2>What is actually inside an image</h2>
+        </div>
+        <p class="prose">Before shipping one it is worth being exact about what an image is, because
+          almost every deployment failure is a violation of one of these three properties.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Property</th><th>What it means</th><th>What it forbids</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Self-contained</strong></td>
+                <td>Everything the program needs to start is inside: interpreter, libraries, code</td>
+                <td>Depending on a file on the host, a folder you mounted, or a tool you happen to have installed</td>
+              </tr>
+              <tr>
+                <td><strong>Immutable</strong></td>
+                <td>The layers are read-only and content-addressed; the same digest is byte-identical anywhere</td>
+                <td>Writing anything you want to keep into the container filesystem</td>
+              </tr>
+              <tr>
+                <td><strong>Configured from outside</strong></td>
+                <td>Behaviour comes from environment variables at start time, not from what was baked in</td>
+                <td>Building one image per environment; baking secrets into layers</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="prose">An image is a stack of layers, each the filesystem difference produced by
+          one instruction. Ordering them from least to most volatile is not a style preference — it
+          is what makes rebuilds fast, because every layer above a changed one is discarded.</p>
+
+        <div class="diagram">
+          <div class="dg-stack">
+            <div class="dg-box dg-box--muted">FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim<br><small>Debian + Python + uv — changes when you upgrade Python, so almost never</small></div>
+            <div class="dg-box dg-box--muted">COPY pyproject.toml uv.lock<br><small>changes when you add a dependency</small></div>
+            <div class="dg-box">RUN uv sync --frozen --no-dev<br><small>the expensive layer — reused as long as the lock file is identical</small></div>
+            <div class="dg-box dg-box--accent">COPY app ./app<br><small>changes every time you edit a line — deliberately last</small></div>
+            <div class="dg-box dg-box--accent">CMD uvicorn app.main:app --host 0.0.0.0 --port 7799<br><small>metadata, not a layer: what to run when the container starts</small></div>
+          </div>
+          <p class="diagram__caption">Swap the last two <code>COPY</code>s and every code edit
+            reinstalls every dependency. This is the single most common cause of a two-minute build
+            that should take two seconds.</p>
+        </div>
+
+        <p class="prose">Two details in that file earn their place. <code>--frozen</code> tells
+          <code>uv</code> to install exactly what <code>uv.lock</code> pins and to fail rather than
+          silently resolve something newer — the build is reproducible or it does not happen.
+          <code>--no-dev</code> leaves the test and tooling dependencies out of the shipped image:
+          smaller, and a smaller attack surface.</p>
+
+        <p class="prose">And <code>--host 0.0.0.0</code>, which looks like a detail and is not. The
+          default, <code>127.0.0.1</code>, means <em>accept connections that originate inside this
+          machine</em> — and a container is its own machine. A server bound to loopback inside a
+          container is unreachable from everywhere, including from the host that started it. It is
+          the most common "the container is running but nothing answers" of all.</p>
+      </section>
+
+      <!-- ============ DEV VS SHIP ============ -->
+      <section id="dev-vs-ship" class="doc-section">
+        <div>
+          <span class="eyebrow">The distinction that matters today</span>
+          <h2>A development image and a shipped image are <span class="gradient-text">not the same image</span></h2>
+        </div>
+        <p class="prose">Until this session, both <code>Dockerfile</code>s in this repository were
+          written for one job: give you hot reload inside a container. Read them with shipping in
+          mind and the problems are immediate.</p>
+
+        <div class="code-block">
+          <span class="code-block__label">what the API Dockerfile used to end with</span>
+          <pre><code>CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app",
+     "--host", "0.0.0.0", "--port", "7799", "--reload"]</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">docker-compose.yml — the other half of the same trick</span>
+          <pre><code>volumes:
+  - ./app:/srv/app          # your editor writes straight into the container</code></pre>
+        </div>
+
+        <p class="prose"><code>--reload</code> makes uvicorn watch the filesystem and restart when a
+          file changes. That is only useful because the bind mount replaces the image's copy of
+          <code>/srv/app</code> with the folder on your disk. The two are a pair. Push that image to
+          a registry and run it in Azure, where there is no bind mount, and you get a server that
+          spends CPU watching files that will never change, restarts on a stray write, and — worse —
+          an image whose behaviour silently depended on source it does not contain.</p>
+
+        <p class="prose">The fix is the standard one: the <strong>image</strong> carries the
+          shippable default, and <strong>compose</strong> adds the development behaviour back for
+          development only.</p>
+
+        <div class="code-block">
+          <span class="code-block__label">code/backend/Dockerfile — now</span>
+          <pre><code># A shippable default: the code is IN the image, and the server does not watch the
+# filesystem for edits. Development puts --reload back through `command:` in
+# docker-compose.yml, where the source is also bind-mounted — the two belong
+# together, and neither belongs in an image you push to a registry.
+CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7799"]</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">code/backend/docker-compose.yml — now</span>
+          <pre><code>api:
+  build: .
+  command: ["uv", "run", "--no-sync", "uvicorn", "app.main:app",
+            "--host", "0.0.0.0", "--port", "7799", "--reload"]
+  volumes:
+    - ./app:/srv/app</code></pre>
+        </div>
+        <p class="prose">Nothing about your daily workflow changes. <code>docker compose up</code>
+          still hot-reloads. But <code>docker run</code> on the same image now behaves like
+          production, which is the entire point: <strong>the thing you test is the thing you
+          ship.</strong></p>
+
+        <h3>The console had a bigger problem</h3>
+        <p class="prose">The console image ran <code>npm run dev</code> — the Vite development
+          server. That is not a small compromise. A dev server compiles modules on demand, serves
+          them unminified, keeps a websocket open for hot reload, and needs the entire
+          <code>node_modules</code> tree at runtime. It is also the component that has been
+          <em>proxying</em> every API call, which is why the browser never met a CORS error.</p>
+        <p class="prose">Shipping it means doing both jobs properly: compile React once, and give
+          the proxying job to something built for it. The <code>Dockerfile</code> now has two
+          targets from one file — <code>dev</code> for compose, <code>prod</code> by default —
+          and <code>nginx.conf.template</code> forwards the same route list that
+          <code>vite.config.js</code> forwards in development.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>target <code>dev</code></th><th>target <code>prod</code> (the default)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Base image</td><td><code>node:20-alpine</code></td><td><code>nginx:1.27-alpine</code></td></tr>
+              <tr><td>What runs</td><td><code>vite</code> — compiles on demand</td><td>nginx — serves files</td></tr>
+              <tr><td>The React code</td><td>bind-mounted from your disk</td><td>compiled into <code>/usr/share/nginx/html</code></td></tr>
+              <tr><td>Who proxies the API</td><td><code>server.proxy</code> in <code>vite.config.js</code></td><td><code>location</code> blocks in <code>nginx.conf.template</code></td></tr>
+              <tr><td>Where the API URL comes from</td><td><code>VITE_API_TARGET</code>, probed at startup</td><td><code>API_URL</code>, substituted into the nginx config at startup</td></tr>
+              <tr><td>Hot reload</td><td>yes</td><td>no — that is the point</td></tr>
+              <tr><td>Image size</td><td>≈ 410 MB</td><td>≈ 74 MB</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--info">
+          <p class="callout__title">Why the API URL must be settable at <em>start</em> time</p>
+          <p>A compiled React bundle is static files: anything you inline at build time is frozen
+            into them, so a build-time API URL would mean one image per environment. Keeping the
+            proxy in nginx and the URL in an environment variable means one image serves
+            development, staging and production — configured, not rebuilt. The
+            <code>nginx:alpine</code> image substitutes environment variables into any file under
+            <code>/etc/nginx/templates/</code> when it starts, which is why the file is called
+            <code>nginx.conf.template</code>.</p>
+        </div>
+      </section>
+
+      <!-- ============ IDENTITY ============ -->
+      <section id="identity" class="doc-section">
+        <div>
+          <span class="eyebrow">The core mechanic</span>
+          <h2>The identity problem, exactly</h2>
+        </div>
+        <p class="prose">The application never asks for a token directly. It constructs a
+          <code>DefaultAzureCredential</code>, and that object tries a fixed sequence of ways to
+          obtain one, stopping at the first that succeeds. Understanding that sequence explains
+          every authentication outcome you have seen this week.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Credential</th><th>Where it looks</th><th>Wins when…</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td><code>EnvironmentCredential</code></td><td><code>AZURE_CLIENT_ID</code>, <code>AZURE_CLIENT_SECRET</code>, <code>AZURE_TENANT_ID</code></td><td>you gave the process a service principal</td></tr>
+              <tr><td>2</td><td><code>WorkloadIdentityCredential</code></td><td>a projected token file</td><td>running in Kubernetes with workload identity</td></tr>
+              <tr><td>3</td><td><code>ManagedIdentityCredential</code></td><td>a local metadata endpoint the platform provides</td><td><strong>running in Azure</strong> — Container Apps, App Service, a VM</td></tr>
+              <tr><td>4</td><td><code>VisualStudioCodeCredential</code></td><td>the VS Code Azure extension</td><td>you signed in inside the editor</td></tr>
+              <tr><td>5</td><td><code>AzureCliCredential</code></td><td><code>%USERPROFILE%\.azure</code>, via the <code>az</code> executable</td><td><strong>you ran <code>az login</code></strong> — this is your laptop's lane</td></tr>
+              <tr><td>6</td><td><code>AzurePowerShellCredential</code></td><td>the <code>Az.Accounts</code> module</td><td>you used <code>Connect-AzAccount</code> instead</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="prose">Now the whole week reads cleanly. On your machine lane 5 wins. In a plain
+          container none of the lanes can win, so the code falls back to a key. In Azure Container
+          Apps <strong>lane 3</strong> wins — before it ever reaches the CLI lane, and without any
+          secret existing.</p>
+
+        <div class="callout callout--warn">
+          <p class="callout__title">A real failure worth memorizing</p>
+          <p>A backend started from a shell whose <code>PATH</code> did not include the Azure CLI
+            failed with <code>AzureCliCredential: Azure CLI not found on path</code> — even though
+            <code>az login</code> had been done hours earlier and every other terminal worked. Lane
+            5 does not read the token cache itself; it <em>shells out to <code>az</code></em>. If
+            the process cannot find the executable, the lane fails, and the error is about a missing
+            program rather than a missing login. When a credential error surprises you, read which
+            lane failed and why: the chain always tells you.</p>
+        </div>
+
+        <h3>The three ways to give a process an identity</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Lane</th><th>What it is</th><th>Secret to protect</th><th>Use it for</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Managed identity</strong></td>
+                <td>Azure creates a principal, attaches it to your compute, and rotates its credential for you</td>
+                <td class="dg-you">none — there is nothing to leak</td>
+                <td>Anything running <em>in</em> Azure. Always the first choice.</td>
+              </tr>
+              <tr>
+                <td><strong>Service principal</strong></td>
+                <td>An application identity with a client secret or certificate you hold</td>
+                <td class="dg-shared">a secret with an expiry date</td>
+                <td>CI/CD pipelines, and containers running outside Azure</td>
+              </tr>
+              <tr>
+                <td><strong>API key</strong></td>
+                <td>A shared string that identifies the <em>resource</em>, not the caller</td>
+                <td class="dg-provider">a secret with no expiry and no audit trail</td>
+                <td>Local experiments, and services that offer nothing better</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">The ordering is not moral, it is operational. A key cannot be scoped to one
+          operation, cannot be attributed to a person or a service in an audit log, and does not
+          expire — so a leaked key is valid until somebody notices and rotates it. A managed
+          identity has no string to leak in the first place, and every call it makes is attributable
+          to a named principal.</p>
+      </section>
+
+      <!-- ============ MANAGED IDENTITY ============ -->
+      <section id="managed-identity" class="doc-section">
+        <div>
+          <span class="eyebrow">The fix</span>
+          <h2>Managed identity — and the code that does not change</h2>
+        </div>
+        <p class="prose">When you deploy a container app with <code>--system-assigned</code>, Azure
+          creates a service principal in your Entra tenant, ties its lifetime to that app, and
+          exposes a metadata endpoint <em>inside</em> the container. The SDK calls that endpoint,
+          gets a token, and uses it. Delete the app and the principal is deleted with it.</p>
+
+        <div class="diagram">
+          <div class="dg-row">
+            <div class="dg-box dg-box--frame" style="flex:1">
+              <span class="dg-label">Inside the running container</span>
+              <div class="dg-stack">
+                <div class="dg-box">your code: <code>DefaultAzureCredential()</code></div>
+                <div class="dg-box dg-note">↓ lane 3 succeeds</div>
+                <div class="dg-box">the platform's identity endpoint</div>
+                <div class="dg-box dg-note">↓ returns a short-lived token</div>
+                <div class="dg-box dg-box--accent">Foundry · AI Search · Storage — as a named principal</div>
+              </div>
+            </div>
+            <span class="dg-arrow">↔</span>
+            <div class="dg-box dg-box--frame" style="flex:1">
+              <span class="dg-label">What you configure, once</span>
+              <div class="dg-stack">
+                <div class="dg-box dg-box--muted">the app has a system-assigned identity</div>
+                <div class="dg-box dg-box--muted">that identity holds <em>AcrPull</em> on the registry</div>
+                <div class="dg-box dg-box--muted">…<em>Cognitive Services User</em> on Foundry</div>
+                <div class="dg-box dg-box--muted">…<em>Search Index Data Contributor</em> on AI Search</div>
+                <div class="dg-box dg-box--accent">AZURE_AI_AUTH=identity</div>
+              </div>
+            </div>
+          </div>
+          <p class="diagram__caption">Roles are granted to the identity, not written into the app.
+            Revoking access is a role removal, not a redeploy.</p>
+        </div>
+
+        <div class="callout callout--success">
+          <p class="callout__title">Not one line of Python changes</p>
+          <p>The same <code>DefaultAzureCredential</code> that reads your <code>az login</code> on
+            your laptop reads the platform identity in Azure. The only difference between the two
+            environments is which lane of the chain answers first — and that is decided by the
+            environment, not by your code. This is what the abstraction was for.</p>
+        </div>
+
+        <p class="prose">One consequence worth stating plainly, because it inverts the usual
+          intuition: <strong>the deployed application is more secure than your development setup,
+          and simpler</strong>. Locally you juggle a key in <code>.env</code>, or a service
+          principal with a secret that expires. Deployed, there is no key, no secret, no expiry, and
+          a role assignment you can read and revoke from one place.</p>
+      </section>
+
+      <!-- ============ CHANGES ============ -->
+      <section id="changes" class="doc-section">
+        <div>
+          <span class="eyebrow">Checklist</span>
+          <h2>What must change before you ship</h2>
+        </div>
+        <p class="prose">Every row below is a development convenience that has a production
+          counterpart. Nothing here is optional; skipping a row does not fail the build, it fails
+          later and less clearly.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>In development</th><th>Why it exists</th><th>What ships instead</th><th>Done?</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>--reload</code></td><td>restart uvicorn when you edit a file</td><td>plain uvicorn; the code is inside the image</td><td class="dg-you">changed</td></tr>
+              <tr><td><code>./app:/srv/app</code> bind mount</td><td>your editor writes into the container</td><td>nothing — <code>COPY app ./app</code> at build time</td><td class="dg-you">changed</td></tr>
+              <tr><td><code>npm run dev</code> (Vite)</td><td>hot module replacement in the browser</td><td><code>npm run build</code> → static files behind nginx</td><td class="dg-you">changed</td></tr>
+              <tr><td>Vite proxies <code>/ask</code>, <code>/agents</code>…</td><td>one origin, therefore no CORS</td><td>nginx <code>location</code> blocks, same route list</td><td class="dg-you">changed</td></tr>
+              <tr><td><code>env_file: .env</code></td><td>one file, easy to edit</td><td>environment variables + Container Apps secrets</td><td class="dg-shared">at deploy time</td></tr>
+              <tr><td><code>AZURE_AI_AUTH=key</code></td><td>a container on a laptop has no identity</td><td><code>identity</code> — the managed identity</td><td class="dg-shared">at deploy time</td></tr>
+              <tr><td>Qdrant container + local volume</td><td>free, instant, disposable</td><td>Azure AI Search, or Qdrant with real storage</td><td class="dg-shared">decision below</td></tr>
+              <tr><td><code>localhost:7799</code></td><td>your machine only</td><td>HTTPS ingress on 443 with a managed certificate</td><td class="dg-shared">platform</td></tr>
+              <tr><td>logs in your terminal</td><td>you are watching</td><td>Log Analytics; <code>az containerapp logs show</code></td><td class="dg-shared">platform</td></tr>
+              <tr><td>you restart it when it dies</td><td>you are watching</td><td>health probes and automatic replacement</td><td class="dg-shared">platform</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <p class="callout__title">Check your <code>.dockerignore</code> before the first push</p>
+          <p>An image is built from everything in the folder you point at, and <code>.env</code>
+            lives in that folder. If it is not excluded, your keys are baked into a layer — and a
+            layer is permanent, so deleting the file in a later instruction does not remove it. Both
+            <code>.dockerignore</code> files in this repository already exclude <code>.env</code>,
+            <code>.venv</code> and <code>node_modules</code>. Verify it yourself rather than trusting
+            this sentence:</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — prove the secret is not in the image</span>
+          <pre><code>docker build -t libra-api:check code\backend
+docker run --rm libra-api:check ls -la /srv          # no .env should appear
+
+# and search every layer, not just the final filesystem
+docker history --no-trunc libra-api:check | Select-String -Pattern "AZURE_|API_KEY"</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ STATE ============ -->
+      <section id="state" class="doc-section">
+        <div>
+          <span class="eyebrow">The decision nobody warns you about</span>
+          <h2>Where the state goes</h2>
+        </div>
+        <p class="prose">A container filesystem is temporary. When a replica is replaced — a new
+          revision, a scale event, a node moving — everything written inside it is gone. That is not
+          a defect; it is the property that makes replicas interchangeable. But it means every piece
+          of state your application keeps has to live somewhere that outlives a replica.</p>
+        <p class="prose">This application keeps exactly one: <strong>the vector store</strong>.
+          Locally that is a Qdrant container with a named volume, and a named volume is a folder on
+          your machine. It does not travel.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Option</th><th>What you get</th><th>What you take on</th><th>Verdict for this course</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Azure AI Search</strong></td>
+                <td>Managed index; keyword, vector and hybrid retrieval; semantic ranking; role-based access</td>
+                <td>A monthly bill, and a different query API</td>
+                <td class="dg-you">Use this. The app already speaks it — <code>/tools/azure-search/*</code></td>
+              </tr>
+              <tr>
+                <td><strong>Qdrant as a second container app</strong></td>
+                <td>The same database you develop against, no code change at all</td>
+                <td>A persistent volume, backups, upgrades, and its security — all yours</td>
+                <td class="dg-shared">Valid, and instructive. More moving parts than today allows</td>
+              </tr>
+              <tr>
+                <td><strong>Qdrant with no volume</strong></td>
+                <td>It starts</td>
+                <td>Your index disappears on every restart, silently</td>
+                <td class="dg-provider">Never. This is the trap</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="prose">This is the payoff for the work in the previous session. Azure AI Search
+          was not added for variety — it is the piece that makes the application deployable, because
+          it is the only part of the retrieval stack that a container does not have to own. The
+          service holds the index; the container holds nothing and can be replaced at any moment.</p>
+
+        <div class="callout callout--info">
+          <p class="callout__title">The general rule</p>
+          <p>Before you deploy anything, list what it writes. Every item on that list needs a home
+            outside the container: a managed database, a search index, blob storage, a queue. If
+            something on the list has no home, you have not finished designing the deployment —
+            you have only postponed discovering it.</p>
+        </div>
+      </section>
+
+      <!-- ============ LAB A ============ -->
+      <section id="lab-a" class="doc-section">
+        <div>
+          <span class="eyebrow">Lab A · 20 minutes</span>
+          <h2>Build the two images you are going to ship</h2>
+        </div>
+        <p class="prose">Before touching Azure, prove the images work with no source tree, no bind
+          mount and no <code>.env</code> file. If they do not work here, they will not work there,
+          and here the feedback loop is seconds long.</p>
+
+        <h3>1 · Build them</h3>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — from the repository root</span>
+          <pre><code>docker build -t libra-api:v1 code\backend
+docker build -t libra-console:v1 code\frontend        # prod is the default target
+
+docker images | Select-String "libra-"</code></pre>
+        </div>
+        <p class="prose">Note the sizes. The console should be around 74 MB — roughly a fifth of the
+          development image, because Node, the compiler and <code>node_modules</code> stayed in the
+          build stage and never reached the final one.</p>
+
+        <h3>2 · Run the API with no mounts and no <code>.env</code></h3>
+        <p class="prose">Configuration now arrives as flags. This is exactly what Container Apps
+          will do for you later, just typed by hand:</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — one line per variable, backtick continues the line</span>
+          <pre><code>docker run --rm -d --name api-test -p 7899:7799 `
+  -e LLM_PROVIDER=azure `
+  -e EMBEDDING_PROVIDER=azure `
+  -e AZURE_AI_AUTH=key `
+  -e AZURE_AI_API_KEY=$env:AZURE_AI_API_KEY `
+  -e AZURE_AI_ENDPOINT=https://&lt;your-resource&gt;.services.ai.azure.com/models `
+  -e AZURE_AI_CHAT_DEPLOYMENT=gpt-5-mini `
+  -e AZURE_AI_EMBEDDING_DEPLOYMENT=text-embedding-3-small `
+  libra-api:v1
+
+irm http://localhost:7899/health | ConvertTo-Json -Depth 4</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Getting the key into <code>$env:</code> without pasting it</p>
+          <p><code>$env:AZURE_AI_API_KEY = (az cognitiveservices account keys list --name &lt;resource&gt; --resource-group &lt;rg&gt; --query key1 -o tsv)</code>
+            — it stays in the session and never appears in your shell history or your screen share.</p>
+        </div>
+
+        <h3>3 · Run the console against it</h3>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>docker run --rm -d --name console-test -p 7801:7800 `
+  -e API_URL=http://host.docker.internal:7899 `
+  --add-host host.docker.internal:host-gateway `
+  libra-console:v1
+
+start http://localhost:7801</code></pre>
+        </div>
+        <p class="prose">Open it. The console loads from nginx, and <code>/health</code>,
+          <code>/agents</code> and <code>/ask</code> are proxied to the API container. There is no
+          Vite anywhere, and no source on disk is being read.</p>
+
+        <h3>4 · Prove the two things this lab is really about</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Check</th><th>How</th><th>What you should see</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>The image is self-contained</td>
+                <td>Rename <code>code\backend\app</code> temporarily, then <code>irm http://localhost:7899/health</code></td>
+                <td>Still answers. Nothing on your disk is being read</td>
+              </tr>
+              <tr>
+                <td>Editing source changes nothing</td>
+                <td>Edit any file under <code>app\</code> and save</td>
+                <td>No restart in <code>docker logs api-test</code> — <code>--reload</code> is gone</td>
+              </tr>
+              <tr>
+                <td>Foundry agents are unavailable</td>
+                <td><code>irm http://localhost:7899/agents | ConvertTo-Json -Depth 4</code></td>
+                <td><code>foundry.available: false</code> with the reason — key auth, no identity</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose">That last row is the one to sit with. It is the exact condition this
+          session removes — and the only change required is <em>where</em> the container runs.</p>
+
+        <div class="code-block">
+          <span class="code-block__label">clean up</span>
+          <pre><code>docker rm -f api-test console-test</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ TARGETS ============ -->
+      <section id="targets" class="doc-section">
+        <div>
+          <span class="eyebrow">Choosing</span>
+          <h2>Where a container can run in Azure</h2>
+        </div>
+        <p class="prose">There are five reasonable answers and they differ mainly in how much of the
+          platform you are asked to operate. Pick by the amount of infrastructure you want to own,
+          not by the feature list.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Service</th><th>Model</th><th>Scales to zero</th><th>You operate</th><th>Reach for it when</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Container Apps</strong></td>
+                <td>Serverless containers on managed Kubernetes you never see</td>
+                <td class="dg-you">yes</td>
+                <td>The image and the configuration</td>
+                <td>An HTTP API or a background worker — <strong>this course</strong></td>
+              </tr>
+              <tr>
+                <td><strong>App Service</strong></td>
+                <td>Classic PaaS that also accepts a container</td>
+                <td class="dg-provider">no (always-on plan)</td>
+                <td>The image, the plan, the slots</td>
+                <td>You already run App Service and want one more thing beside it</td>
+              </tr>
+              <tr>
+                <td><strong>Container Instances</strong></td>
+                <td>One container, no orchestration at all</td>
+                <td class="dg-shared">manual</td>
+                <td>Everything above the container</td>
+                <td>A one-off job or a demo lasting an afternoon</td>
+              </tr>
+              <tr>
+                <td><strong>Kubernetes (AKS)</strong></td>
+                <td>The full cluster, yours</td>
+                <td class="dg-shared">with work</td>
+                <td>Nodes, networking, upgrades, ingress, the lot</td>
+                <td>You have a platform team and reasons</td>
+              </tr>
+              <tr>
+                <td><strong>Functions</strong></td>
+                <td>Event-driven; can run a container</td>
+                <td class="dg-you">yes</td>
+                <td>The function code</td>
+                <td>Short, triggered work rather than a long-lived server</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="prose">We use <strong>Container Apps</strong>, and the reasons are specific to what
+          we built. It scales to zero, so an idle course project costs nothing. It issues an HTTPS
+          certificate for you. It supports managed identity directly, which is the whole point of
+          today. And it keeps <em>revisions</em>, so shipping a new version and rolling it back are
+          both one command — the operational property that matters most the first time you deploy
+          something broken.</p>
+
+        <div class="callout callout--info">
+          <p class="callout__title">What "serverless" means here</p>
+          <p>Not that there is no server — that you do not name one, patch one, or pay for one while
+            nothing is happening. Underneath, Container Apps runs on Kubernetes; the deal is that
+            the cluster is not yours to operate. With <code>--min-replicas 0</code> the platform
+            stops your last replica when traffic stops and starts one again when a request arrives.
+            The price of that is a <em>cold start</em>: the first request after an idle period waits
+            for a container to boot.</p>
+        </div>
+      </section>
+
+      <!-- ============ THE COMPLETE RECIPE ============ -->
+      <section id="recipe" class="doc-section">
+        <div>
+          <span class="eyebrow">Reference · follow this linearly</span>
+          <h2>The complete recipe: <span class="gradient-text">from an image on your laptop to a public URL</span></h2>
+        </div>
+        <p class="prose">Everything above explained the ideas. This is the procedure — every step,
+          every command, in order, with nothing assumed. Follow it once and you will have a
+          registry, two images built in the cloud, a Container Apps environment, an API with its own
+          identity and no key anywhere, a console in front of it, and an address you can send to
+          somebody.</p>
+
+        <div class="callout callout--warn">
+          <p class="callout__title">Windows first — read this once</p>
+          <p>Every command on this page is PowerShell. Three habits keep them working, and they are
+            the same three that catch people in every Azure tutorial written for bash.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Habit</th><th>Why</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Continue lines with a <strong>backtick</strong> <code>`</code></td>
+                <td><code>\</code> is bash's continuation character; in PowerShell it is a literal backslash and the command breaks</td>
+                <td><code>az acr create --name $Acr `</code><br><code>&nbsp;&nbsp;--resource-group $Rg --sku Basic</code></td>
+              </tr>
+              <tr>
+                <td>The backtick must be the <strong>last</strong> character on the line</td>
+                <td>A single trailing space after it and PowerShell sees an escaped space, not a continuation</td>
+                <td>When in doubt, put the whole command on one line — that always works</td>
+              </tr>
+              <tr>
+                <td>Capture values in variables, not in nested <code>$( )</code></td>
+                <td>Nesting works, but a failure inside the inner call is much harder to see</td>
+                <td><code>$acrId = az acr show --name $Acr --query id -o tsv</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>0 · Set your variables once</h3>
+        <p class="prose">Every command below reads from these. Set them at the top of your session
+          and the rest of the page is copy-paste. Names matter: a registry name must be globally
+          unique across all of Azure, lowercase, letters and digits only.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — edit the first four lines, run the block</span>
+          <pre><code>$Rg       = "libra-ai-acad"                 # your existing resource group
+$Location = "swedencentral"                 # the region your Foundry resource is in
+$Acr      = "acrlibra&lt;yourname&gt;"            # globally unique, lowercase, a-z0-9 only
+$Foundry  = "libra-ai-acad-resource"        # your Foundry (AI Services) resource
+
+$Env      = "cae-libra-acad"                # the Container Apps environment
+$ApiApp   = "ca-libra-api"
+$WebApp   = "ca-libra-console"
+
+# sanity: are you where you think you are?
+az account show --query "{user:user.name, subscription:name}" -o yaml</code></pre>
+        </div>
+
+        <div class="callout callout--tip">
+          <p class="callout__title">The one-command version — worth seeing once</p>
+          <p><code>az containerapp up --name ca-quick --resource-group $Rg --location $Location --source . --target-port 7799 --ingress external</code>
+            creates a registry, builds your image in the cloud, creates an environment and deploys
+            the app — one command, about four minutes. It is a genuinely good way to see the shape
+            of the thing before learning the parts. It also authenticates the app to the registry
+            with an <em>admin key</em> and gives it no managed identity, which is precisely what the
+            rest of this recipe exists to avoid. Use it to explore; use the steps below for anything
+            you intend to keep.</p>
+        </div>
+
+        <h3>1 · Verify what you already own</h3>
+        <p class="prose">Four things must be true. Each command prints something if it is satisfied.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code># 1 · the resource group exists
+az group show --name $Rg --query "{name:name, location:location}" -o yaml
+
+# 2 · a chat model and an embedding model are deployed
+az cognitiveservices account deployment list --name $Foundry --resource-group $Rg --query "[].{deployment:name, model:properties.model.name}" -o table
+
+# 3 · the Foundry endpoints, which the app will need
+az cognitiveservices account show --name $Foundry --resource-group $Rg --query properties.endpoints -o yaml
+
+# 4 · your CLI is recent enough for the containerapp commands
+az version --query "\"azure-cli\"" -o tsv</code></pre>
+        </div>
+
+        <h3>2 · Register the providers, add the extension</h3>
+        <p class="prose">A subscription only accepts resource types whose <em>provider</em> is
+          registered. Registration is a one-time, free operation per subscription and takes a minute
+          or two the first time. Doing it now converts a confusing error later into a short wait
+          now.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az extension add --name containerapp --upgrade
+
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.ContainerRegistry
+az provider register --namespace Microsoft.OperationalInsights   # where the logs go
+
+# repeat until all three say Registered
+az provider show --namespace Microsoft.App --query registrationState -o tsv
+az provider show --namespace Microsoft.ContainerRegistry --query registrationState -o tsv
+az provider show --namespace Microsoft.OperationalInsights --query registrationState -o tsv</code></pre>
+        </div>
+
+        <h3>3 · Create the container registry</h3>
+        <p class="prose">A registry is where images live so that something other than your laptop
+          can pull them. Docker Hub is a registry; Azure Container Registry is one inside your
+          subscription, with your access control and your network rules.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az acr create --name $Acr --resource-group $Rg --location $Location --sku Basic
+
+# admin access stays OFF: the app will authenticate as itself, not with a shared password
+az acr update --name $Acr --admin-enabled false
+
+az acr show --name $Acr --query "{name:name, server:loginServer, sku:sku.name}" -o yaml</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>SKU</th><th>Included storage</th><th>Suits</th></tr></thead>
+            <tbody>
+              <tr><td><code>Basic</code></td><td>10 GB</td><td>Learning and small projects — use this</td></tr>
+              <tr><td><code>Standard</code></td><td>100 GB</td><td>A team shipping regularly</td></tr>
+              <tr><td><code>Premium</code></td><td>500 GB</td><td>Geo-replication, private endpoints, content trust</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4 · Build the images — in the cloud</h3>
+        <p class="prose">This is the step that surprises people, and it is the best single argument
+          for the CLI on Windows. <code>az acr build</code> uploads your build context to Azure,
+          builds the image there on Linux, and pushes it to your registry. <strong>You do not need
+          Docker installed at all</strong> — no Desktop, no daemon, no WSL, no licence question. It
+          also removes a whole category of "works on my machine": the build runs on the same kind of
+          machine that will run it.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — from the repository root</span>
+          <pre><code>az acr build --registry $Acr --image libra-api:v1 code\backend
+
+# the console's Dockerfile has two targets; `prod` is the default, so nothing extra to pass
+az acr build --registry $Acr --image libra-console:v1 code\frontend
+
+az acr repository list --name $Acr -o table
+az acr repository show-tags --name $Acr --repository libra-api -o table</code></pre>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">The local alternative, for completeness</p>
+          <p>If you do have Docker and prefer to build locally, it is three steps:
+            <code>az acr login --name $Acr</code>, then
+            <code>docker build -t "$Acr.azurecr.io/libra-api:v1" code\backend</code>, then
+            <code>docker push "$Acr.azurecr.io/libra-api:v1"</code>. On an ARM Mac add
+            <code>--platform linux/amd64</code> to the build, or the image will not start in
+            Azure — a failure that reads like a crash and is actually an architecture mismatch.</p>
+        </div>
+
+        <h3>5 · Create the Container Apps environment</h3>
+        <p class="prose">An <em>environment</em> is the shared boundary your apps live in: one
+          virtual network, one Log Analytics workspace, one internal DNS namespace. Apps in the same
+          environment can reach each other by name, privately. Creating it takes two to three
+          minutes — the slowest step on this page.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp env create --name $Env --resource-group $Rg --location $Location
+
+az containerapp env show --name $Env --resource-group $Rg --query "{name:name, state:properties.provisioningState, domain:properties.defaultDomain}" -o yaml</code></pre>
+        </div>
+
+        <h3>6 · Create the API app — with a placeholder image</h3>
+        <p class="prose">A deliberate order of operations. The app cannot pull from your private
+          registry until it has an identity, and it has no identity until it exists. So it is
+          created from a public image that always pulls, and given the real one two steps later.
+          Doing it the other way round produces an authorization failure that reads like a missing
+          image.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp create `
+  --name $ApiApp --resource-group $Rg --environment $Env `
+  --image mcr.microsoft.com/k8se/quickstart:latest `
+  --target-port 7799 --ingress external `
+  --system-assigned `
+  --min-replicas 0 --max-replicas 2 `
+  --cpu 0.5 --memory 1.0Gi</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Flag</th><th>What it decides</th></tr></thead>
+            <tbody>
+              <tr><td><code>--target-port 7799</code></td><td>The port your process listens on <em>inside</em> the container. The outside is always 443</td></tr>
+              <tr><td><code>--ingress external</code></td><td>Reachable from the internet, with a certificate Azure issues and renews. <code>internal</code> = only from inside the environment</td></tr>
+              <tr><td><code>--system-assigned</code></td><td>Create a managed identity tied to this app's lifetime. The reason this page exists</td></tr>
+              <tr><td><code>--min-replicas 0</code></td><td>Idle costs nothing; the first request after idling pays a cold start</td></tr>
+              <tr><td><code>--max-replicas 2</code></td><td>The ceiling. Set it deliberately — it is your defence against a runaway bill</td></tr>
+              <tr><td><code>--cpu 0.5 --memory 1.0Gi</code></td><td>Per replica. The consumption profile pairs roughly 2 GiB of memory per vCPU, so these two go together</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>7 · Give the identity permission to pull</h3>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>$principalId = az containerapp identity show --name $ApiApp --resource-group $Rg --query principalId -o tsv
+$acrId       = az acr show --name $Acr --query id -o tsv
+
+az role assignment create --assignee $principalId --role AcrPull --scope $acrId
+
+# tell the app to authenticate to the registry as itself
+az containerapp registry set --name $ApiApp --resource-group $Rg --server "$Acr.azurecr.io" --identity system</code></pre>
+        </div>
+        <div class="callout callout--warn">
+          <p class="callout__title">Role assignments are not instant</p>
+          <p>Entra propagates them, which usually takes seconds and occasionally a couple of
+            minutes. If the next step fails with an authorization error, wait sixty seconds and run
+            it again before changing anything. Re-running the same command is safe.</p>
+        </div>
+
+        <h3>8 · Deploy the image you actually built</h3>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp update --name $ApiApp --resource-group $Rg --image "$Acr.azurecr.io/libra-api:v1"
+
+$apiFqdn = az containerapp show --name $ApiApp --resource-group $Rg --query properties.configuration.ingress.fqdn -o tsv
+"https://$apiFqdn"</code></pre>
+        </div>
+        <p class="prose">It will not answer usefully yet — it has no configuration, so it does not
+          know which model to call. That is step 10. What this step proves is that the image was
+          pulled from your private registry using an identity rather than a password.</p>
+
+        <h3>9 · Grant the data-plane roles</h3>
+        <p class="prose">The identity can now pull an image. It still cannot call anything. Each
+          service needs its own role assignment, scoped to that resource and nothing wider — this is
+          where "least privilege" stops being a slogan and becomes four commands.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>$foundryId = az cognitiveservices account show --name $Foundry --resource-group $Rg --query id -o tsv
+
+# chat, embeddings, speech
+az role assignment create --assignee $principalId --role "Cognitive Services User" --scope $foundryId
+
+# the Foundry Agent Service, if you use hosted agents
+az role assignment create --assignee $principalId --role "Azure AI User" --scope $foundryId
+
+# Azure AI Search, if you moved the vector store there
+$searchId = az search service show --name srch-libra-acad --resource-group $Rg --query id -o tsv
+az role assignment create --assignee $principalId --role "Search Index Data Contributor" --scope $searchId
+
+# read back exactly what this identity can do — worth doing every single time
+az role assignment list --assignee $principalId --all --query "[].{role:roleDefinitionName, scope:scope}" -o table</code></pre>
+        </div>
+
+        <h3>10 · Configure it</h3>
+        <p class="prose">Two kinds of value, and the difference is not cosmetic. <strong>Environment
+          variables</strong> are visible to anyone who can read the app — endpoints, model names,
+          feature flags. <strong>Secrets</strong> are stored encrypted, are never returned by
+          <code>az containerapp show</code>, and are referenced by name.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — secrets first</span>
+          <pre><code># only if you still need one. With managed identity, most of these disappear entirely.
+$searchKey = az search admin-key show --service-name srch-libra-acad --resource-group $Rg --query primaryKey -o tsv
+
+az containerapp secret set --name $ApiApp --resource-group $Rg --secrets "search-key=$searchKey"</code></pre>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — then the configuration</span>
+          <pre><code>az containerapp update --name $ApiApp --resource-group $Rg `
+  --set-env-vars `
+    "LLM_PROVIDER=azure" `
+    "EMBEDDING_PROVIDER=azure" `
+    "AZURE_AI_AUTH=identity" `
+    "AZURE_AI_ENDPOINT=https://$Foundry.services.ai.azure.com/models" `
+    "AZURE_AI_CHAT_DEPLOYMENT=gpt-5-mini" `
+    "AZURE_AI_EMBEDDING_DEPLOYMENT=text-embedding-3-small" `
+    "AZURE_AI_PROJECT_ENDPOINT=https://$Foundry.services.ai.azure.com/api/projects/&lt;your-project&gt;" `
+    "AZURE_SEARCH_ENDPOINT=https://srch-libra-acad.search.windows.net" `
+    "AZURE_SEARCH_INDEX=libra-docs" `
+    "AZURE_SEARCH_KEY=secretref:search-key" `
+    "AGENT_PERSONA=teller"</code></pre>
+        </div>
+        <div class="callout callout--success">
+          <p class="callout__title"><code>AZURE_AI_AUTH=identity</code> — the line this whole session was for</p>
+          <p>On your laptop that setting means "use my <code>az login</code>". Here it means "use
+            the identity Azure attached to this app". Same value, same code, a different lane of the
+            credential chain. There is no key for chat, no key for embeddings, no key for the Agent
+            Service — and the agent features that were dark in Docker are available again, because
+            for the first time the container has a real identity.</p>
+        </div>
+
+        <h3>11 · Verify from outside</h3>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>irm "https://$apiFqdn/health" | ConvertTo-Json -Depth 4
+
+# the call that proves the identity works — no key involved anywhere
+irm "https://$apiFqdn/agents" | ConvertTo-Json -Depth 4
+#   look for:  "foundry": { "available": true, "reason": null }
+
+$body = @{ question = "What can you help me with?"; use_rag = $false } | ConvertTo-Json
+$r = irm "https://$apiFqdn/ask" -Method Post -ContentType 'application/json' -Body $body
+$r.answer</code></pre>
+        </div>
+        <p class="prose">Compare that with the same call at the end of Lab A, where
+          <code>foundry.available</code> was <code>false</code>. Nothing about the application
+          changed between the two. Only its address — and what that address implies about who it
+          is.</p>
+
+        <h3>12 · Deploy the console in front of it</h3>
+        <p class="prose">The same pattern, one image smaller, plus the environment variable that
+          tells nginx where to forward the API routes.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp create `
+  --name $WebApp --resource-group $Rg --environment $Env `
+  --image "$Acr.azurecr.io/libra-console:v1" `
+  --target-port 7800 --ingress external `
+  --system-assigned --registry-server "$Acr.azurecr.io" --registry-identity system `
+  --env-vars "API_URL=https://$apiFqdn" `
+  --min-replicas 0 --max-replicas 2 `
+  --cpu 0.25 --memory 0.5Gi
+
+$webFqdn = az containerapp show --name $WebApp --resource-group $Rg --query properties.configuration.ingress.fqdn -o tsv
+start "https://$webFqdn"</code></pre>
+        </div>
+        <p class="prose"><code>--registry-identity system</code> is the shortcut for steps 6 and 7
+          combined: the CLI creates the identity, assigns <em>AcrPull</em> and configures the
+          registry in one call. It is what you would normally write. Step 6 took the long way round
+          on purpose, so that when this line fails — usually because your account cannot create role
+          assignments — you know which of the three things it does went wrong.</p>
+
+        <div class="callout callout--tip">
+          <p class="callout__title">Then close the back door</p>
+          <p>The API does not need to be on the public internet once the console fronts it. Switch
+            it to internal ingress and it becomes reachable only from inside the environment:</p>
+        </div>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — optional, and good practice</span>
+          <pre><code>az containerapp ingress update --name $ApiApp --resource-group $Rg --type internal
+
+# the internal name replaces the public one; point the console at it
+$apiInternal = az containerapp show --name $ApiApp --resource-group $Rg --query properties.configuration.ingress.fqdn -o tsv
+az containerapp update --name $WebApp --resource-group $Rg --set-env-vars "API_URL=https://$apiInternal"</code></pre>
+        </div>
+
+        <h3>13 · Delete everything</h3>
+        <p class="prose">Knowing the teardown is part of knowing the deployment. Nothing here is
+          precious, and an environment you cannot delete confidently is one you will hesitate to
+          rebuild.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code># just the apps
+az containerapp delete --name $WebApp --resource-group $Rg --yes
+az containerapp delete --name $ApiApp --resource-group $Rg --yes
+
+# the environment and the registry too
+az containerapp env delete --name $Env --resource-group $Rg --yes
+az acr delete --name $Acr --resource-group $Rg --yes
+
+# or all of it, Foundry included — the nuclear option
+az group delete --name $Rg --yes --no-wait</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ SECRETS ============ -->
+      <section id="secrets" class="doc-section">
+        <div>
+          <span class="eyebrow">Configuration</span>
+          <h2>Where each value belongs</h2>
+        </div>
+        <p class="prose">Your <code>.env</code> file has about thirty entries. In a deployment they
+          split into four groups, and putting one in the wrong group is either a leak or an
+          inconvenience.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Group</th><th>Examples</th><th>Where it goes</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Not secret, changes per environment</strong></td>
+                <td>Endpoints, deployment names, index names, <code>AGENT_PERSONA</code></td>
+                <td><code>--set-env-vars</code></td>
+                <td>Readable by anyone who can read the app, and that is fine — being able to see them is useful</td>
+              </tr>
+              <tr>
+                <td><strong>Secret, still needed</strong></td>
+                <td>A Brave or Serper search key; a third-party API key</td>
+                <td><code>az containerapp secret set</code>, referenced as <code>secretref:name</code></td>
+                <td>Encrypted at rest, never echoed back by the CLI, injected only into the container</td>
+              </tr>
+              <tr>
+                <td><strong>Secret, and avoidable</strong></td>
+                <td><code>AZURE_AI_API_KEY</code>, <code>AZURE_SEARCH_KEY</code></td>
+                <td class="dg-you">Nowhere — delete them and use the managed identity</td>
+                <td>The best place to keep a secret is not to have one</td>
+              </tr>
+              <tr>
+                <td><strong>Shared across several apps</strong></td>
+                <td>A certificate; a database password more than one service needs</td>
+                <td>Azure Key Vault, read by the app's identity</td>
+                <td>One place to rotate, one audit log, one set of access rules</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — Key Vault, when a secret outgrows one app</span>
+          <pre><code>az keyvault create --name kv-libra-acad --resource-group $Rg --location $Location --enable-rbac-authorization true
+az keyvault secret set --vault-name kv-libra-acad --name search-key --value $searchKey
+
+# let the app's identity read it — a role, not a password
+$kvId = az keyvault show --name kv-libra-acad --query id -o tsv
+az role assignment create --assignee $principalId --role "Key Vault Secrets User" --scope $kvId
+
+# the app resolves the reference itself, at start, as itself
+az containerapp secret set --name $ApiApp --resource-group $Rg `
+  --secrets "search-key=keyvaultref:https://kv-libra-acad.vault.azure.net/secrets/search-key,identityref:system"</code></pre>
+        </div>
+        <p class="prose">Follow the chain in that last command: the app authenticates to Key Vault
+          with its managed identity, reads the secret at start, and exposes it to the process as an
+          environment variable. The secret never appears in your shell, your repository, your CI
+          logs or the app's own definition. That is the shape of a well-kept secret — and note it is
+          the same identity doing the work as in every other step today.</p>
+      </section>
+
+      <!-- ============ OPERATE ============ -->
+      <section id="operate" class="doc-section">
+        <div>
+          <span class="eyebrow">Operating it</span>
+          <h2>Logs, probes and revisions</h2>
+        </div>
+
+        <h3>Reading the logs</h3>
+        <p class="prose">Two streams, and reaching for the wrong one wastes a lot of time.
+          <em>Console</em> logs are what your process wrote to stdout and stderr. <em>System</em>
+          logs are what the platform did to your container: pulled the image, started it, failed a
+          probe, replaced it. When an app will not start at all, the answer is almost always in the
+          system stream.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp logs show --name $ApiApp --resource-group $Rg --follow --tail 50
+az containerapp logs show --name $ApiApp --resource-group $Rg --type system --tail 50
+
+# which replicas exist right now, and in what state
+az containerapp replica list --name $ApiApp --resource-group $Rg -o table</code></pre>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">Logs the platform can actually read</p>
+          <p>Container Apps collects stdout line by line. A log line that is valid JSON becomes a
+            queryable record in Log Analytics; a multi-line Python traceback becomes several
+            unrelated records. The argument for structured logging is worth having before you need
+            it at three in the morning, not after.</p>
+        </div>
+
+        <h3>Health probes</h3>
+        <p class="prose">The platform will replace a replica that stops answering — but only if you
+          have told it how to ask. Your application already has the endpoint: <code>/health</code>
+          checks the vector store, the configured provider, and the speech and search configuration,
+          so it fails when the app is genuinely unusable rather than merely alive.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp update --name $ApiApp --resource-group $Rg `
+  --liveness-probe-path /health --liveness-probe-initial-delay 15 `
+  --readiness-probe-path /health</code></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Probe</th><th>Asks</th><th>When it fails</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Startup</strong></td><td>Has it finished booting?</td><td>The replica is given more time, then abandoned</td></tr>
+              <tr><td><strong>Readiness</strong></td><td>Can it take traffic right now?</td><td>It is removed from the load balancer, and kept alive</td></tr>
+              <tr><td><strong>Liveness</strong></td><td>Is it still working at all?</td><td>The replica is killed and replaced</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Revisions — shipping, and un-shipping</h3>
+        <p class="prose">Every change to the image or the configuration creates a new
+          <em>revision</em>: an immutable snapshot of the app's definition. Old revisions are kept,
+          which makes a rollback a routing change rather than a rebuild.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>az containerapp revision set-mode --name $ApiApp --resource-group $Rg --mode multiple
+az containerapp revision list --name $ApiApp --resource-group $Rg -o table
+
+# ship v2 beside v1 and send it a tenth of the traffic
+az acr build --registry $Acr --image libra-api:v2 code\backend
+az containerapp update --name $ApiApp --resource-group $Rg --image "$Acr.azurecr.io/libra-api:v2"
+
+az containerapp ingress traffic set --name $ApiApp --resource-group $Rg `
+  --revision-weight &lt;old-revision-name&gt;=90 &lt;new-revision-name&gt;=10
+
+# it is bad. put everything back — seconds, not a rebuild
+az containerapp ingress traffic set --name $ApiApp --resource-group $Rg --revision-weight &lt;old-revision-name&gt;=100</code></pre>
+        </div>
+        <div class="callout callout--warn">
+          <p class="callout__title">Multi-revision mode is not the default</p>
+          <p>Out of the box an app runs in <em>single revision</em> mode: a new revision replaces the
+            old one and traffic splitting is unavailable. Turn it on before you need it — which is
+            why it is the first line of the block above. Otherwise the rollback you want at the
+            worst possible moment is a redeploy.</p>
+        </div>
+        <p class="prose">This is the operational habit worth taking from today, independently of
+          Azure. A deployment that can be undone in one command changes how a team behaves: releases
+          get smaller and more frequent, because being wrong stops being expensive.</p>
+
+        <h3>Tags, and why <code>latest</code> is a trap</h3>
+        <p class="prose"><code>latest</code> is not a version; it is a name that means whatever was
+          pushed last. Two replicas started ten minutes apart can be running different code, and the
+          revision history will not show it. Tag with something that identifies the build — a git
+          commit is the honest choice, because it makes an image traceable to a line of code.</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell</span>
+          <pre><code>$sha = git rev-parse --short HEAD
+az acr build --registry $Acr --image "libra-api:$sha" code\backend
+az containerapp update --name $ApiApp --resource-group $Rg --image "$Acr.azurecr.io/libra-api:$sha"</code></pre>
+        </div>
+      </section>
+
+      <!-- ============ COST ============ -->
+      <section id="cost" class="doc-section">
+        <div>
+          <span class="eyebrow">Money</span>
+          <h2>What this costs, and how to make it cost nothing</h2>
+        </div>
+        <p class="prose">Container Apps on the consumption plan bills for what a replica consumes
+          while it exists: vCPU-seconds, GiB-seconds and requests, with a monthly free grant per
+          subscription. With <code>--min-replicas 0</code> an idle project consumes none of it.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Resource</th><th>Billed on</th><th>Cost while idle</th></tr></thead>
+            <tbody>
+              <tr><td>Container Apps (consumption)</td><td>vCPU-seconds, GiB-seconds, requests — after a monthly free grant</td><td class="dg-you">nothing, at min-replicas 0</td></tr>
+              <tr><td>Container Apps environment</td><td>nothing by itself</td><td class="dg-you">nothing</td></tr>
+              <tr><td>Container Registry (Basic)</td><td>a fixed daily rate plus storage</td><td class="dg-shared">a few euro a month</td></tr>
+              <tr><td>Log Analytics</td><td>GB ingested, with a free daily allowance</td><td class="dg-shared">small</td></tr>
+              <tr><td>Azure AI Search (Basic)</td><td>a fixed hourly rate — it does not scale to zero</td><td class="dg-provider">the largest line on this list</td></tr>
+              <tr><td>Foundry model calls</td><td>tokens in and out</td><td class="dg-you">nothing when nobody asks</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <p class="callout__title">The one that will surprise you</p>
+          <p>Azure AI Search bills by the hour regardless of use — an empty index costs the same as
+            a busy one. It is the only component here that keeps charging while you sleep. For a
+            course project, either use the <code>free</code> tier (one index, 50 MB, one per
+            subscription) or delete the service between sessions and recreate it with
+            <code>07-provision-search.ps1</code>, which takes about two minutes.</p>
+        </div>
+
+        <p class="prose">Prices change and vary by region, so treat the table as shape rather than
+          numbers and get real figures for your own subscription:</p>
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — what you are actually spending</span>
+          <pre><code># what exists in the group, and what kind of thing each one is
+az resource list --resource-group $Rg --query "[].{name:name, type:type, location:location}" -o table
+
+# and the bill itself, in the portal
+start "https://portal.azure.com/#view/Microsoft_Azure_CostManagement/Menu/~/costanalysis"</code></pre>
+        </div>
+        <div class="callout callout--tip">
+          <p class="callout__title">Set a budget before you set an alarm clock</p>
+          <p>Cost Management → Budgets → a monthly budget on the resource group, with alerts at 50%
+            and 90%. Two minutes of work, and it is the difference between noticing an expensive
+            mistake on the day it happens and noticing it on the invoice.</p>
+        </div>
+      </section>
+
+      <!-- ============ AUTOMATION ============ -->
+      <section id="automation" class="doc-section">
+        <div>
+          <span class="eyebrow">The point of all of it</span>
+          <h2>One script, from nothing to a URL</h2>
+        </div>
+        <p class="prose">Every step in the recipe was a command, which means the whole recipe is a
+          program. That is the argument for a cloud platform in its strongest form: not that there
+          is a website, but that <strong>an environment is code</strong> — reviewable in a pull
+          request, repeatable by a colleague, and rebuildable from nothing after you delete it by
+          accident.</p>
+
+        <div class="code-block">
+          <span class="code-block__label">code/backend/scripts/azure/08-deploy-containerapp.ps1 — the shape</span>
+          <pre><code>param(
+    [string]$ResourceGroup = "libra-ai-acad",
+    [string]$Registry      = "acrlibraacad",
+    [string]$Environment   = "cae-libra-acad",
+    [string]$Tag           = "v1"
+)
+$ErrorActionPreference = "Stop"
+
+# 1 · providers and extension     (idempotent — check before registering)
+# 2 · registry                    (idempotent — az acr show first)
+# 3 · build both images in ACR    (always runs; the tag is the version)
+# 4 · environment                 (idempotent)
+# 5 · app + identity + AcrPull    (idempotent — check the role assignment first)
+# 6 · data-plane roles on Foundry and AI Search
+# 7 · environment variables and secrets
+# 8 · print the two URLs</code></pre>
+        </div>
+
+        <p class="prose">Two properties make such a script worth writing, and both take deliberate
+          effort. It must be <strong>idempotent</strong> — every step checks before it creates, so
+          running it twice is safe and running it after a partial failure resumes rather than
+          collapses. And it must be <strong>parameterized</strong> — names and region at the top, so
+          the same file builds your environment and a colleague's without an edit.</p>
+
+        <div class="callout callout--success">
+          <p class="callout__title">The only honest test</p>
+          <p><code>az group delete --name $Rg --yes</code>, then run your script. If the environment
+            comes back — registry, images, environment, apps, identity, roles, configuration — and
+            the URL answers, you have written infrastructure as code and you can stop being nervous
+            around your cloud account. That confidence is the deliverable, not the script.</p>
+        </div>
+
+        <h3>The next step: doing it on every commit</h3>
+        <p class="prose">The same commands run in GitHub Actions with no change of substance. The
+          only genuinely new problem is how the pipeline authenticates, and the modern answer avoids
+          storing a secret at all: <em>workload identity federation</em> lets GitHub present a
+          short-lived token that Entra trusts, for one repository and one branch.</p>
+        <div class="code-block">
+          <span class="code-block__label">.github/workflows/deploy.yml — the essential shape</span>
+          <pre><code>permissions:
+  id-token: write          # lets the job request a federated token
+  contents: read
+
+steps:
+  - uses: actions/checkout@v4
+  - uses: azure/login@v2
+    with:
+      client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+      tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  - run: az acr build --registry $ACR --image libra-api:${{ github.sha }} code/backend
+  - run: az containerapp update --name $APP --resource-group $RG --image $ACR.azurecr.io/libra-api:${{ github.sha }}</code></pre>
+        </div>
+        <p class="prose">Three identifiers, no password, and an image tagged with the commit that
+          produced it. Notice that the last two lines are commands you already ran by hand today —
+          which is the point. A deployment pipeline is not a new technology; it is your terminal
+          session, written down.</p>
+      </section>
+
+      <!-- ============ TROUBLESHOOTING ============ -->
+      <section id="troubleshooting" class="doc-section">
+        <div>
+          <span class="eyebrow">When it breaks</span>
+          <h2>The failures you will actually hit</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>App goes <em>Provisioning</em> → <em>Failed</em>, with no console logs</td>
+                <td>The image could not be pulled</td>
+                <td>The <code>--type system</code> logs say so explicitly. Check the AcrPull assignment and <code>registry set --identity system</code></td>
+              </tr>
+              <tr>
+                <td>Replica starts, then restarts forever</td>
+                <td>The process exits — usually a missing environment variable read at import time</td>
+                <td>Console logs hold the traceback. Compare your variables against <code>.env.example</code></td>
+              </tr>
+              <tr>
+                <td>The URL times out but the replica is running</td>
+                <td><code>--target-port</code> does not match the port uvicorn listens on, or the server bound to <code>127.0.0.1</code></td>
+                <td>Port 7799 <em>and</em> <code>--host 0.0.0.0</code>. Both, together</td>
+              </tr>
+              <tr>
+                <td><code>DefaultAzureCredential failed</code>, in Azure</td>
+                <td>No managed identity, or no role on the target resource</td>
+                <td><code>az containerapp identity show</code>, then <code>az role assignment list --assignee $principalId --all</code></td>
+              </tr>
+              <tr>
+                <td><code>AzureCliCredential: Azure CLI not found on path</code></td>
+                <td>Running locally, from a shell whose PATH lacks <code>az</code> — that lane shells out to the executable</td>
+                <td>Start the backend from a terminal where <code>az account show</code> works</td>
+              </tr>
+              <tr>
+                <td>Authorization failure immediately after granting a role</td>
+                <td>Entra propagation</td>
+                <td>Wait sixty seconds and repeat the same command</td>
+              </tr>
+              <tr>
+                <td>The first request after a quiet hour takes several seconds</td>
+                <td>Cold start, from <code>--min-replicas 0</code></td>
+                <td>Expected. Use <code>--min-replicas 1</code> if latency matters more than the bill</td>
+              </tr>
+              <tr>
+                <td><code>exec format error</code> in the logs</td>
+                <td>Image built for ARM, running on x86</td>
+                <td>Build with <code>az acr build</code>, or pass <code>--platform linux/amd64</code></td>
+              </tr>
+              <tr>
+                <td>Console loads, but every API call returns 502</td>
+                <td><code>API_URL</code> is wrong, or points at an internal FQDN from outside the environment</td>
+                <td><code>az containerapp show --name $WebApp --resource-group $Rg --query "properties.template.containers[0].env"</code></td>
+              </tr>
+              <tr>
+                <td>The index is empty after a redeploy</td>
+                <td>The state was inside the container</td>
+                <td>It always was. See <a href="#state">where the state goes</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout callout--info">
+          <p class="callout__title">The order to look in</p>
+          <p>System logs, then console logs, then <code>az containerapp show</code> for the
+            definition, then the role assignments. Four places, in that order, resolve almost
+            everything — and each one is a command, so you can put them in a script and stop having
+            to remember them.</p>
+        </div>
+      </section>
+
+      <!-- ============ LAB B ============ -->
+      <section id="lab-b" class="doc-section">
+        <div>
+          <span class="eyebrow">Lab B · 15 minutes</span>
+          <h2>Deploy your own, and open it on a device that is not your laptop</h2>
+        </div>
+        <p class="prose">Work in your own resource group, with your own names. Fifteen minutes is
+          enough if the providers are already registered — do step 2 of the recipe first if you have
+          not.</p>
+        <ol>
+          <li><strong>Registry and images.</strong> Create your registry, then build both images with
+            <code>az acr build</code>. Note how long it takes, and what it never asked you for.</li>
+          <li><strong>Environment and API app.</strong> Create the environment, then the app with
+            <code>--system-assigned</code>, <code>--min-replicas 0</code> and a
+            <code>--max-replicas</code> you chose deliberately.</li>
+          <li><strong>Identity and roles.</strong> AcrPull on the registry, <em>Cognitive Services
+            User</em> on your Foundry resource. Then read the assignments back and check the list
+            contains nothing wider than you intended.</li>
+          <li><strong>Configuration.</strong> Set the environment variables — with
+            <code>AZURE_AI_AUTH=identity</code> and <strong>no key anywhere</strong>.</li>
+          <li><strong>Prove it.</strong> Call <code>/health</code> and <code>/agents</code> over
+            HTTPS. Record whether <code>foundry.available</code> is <code>true</code>, and be ready
+            to say why.</li>
+          <li><strong>Console.</strong> Deploy it with <code>API_URL</code> pointing at your API and
+            open it <strong>on your phone</strong>. That is the moment it stops being a local
+            project.</li>
+          <li><strong>Then break it on purpose.</strong> Deploy a <code>v2</code> whose
+            <code>AZURE_AI_CHAT_DEPLOYMENT</code> names a model that does not exist. Watch it fail,
+            find the failure in the logs, and roll back with one traffic-weight command.</li>
+        </ol>
+        <div class="callout callout--tip">
+          <p class="callout__title">Leave it running or delete it — but decide</p>
+          <p>With <code>--min-replicas 0</code> the apps cost nothing while idle, so leaving them up
+            for the rest of the week is reasonable and useful for Session 7. Azure AI Search is the
+            exception: if you provisioned it on <code>basic</code>, delete it tonight and recreate it
+            tomorrow.</p>
+        </div>
+      </section>
+
+      <!-- ============ CONCLUSIONS ============ -->
+      <section id="conclusions" class="doc-section">
+        <div>
+          <span class="eyebrow">Conclusions</span>
+          <h2>What changed today</h2>
+        </div>
+        <p class="prose">The question this session opened with — <em>why are we running the Python on
+          the host when there is a perfectly good Dockerfile?</em> — turned out to have an answer
+          that was not about Docker at all. A container is anonymous, and your laptop has no way to
+          give it an identity that is not a secret. Azure does. The moment the container runs
+          somewhere that can vouch for it, the reason to avoid containers disappears and the
+          argument reverses completely: the deployed version is the one with no key in it.</p>
+        <p class="prose">The second thread was subtler and will outlast this platform. Almost
+          everything that made the application pleasant to develop — hot reload, a bind mount, a dev
+          server, a <code>.env</code> file, a database in a disposable container — is a
+          <em>development device</em>, and each has a production counterpart that must be chosen
+          deliberately. Nobody warns you about this, because in development none of it looks like a
+          decision. Shipping is largely the work of finding those devices and replacing them, one at
+          a time.</p>
+        <p class="prose">And the third: the code did not change. Not one line of Python was edited to
+          make any of this work. What changed was configuration, identity, and where the process
+          runs. When an abstraction is chosen well — <code>DefaultAzureCredential</code> is the
+          example on this page — moving between environments becomes a matter of what is true around
+          the code rather than what is written inside it. That is what you were buying when you
+          accepted the extra indirection.</p>
+      </section>
+
+      <!-- ============ TAKEAWAYS ============ -->
+      <section id="takeaways" class="doc-section">
+        <div>
+          <span class="eyebrow">Takeaways</span>
+          <h2>Ten things to remember</h2>
+        </div>
+        <ol>
+          <li><strong>A container on your laptop is anonymous.</strong> <code>az login</code> writes
+            a token cache into your user profile and the container cannot see it. That is the whole
+            reason the API ran on the host.</li>
+          <li><strong>Keys work for the data plane, not the control plane.</strong> Chat, embeddings,
+            speech and search accept a key. The Agent Service and every ARM operation require an
+            Entra token.</li>
+          <li><strong>Managed identity removes the secret entirely.</strong> Azure creates the
+            principal, attaches it to the app, rotates its credential and deletes it with the app.
+            Nothing to leak, nothing to rotate.</li>
+          <li><strong><code>DefaultAzureCredential</code> is a chain, not a method.</strong> Lane 5
+            wins on your machine, lane 3 wins in Azure, and the error always names the lane that
+            failed.</li>
+          <li><strong>A dev image and a shipped image are different images.</strong>
+            <code>--reload</code>, bind mounts and dev servers are development devices; the image
+            carries the shippable default and compose adds the rest back.</li>
+          <li><strong>Layer order is a performance decision.</strong> Dependencies before source, or
+            every edit reinstalls the world.</li>
+          <li><strong>Bind to <code>0.0.0.0</code>.</strong> Loopback inside a container means
+            reachable by nothing, including the host that started it.</li>
+          <li><strong>Anything the container writes is lost.</strong> List what your app persists
+            before you deploy it; every item needs a home outside the replica.</li>
+          <li><strong><code>latest</code> is not a version.</strong> Tag with the commit, so an image
+            can be traced back to a line of code.</li>
+          <li><strong>If it is a command, it is a program.</strong> The real test of an environment is
+            deleting it and rebuilding it from a script.</li>
+        </ol>
+      </section>
+
+      <!-- ============ REFERENCES ============ -->
+      <section id="references" class="doc-section">
+        <div>
+          <span class="eyebrow">References</span>
+          <h2>Where to read further</h2>
+        </div>
+        <h3>Azure documentation</h3>
+        <ul>
+          <li><a href="https://learn.microsoft.com/azure/container-apps/" target="_blank" rel="noreferrer">Azure Container Apps</a> — start with the quickstarts, then <em>Concepts → Revisions</em>, which is the part most tutorials skip</li>
+          <li><a href="https://learn.microsoft.com/azure/container-apps/managed-identity" target="_blank" rel="noreferrer">Managed identities in Container Apps</a> — system-assigned versus user-assigned, and when the second is worth it</li>
+          <li><a href="https://learn.microsoft.com/azure/container-registry/" target="_blank" rel="noreferrer">Azure Container Registry</a>, and <a href="https://learn.microsoft.com/azure/container-registry/container-registry-tasks-overview" target="_blank" rel="noreferrer">ACR Tasks</a> — what <code>az acr build</code> actually uses</li>
+          <li><a href="https://learn.microsoft.com/azure/container-apps/manage-secrets" target="_blank" rel="noreferrer">Secrets in Container Apps</a> — including the Key Vault reference syntax</li>
+          <li><a href="https://learn.microsoft.com/azure/developer/github/connect-from-azure" target="_blank" rel="noreferrer">Authenticate GitHub Actions to Azure</a> — workload identity federation, the passwordless pipeline</li>
+          <li><a href="https://learn.microsoft.com/cli/azure/containerapp" target="_blank" rel="noreferrer"><code>az containerapp</code> command reference</a> — every flag used on this page</li>
+        </ul>
+        <h3>Containers, generally</h3>
+        <ul>
+          <li><a href="https://docs.docker.com/build/building/best-practices/" target="_blank" rel="noreferrer">Dockerfile best practices</a> — layer caching and multi-stage builds, from the source</li>
+          <li><a href="https://12factor.net/" target="_blank" rel="noreferrer">The Twelve-Factor App</a> — factors III (config), VI (processes) and XI (logs) are exactly this session, written down in 2011</li>
+          <li><a href="https://podman.io/" target="_blank" rel="noreferrer">Podman</a> — a daemonless, rootless alternative that runs the same images and needs no licence for commercial use</li>
+        </ul>
+        <h3>In this repository</h3>
+        <ul>
+          <li><code>code/backend/Dockerfile</code> and <code>code/backend/docker-compose.yml</code> — the shippable default and the development override, side by side</li>
+          <li><code>code/frontend/Dockerfile</code> and <code>code/frontend/nginx.conf.template</code> — the two targets, and the proxy that replaces Vite</li>
+          <li><code>code/backend/scripts/azure/</code> — the whole environment as scripts, in PowerShell and bash</li>
+          <li><a href="s04-foundry-in-practice.html">Session 4 — Azure Foundry in practice</a>, section <em>The complete recipe</em>, for the agent half of the story</li>
+          <li><a href="../topics/ref-cloud-computing.html">Reference — cloud computing</a>, for the service-model vocabulary this session assumes</li>
+        </ul>
+      </section>
+
+      <!-- ============ ASSIGNMENT ============ -->
+      <section id="assignment" class="doc-section">
+        <div>
+          <span class="eyebrow">Assignment</span>
+          <h2>Before the next session</h2>
+        </div>
+        <p class="prose">Three parts. The first two are essential — Session 7 is a build day and it
+          assumes you can deploy what you build. The third is optional, and is where the interesting
+          conversations come from.</p>
+
+        <h3>Part 1 — a deployment that answers (essential)</h3>
+        <p class="prose">Finish Lab B if the clock cut it short, so that all of the following are
+          true: your images are in your own registry, tagged with something that is not
+          <code>latest</code>; your API answers <code>/health</code> over HTTPS; your console is
+          deployed and reaches it; and the app authenticates with a managed identity, with
+          <strong>no key in its configuration</strong>. Bring both URLs.</p>
+
+        <h3>Part 2 — write the script (essential)</h3>
+        <p class="prose">Turn your deployment into <code>08-deploy-containerapp.ps1</code>: names
+          and region as parameters at the top, every step checking before it creates, and the two
+          URLs printed at the end. Then test it the only way that counts — delete the container apps
+          and the registry, run the script, and confirm everything comes back. One paragraph on what
+          broke the first time, because something will.</p>
+
+        <h3>Part 3 — measure the cold start (stretch)</h3>
+        <p class="prose">With <code>--min-replicas 0</code>, time the first request after ten minutes
+          of silence, then the next five. Repeat with <code>--min-replicas 1</code>. Report the six
+          numbers from each run, and say which configuration you would choose for an internal
+          banking tool used by forty people, and which for a customer-facing chat on a public
+          website. The answer is not the same, and the reasoning is what we will discuss.</p>
+
+        <div class="code-block">
+          <span class="code-block__label">PowerShell — a defensible way to measure it</span>
+          <pre><code>1..6 | ForEach-Object {
+  $t = Measure-Command { irm "https://$apiFqdn/health" | Out-Null }
+  "request $_  :  $([math]::Round($t.TotalMilliseconds)) ms"
+}</code></pre>
+        </div>
+
+        <div class="callout callout--info">
+          <p class="callout__title">If something blocks you</p>
+          <p>Bring the exact command and the exact error text — and for a deployment failure, the
+            output of <code>az containerapp logs show --type system --tail 30</code>. A precise
+            error is diagnosable in seconds. The first minutes of Session 7 are reserved for exactly
+            this.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ PERSISTENT CHROME ============ -->
+  <nav class="page-nav" aria-label="Page navigation">
+    <button class="btn" data-nav="up" title="Previous section" aria-label="Previous section">&#8593;</button>
+    <button class="btn" data-nav="down" title="Next section" aria-label="Next section">&#8595;</button>
+    <button class="btn" data-nav="theme" title="Toggle theme" aria-label="Toggle theme">&#9689;</button>
+  </nav>
+  <footer class="site-footer">
+    Session 6 &middot; Shipping the container &mdash; AI Engineering on Azure &middot; Libra Bank Academy
+  </footer>
+
+  <script src="../../resources/nav.js"></script>
+</body>
+</html>
