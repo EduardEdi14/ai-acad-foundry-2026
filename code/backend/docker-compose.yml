@@ -11,6 +11,11 @@ services:
   api:
     build: .
     container_name: rag-api
+    # The image's own CMD has no --reload, because a shipped image must not depend
+    # on source it does not contain. Development adds it back here, together with
+    # the bind-mount below — this is the only place the two are true at once.
+    command: ["uv", "run", "--no-sync", "uvicorn", "app.main:app",
+              "--host", "0.0.0.0", "--port", "7799", "--reload"]
     ports:
       - "7799:7799"
     env_file: .env
@@ -38,7 +43,11 @@ services:
       - "host.docker.internal:host-gateway"   # makes host LM Studio reachable on Linux too
 
   console:
-    build: ../frontend
+    build:
+      context: ../frontend
+      # the Vite dev server, for hot reload. The Dockerfile's default target is
+      # `prod`: compiled static files behind nginx, which is what gets pushed.
+      target: dev
     container_name: rag-console
     ports:
       - "7800:7800"
@@ -50,8 +59,10 @@ services:
       - ../frontend/src:/srv/src              # live reload: edit locally, HMR in the browser
       - ../frontend/index.html:/srv/index.html
       - ../frontend/vite.config.js:/srv/vite.config.js   # proxy routes, without a rebuild
-    depends_on:
-      - api
+    # deliberately NO depends_on: the console probes for the API at startup, so it
+    # works whether the API runs beside it in compose or on your machine under uv.
+    # Declaring a dependency would drag the API container up even when you wanted
+    # to run the backend yourself — the usual cause of "two backends on port 7799".
     extra_hosts:
       # "the machine running Docker" — unused in this lane, required by the host-api one
       - "host.docker.internal:host-gateway"

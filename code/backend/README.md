@@ -80,19 +80,91 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | `warning: VIRTUAL_ENV=…\venv does not match the project environment path .venv` | **Another virtual environment is active** — often one at the repository root | Harmless: uv ignores it and uses `.venv`. To silence it, run `deactivate`, or add `--active` to use the active one instead |
 | `No such file or directory: pyproject.toml` | You are in the wrong folder | `uv run` must be run from `code/backend` |
 | `ModuleNotFoundError: fastapi` | Dependencies not installed | `uv sync` (or `pip install -r requirements.txt`) |
-| `Address already in use` on 7799 | The Docker API container is still running | `docker compose stop api`, or use `--port 7801` |
+| `Address already in use` on 7799 | The Docker API container is still running, or an orphaned `--reload` child | `docker compose stop api`, or `./scripts/dev.ps1 -Force`, or `--port 7801` |
 | `python` points somewhere unexpected | A stale venv is activated in this shell | `deactivate`, then check with `where.exe python` |
 
 Everything below assumes one of the two setups above is done.
 
 ---
 
-## Run it — option A: locally, without Docker (recommended for teaching)
+There are three ways to run this, and the only real difference between them is **where
+the Azure identity comes from**. Pick by what you have installed:
+
+| | You need installed | Identity | Hosted agents & deployments visible |
+|---|---|---|---|
+| **A · everything in Docker** | Docker only | a service principal in `.env` | only with `09-create-service-principal` |
+| **B · locally, no Docker** | Python (uv) + Node | your own `az login` | yes |
+| **C · API on the host, rest in Docker** | Python (uv) + Docker | your own `az login` | **yes, with nothing to create** |
+
+**If Docker is all you have, use A.** Reaching the Agent Service from a container needs
+a service principal — and registering an application is a *directory* permission that
+many tenants (universities, banks) do not grant ordinary users. Without one, A still
+does everything except hosted agents and the Azure panel.
+
+**If you can run Python but your students cannot run Node, use C.** It is one command,
+`scripts/dev.ps1`, and it is the only lane that needs no secret and no permission from
+anybody: the API runs as you, so it inherits your `az login`, while the console runs in
+a container so nobody needs `npm`.
+
+## Run it — option A: everything in Docker
+
+```bash
+cd code/backend
+cp .env.example .env               # then edit — see Credentials below
+docker compose up --build
+#   :7800 console · :7799/docs Swagger · :7833/dashboard Qdrant
+```
+
+One command, and nothing to install but Docker. By default the API container
+authenticates with a **key**, because it cannot borrow your `az login` — and keys are
+enough for chat and embeddings but *not* for the Agent Service or the control plane,
+which require Microsoft Entra. The console reports that honestly rather than showing an
+empty list.
+
+### Give the container its own identity
+
+That default is a convenience, not a limit. A **service principal** is an application
+identity with its own id and secret, which `DefaultAzureCredential` picks up from the
+environment *before* it ever looks for the Azure CLI. One script creates it, grants it
+the three roles it needs, and writes the values into `.env`:
+
+```powershell
+cd code/backend/scripts/azure
+./09-create-service-principal.ps1          # bash: ./09-create-service-principal.sh
+```
+
+It sets these four lines for you — `DOCKER_AZURE_AI_AUTH` is what flips the compose
+override from `key` to `identity`:
+
+```ini
+DOCKER_AZURE_AI_AUTH=identity
+AZURE_CLIENT_ID=<appId>
+AZURE_CLIENT_SECRET=<password>
+AZURE_TENANT_ID=<tenant>
+```
+
+Then `docker compose up -d --build`, and the container has a real identity: hosted
+agents, deployments and the Agent Service all work inside Docker. Prove it with
+`GET /agents` — `foundry.available` should be `true`. Treat the secret like any other:
+it lives in the git-ignored `.env`, it expires, and re-running the script rotates it.
+
+**In production you would use neither a key nor a service principal.** A container
+running *in* Azure gets a **managed identity** — same `DefaultAzureCredential`, same
+code, no secret to store or rotate at all. The three lanes, in order of preference:
+managed identity → service principal → key. Deploying it that way is
+[Session 6](../../docs/sessions/s06-shipping-containers.html).
+
+The app container overrides `QDRANT_URL` automatically and bind-mounts `./app`, so
+**live reload works inside the container too** — edit a file, watch it restart. That
+bind-mount and the `--reload` in `docker-compose.yml` are development devices; the image
+itself carries the plain command, so what you push to a registry behaves like production.
+
+Qdrant has a visual dashboard: http://localhost:7833/dashboard — great on a shared screen.
+
+## Run it — option B: locally, without Docker
 
 Only the vector database runs in a container; the API runs on your machine, where it can
-borrow your `az login`. **This is the mode where hosted Foundry agents and the model
-deployments are visible**, because the Agent Service and the control plane both require
-Microsoft Entra authentication.
+borrow your `az login`. No service principal needed, because you *are* the identity.
 
 ```bash
 cd code/backend
@@ -117,63 +189,36 @@ npm run dev                        # http://localhost:7800, proxies to :7799
 Skipping Qdrant entirely is fine for a quick look — `/chunk`, `/agents`, `/tools` and
 ungrounded `/ask` all work without it; only `/ingest`, `/search` and grounded `/ask` need it.
 
-## Run it — option B: everything in Docker
+## Run it — option C: API on the host, everything else in Docker
 
-```bash
+Option B's identity lane without needing Node installed: the API — the only part that
+wants your `az login` — runs on your machine, while Qdrant and the console stay in
+containers.
+
+One command does all of it — it checks that `az` is reachable and that you are signed
+in, warns if `.env` disagrees with this lane, starts Qdrant and the console, and then
+runs the API in the foreground:
+
+```powershell
 cd code/backend
-docker compose up --build
+./scripts/dev.ps1                  # bash: ./scripts/dev.sh
 #   :7800 console · :7799/docs Swagger · :7833/dashboard Qdrant
 ```
 
-Self-contained and one command. By default the API container authenticates with a
-**key**, because it cannot borrow your `az login` — and keys are enough for chat and
-embeddings but *not* for the Agent Service or the control plane, which require
-Microsoft Entra. The console reports that honestly rather than showing an empty list.
+Ctrl+C stops the API; the containers keep running. Useful switches:
 
-### Identity inside a container
+| Flag | When |
+|---|---|
+| `-Force` | something is still holding 7799 — see the note below |
+| `-Port 7801` | you would rather move than argue with it |
+| `-BindAll` | Docker Engine on Linux, where `host.docker.internal` is a real interface |
+| `-SkipDocker` | the containers are already up |
 
-That default is a convenience, not a limit — a container can absolutely hold an Entra
-identity. Give it a **service principal**: an application identity with its own id and
-secret, which `DefaultAzureCredential` picks up from the environment *before* it ever
-looks for the Azure CLI.
+**There is deliberately no `api` container in this lane.** Docker Desktop will show
+`rag-qdrant` and `rag-console` and nothing else — that is the point: the backend is the
+process in your terminal. `docker compose ps` agreeing with you is the check.
 
-```bash
-# create one, scoped to your Foundry resource only
-RES=$(az cognitiveservices account show --name <resource> --resource-group <rg> --query id -o tsv)
-az ad sp create-for-rbac --name sp-libra-console --role "Azure AI User" --scopes "$RES"
-```
-
-Paste the three values it prints into `.env` and flip the compose override:
-
-```ini
-DOCKER_AZURE_AI_AUTH=identity
-AZURE_CLIENT_ID=<appId>
-AZURE_CLIENT_SECRET=<password>
-AZURE_TENANT_ID=<tenant>
-```
-
-`docker compose up -d` and the container now has a real identity: hosted agents,
-deployments and the Agent Service all work inside Docker. Treat the secret like any
-other — it lives in the git-ignored `.env`, and it expires, so rotate it.
-
-**In production you would use neither.** A container running in Azure gets a *managed
-identity* — same `DefaultAzureCredential`, same code, no secret to store or rotate at
-all. The three lanes, in order of preference: managed identity → service principal →
-key.
-
-The app container overrides `QDRANT_URL` automatically and bind-mounts `./app`,
-so **live reload works inside the container too** — edit a file, watch it restart.
-Note for Docker + Azure keyless auth: `az login` doesn't exist inside the container,
-so either use `AZURE_AI_AUTH=key` there, or run the API locally (option A) for the
-identity lane.
-
-Qdrant has a visual dashboard: http://localhost:7833/dashboard — great on a shared screen.
-
-## Run it — option C: API on the host, everything else in Docker
-
-Option A's identity lane without needing Node installed: the API — the only part that
-wants your `az login` — runs on your machine, while Qdrant and the console stay in
-containers.
+By hand, if you would rather see the two halves:
 
 ```bash
 # terminal 1 — the API, on your machine
@@ -183,6 +228,13 @@ uv run uvicorn app.main:app --reload --port 7799
 # terminal 2
 docker compose -f docker-compose.yml -f docker-compose.host-api.yml up
 ```
+
+**When 7799 stays busy after you stopped the server.** `uvicorn --reload` runs the
+server in a *child* process; close the terminal at the wrong moment and the parent dies
+while the child keeps the socket. The child's command line says
+`multiprocessing.spawn`, not `uvicorn`, so the obvious "kill anything called uvicorn"
+misses it and the port looks occupied by nothing at all. `./scripts/dev.ps1 -Force`
+clears exactly that case.
 
 The override file swaps the console's proxy target to `host.docker.internal` and leaves
 the `api` service out, so it does not fight your local uvicorn for port 7799.
@@ -341,5 +393,6 @@ vector spaces). `DELETE /collection` and re-ingest.
 | `409` on `/ingest` (dimension mismatch) | You changed embedding models — `DELETE /collection`, re-ingest |
 | `502 Embedding/LLM call failed … 401` | Wrong/expired key, or (azure identity) run `az login`; check the role |
 | `502 … Connection refused` on lmstudio | LM Studio server not started, or wrong base URL from Docker |
-| Azure works locally, fails in Docker | Identity lane needs `az login` — use `AZURE_AI_AUTH=key` in containers |
+| Azure works locally, fails in Docker | The container cannot see your `az login`. Run `scripts/azure/09-create-service-principal.ps1` to give it its own identity, or fall back to `AZURE_AI_AUTH=key` |
+| `foundry.available: false` in Docker | Same cause — a key cannot reach the Agent Service. Same fix |
 | Port already in use | All ports are configurable: `API_PORT`, compose port mappings |

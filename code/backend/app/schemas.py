@@ -113,6 +113,16 @@ class AskRequest(BaseModel):
     agent_mode: Optional[Literal["local", "foundry"]] = Field(
         None, description="local = the loop runs here; foundry = the hosted Agent Service"
     )
+    fact_check: bool = Field(
+        False,
+        description="After answering, verify the answer against the open web and attach a "
+                    "verdict. A second capability, toggled at runtime exactly like use_rag.",
+    )
+    fact_check_urls: list[str] = Field(
+        default_factory=list,
+        description="Check against these pages instead of searching — deterministic, and "
+                    "immune to search rate limits during a demo.",
+    )
 
 
 class AgentInfo(BaseModel):
@@ -212,9 +222,21 @@ class Usage(BaseModel):
     completion_tokens: Optional[int] = None
 
 
+class FactCheckVerdict(BaseModel):
+    verdict: str
+    confidence: str
+    reasoning: str
+    evidence_from: str
+    sources: list[FactCheckSource] = Field(default_factory=list)
+    error: Optional[str] = None
+
+
 class AskResponse(BaseModel):
     answer: str
     augmented: bool
+    fact_check: Optional[FactCheckVerdict] = Field(
+        None, description="Present when fact_check was requested"
+    )
     provider: str
     model: str
     agent: Optional[AgentInfo] = Field(None, description="Which persona shaped this answer")
@@ -243,6 +265,99 @@ class ScrapeResponse(BaseModel):
     approx_tokens: int
     warnings: list[str] = Field(description="Everything the naive approach could not handle")
     stats: dict
+
+
+class WebSearchRequest(BaseModel):
+    model_config = {"json_schema_extra": {"examples": [{
+        "query": "Azure AI Foundry agent service pricing",
+        "max_results": 5,
+    }]}}
+
+    query: str = Field(..., min_length=1)
+    max_results: Optional[int] = Field(None, ge=1, le=15)
+
+
+class WebSearchHit(BaseModel):
+    rank: int
+    title: str
+    url: str
+    snippet: str
+
+
+class WebSearchResponse(BaseModel):
+    query: str
+    provider: str = Field(description="Which engine answered, and whether it is managed")
+    count: int
+    results: list[WebSearchHit]
+    note: Optional[str] = None
+
+
+class FactCheckRequest(BaseModel):
+    model_config = {"json_schema_extra": {"examples": [{
+        "claim": "Azure AI Foundry Agent Service supports tool calling.",
+        "pages": 3,
+    }]}}
+
+    claim: str = Field(..., min_length=1, description="The statement to verify")
+    pages: Optional[int] = Field(None, ge=1, le=5, description="How many results to read in full")
+    urls: list[str] = Field(
+        default_factory=list,
+        description="Check against these pages instead of searching. Use this when you want "
+                    "a deterministic result — a demo that cannot be broken by a rate limit.",
+    )
+
+
+class FactCheckSource(BaseModel):
+    rank: int
+    title: str
+    url: str
+    chars_read: int
+    used: bool = Field(description="Whether the page could actually be read")
+
+
+class FactCheckResponse(BaseModel):
+    claim: str
+    evidence_from: str = Field(description="search provider, or 'supplied urls'")
+    verdict: str = Field(description="supported · contradicted · unclear")
+    confidence: str
+    reasoning: str
+    sources: list[FactCheckSource]
+    prompt_sent: str
+    usage: Optional[Usage] = None
+
+
+class AzureSearchSyncRequest(ChunkRequest):
+    """Same request shape as /ingest — only the destination differs."""
+
+    model_config = {"json_schema_extra": {"examples": [{
+        "text": "Libra Bank blocks a card after three failed PIN attempts. "
+                "Mortgage early repayment is free in the variable-rate period; "
+                "the fixed-rate period costs one percent.",
+        "strategy": "dynamic",
+        "source": "retail-faq",
+    }]}}
+
+    source: str = Field("adhoc", description="Stored on every document, and filterable")
+    allowed_groups: list[str] = Field(
+        default_factory=lambda: ["all-staff"],
+        description="Who may retrieve these documents — the field security trimming filters on",
+    )
+
+
+class AzureSearchQueryRequest(BaseModel):
+    model_config = {"json_schema_extra": {"examples": [{
+        "query": "my card got frozen",
+        "mode": "hybrid",
+        "top": 3,
+    }]}}
+
+    query: str = Field(..., min_length=1)
+    mode: Literal["keyword", "vector", "hybrid"] = Field(
+        "hybrid", description="keyword = BM25 only · vector = embeddings only · hybrid = both, fused"
+    )
+    top: Optional[int] = Field(None, ge=1, le=20)
+    filter: Optional[str] = Field(None, description="OData filter, e.g. source eq 'retail-faq'")
+    semantic: bool = Field(False, description="Add the semantic reranker (paid tiers only)")
 
 
 class SpeakRequest(BaseModel):
@@ -277,5 +392,8 @@ class Health(BaseModel):
     qdrant_url: str
     llm: dict
     embeddings: dict
+    agents: dict = Field(default_factory=dict)
+    speech: dict = Field(default_factory=dict)
+    search: dict = Field(default_factory=dict)
     agents: dict = Field(default_factory=dict)
     speech: dict = Field(default_factory=dict)
